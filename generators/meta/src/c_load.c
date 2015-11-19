@@ -114,7 +114,7 @@ static corto_char* c_loadElementId(corto_value* v, corto_char* out, corto_int32 
 /* This function translates from a value-object to a valid C-string identifying a
  * part of the object that is being serialized. */
 static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char* out, corto_bool addMemberOperator) {
-    corto_value* stack[CORTO_MAX_TYPE_DEPTH];
+    corto_value* stack[CORTO_MAX_INHERITANCE_DEPTH];
     corto_uint32 count;
     corto_value *ptr;
     corto_object o;

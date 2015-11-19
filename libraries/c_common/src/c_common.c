@@ -112,15 +112,14 @@ corto_string corto_genId(corto_string str, corto_id id) {
 
     /* Strip scope-operator for rootscope */
     if (*ptr) {
-        if (*(corto_int16*)ptr == CORTO_SCOPE_HEX) {
-            ptr += 2;
+        if (*ptr == '/') {
+            ptr += 1;
         }
 
         /* Replace '::' with '_' */
         while((ch = *ptr)) {
             switch(ch) {
-            case ':':
-                ptr++;
+            case '/':
                 /* no break */
             case ',':
             case '(':
@@ -436,15 +435,13 @@ corto_char* c_topath(corto_object o, corto_id id, corto_char separator) {
 
     corto_fullname(o, id);
 
-    ptr = id + 2;
-    offset = 2;
+    ptr = id + 1;
+    offset = 1;
     while((ch = *ptr)) {
         switch(ch) {
-        case ':':
+        case '/':
             *(ptr-offset) = separator;
-            ptr++;
-            offset++;
-            break;
+            break;        
         default:
             *(ptr-offset) = *ptr;
             break;

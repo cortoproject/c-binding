@@ -503,9 +503,9 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_fullname(o, fullname);
         c_functionName(o, functionName, data);
         if (corto_function(o)->overloaded) {
-            strcpy(signatureName, fullname);
+            strcpy(signatureName, fullname + 1); /* Skip scope */
         } else {
-            corto_signatureName(fullname, signatureName);
+            corto_signatureName(fullname + 1, signatureName);
         }
 
         /* Write identifying comment to headerfile */
