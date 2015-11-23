@@ -38,7 +38,7 @@ static g_file c_interfaceOpenFile(corto_string name, c_typeWalk_t *data) {
         g_fileWrite(result, " * Only code written between the begin and end tags will be preserved\n");
         g_fileWrite(result, " * when the file is regenerated.\n");
         g_fileWrite(result, " */\n\n");
-    }   
+    }
     return result;
 }
 
@@ -165,7 +165,7 @@ static int c_interfaceParamCastWalk(corto_parameter *o, void *userData) {
         } else if (!strcmp(o->name, "$__file")) {
             g_fileWrite(data->header, "__FILE__");
         } else {
-            g_fileWrite(data->header, "#%s", o->name + 1);            
+            g_fileWrite(data->header, "#%s", o->name + 1);
         }
     } else {
         if (c_interfaceParamRequiresCast(o->type, o->passByReference)) {
@@ -184,20 +184,20 @@ error:
 
 static int c_interfaceCastMacro(corto_function o, corto_string functionName, c_typeWalk_t *data) {
     data->firstComma = FALSE;
-    
+
     g_fileWrite(data->header, "#define %s(", functionName, functionName);
-    
+
     if (c_procedureHasThis(o)) {
         g_fileWrite(data->header, "_this");
         data->firstComma = TRUE;
     }
-    
+
     if (!c_interfaceParamWalk(o, c_interfaceParamCastDef, data)) {
         goto error;
     }
-    
+
     g_fileWrite(data->header, ") _%s(", functionName);
-    
+
     if (c_procedureHasThis(o)) {
         if (corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
             corto_id classId;
@@ -215,16 +215,16 @@ static int c_interfaceCastMacro(corto_function o, corto_string functionName, c_t
     } else {
         data->firstComma = FALSE;
     }
-    
+
     if (!c_interfaceParamWalk(o, c_interfaceParamCastWalk, data)) {
         goto error;
     }
-    
+
     g_fileWrite(data->header, ")\n");
 
     return 0;
 error:
-    return -1;   
+    return -1;
 }
 
 /* Generate implementation for virtual methods */
@@ -740,7 +740,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
            g_fileWrite(result, "#include \"%s.h\"\n", g_fullOid(g, corto_interface(o)->base, baseId));
         } else {
             corto_id path;
-            g_fileWrite(result, "#include \"%s/%s.h\"\n", 
+            g_fileWrite(result, "#include \"%s/%s.h\"\n",
                 c_topath(corto_parentof(corto_interface(o)->base), path, '/'),
                 g_fullOid(g, corto_interface(o)->base, baseId));
         }
@@ -967,8 +967,8 @@ static corto_bool c_interfaceIsGenerated(corto_string file) {
 }
 
 static corto_bool c_interfaceWasGeneratedNow(
-    corto_string name, 
-    c_typeWalk_t *data) 
+    corto_string name,
+    c_typeWalk_t *data)
 {
     corto_iter iter = corto_llIter(data->generated);
 
@@ -998,6 +998,13 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
                     sprintf(newname, "src/%s.old", file);
                     rename (id, newname);
                     printf("c_interface: %s: stale file, please remove (renamed to %s.old)\n", file, file);
+
+                    /* Remove corresponding headerfile */
+                    sprintf(newname, "include/%s", file);
+                    char *ext = strchr(newname, '.');
+                    *(ext + 1) = 'h';
+                    *(ext + 2) = '\0';
+                    corto_rm(newname);
                 } else {
                     printf("c_interface: %s: stale file, please remove\n", file);
                 }
@@ -1054,7 +1061,7 @@ int corto_genMain(corto_generator g) {
             corto_string package = corto_iterNext(&iter);
             corto_object o = corto_resolve(NULL, package);
             if (!o) {
-                corto_error("package '%s' not found", package);
+                corto_seterr("package '%s' not found", package);
                 goto error;
             }
             corto_id path;
