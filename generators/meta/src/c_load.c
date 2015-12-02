@@ -137,8 +137,8 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
     o = corto_valueObject(v);
 
     /* If object is a collection or primtive, dereference object pointer */
-    objectIsArray = 
-        (corto_typeof(o)->kind == CORTO_PRIMITIVE) || 
+    objectIsArray =
+        (corto_typeof(o)->kind == CORTO_PRIMITIVE) ||
         (corto_typeof(o)->kind == CORTO_COLLECTION);
 
     /* Use '->' operator whenever possible */
@@ -275,7 +275,7 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     }
 
     if (o != g_getCurrent(data->g)) {
-        c_writeExport(data->g, data->header);        
+        c_writeExport(data->g, data->header);
     }
 
     /* Declare objects in headerfile and define in sourcefile */
@@ -514,7 +514,7 @@ static corto_int16 c_initReference(corto_serializer s, corto_value* v, void* use
 static corto_int16 c_initElement(corto_serializer s, corto_value* v, void* userData) {
     c_typeWalk_t* data = userData;
     corto_collection t = corto_collection(corto_valueType(v->parent));
-    corto_bool requiresAlloc = corto_collection_elementRequiresAlloc(t);
+    corto_bool requiresAlloc = corto_collection_requiresAlloc(t->elementType);
 
     /* Allocate space for element */
     switch (t->kind) {
@@ -645,10 +645,10 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
             g_fileIndent(data->source);
 
             g_fileWrite(
-                data->source, 
-                "%s%s %s;\n", 
-                g_fullOid(data->g, t->elementType, elementTypeId), 
-                corto_collection_elementRequiresAlloc(t) ? "*" : "",
+                data->source,
+                "%s%s %s;\n",
+                g_fullOid(data->g, t->elementType, elementTypeId),
+                corto_collection_requiresAlloc(t->elementType) ? "*" : "",
                 c_loadElementId(v, elementId, 1));
 
             break;
@@ -805,23 +805,23 @@ static int c_loadDefine(corto_object o, void* userData) {
         /* Do size validation - this makes porting to other platforms easier */
         if (corto_instanceof(corto_type(corto_type_o), o)) {
             if (corto_type(o)->reference) {
-                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n", 
+                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
                     varId,
                     typeId);
                 g_fileIndent(data->source);
-                g_fileWrite(data->source, 
-                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n", 
+                g_fileWrite(data->source,
+                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
                     g_getName(data->g),
                     fullname,
                     varId,
                     typeId);
             } else {
-                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(%s)) {\n", 
+                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(%s)) {\n",
                     varId,
                     typeId);
                 g_fileIndent(data->source);
-                g_fileWrite(data->source, 
-                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n", 
+                g_fileWrite(data->source,
+                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n",
                     g_getName(data->g),
                     fullname,
                     varId,

@@ -252,8 +252,9 @@ error:
 /* Create list foreach-macro */
 static corto_int16 c_apiListTypeForeach(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId;
-    corto_bool prefix, requiresAlloc = corto_collection_elementRequiresAlloc(o);
     corto_type elementType = corto_collection(o)->elementType;
+    corto_bool prefix, requiresAlloc =
+        corto_collection_requiresAlloc(elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
@@ -320,7 +321,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
     corto_id id, elementId, api;
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
-    corto_bool requiresAlloc = corto_collection_elementRequiresAlloc(corto_collection(o));
+    corto_bool requiresAlloc = corto_collection_requiresAlloc(elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
@@ -371,7 +372,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
 static corto_int16 c_apiListTypeInsert(corto_list o, corto_string operation, c_apiWalk_t* data) {
     corto_int16 result;
 
-    if (corto_collection_elementRequiresAlloc(corto_collection(o))) {
+    if (corto_collection_requiresAlloc(corto_collection(o)->elementType)) {
         result = c_apiListTypeInsertAlloc(o, operation, data);
         result = c_apiListTypeInsertNoAlloc(o, operation, data);
     } else {
@@ -386,7 +387,7 @@ static corto_int16 c_apiListTypeTake(corto_list o, corto_string operation, c_api
     corto_id id, elementId, api;
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
-    corto_bool allocRequired = corto_collection_elementRequiresAlloc(corto_collection(o));
+    corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
@@ -413,7 +414,7 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId;
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
-    corto_bool allocRequired = corto_collection_elementRequiresAlloc(corto_collection(o));
+    corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
@@ -448,7 +449,7 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId;
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
-    corto_bool allocRequired = corto_collection_elementRequiresAlloc(corto_collection(o));
+    corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
