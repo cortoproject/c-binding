@@ -20,6 +20,7 @@ typedef struct c_apiWalk_t {
     corto_uint32 parameterCount;
     corto_ll memberCache;
     corto_ll collections;
+    corto_ll iterators;
     corto_ll args;
 } c_apiWalk_t;
 
@@ -43,6 +44,7 @@ corto_int16 c_apiTypeDeinit(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data);
 
 int c_apiCollectionWalk(void* o, void* userData);
+int c_apiIteratorWalk(void* o, void* userData);
 
 #ifdef __cplusplus
 }

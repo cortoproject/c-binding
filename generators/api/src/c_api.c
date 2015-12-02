@@ -25,7 +25,7 @@ static corto_int16 c_apiWalkType(corto_type o, c_apiWalk_t* data) {
     /* Generate _update function */
     if (c_apiTypeUpdate(o, data)) {
         goto error;
-    }   
+    }
 
     g_fileWrite(data->header, "\n");
 
@@ -50,12 +50,12 @@ static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
     /* Generate _define function */
     if (c_apiTypeDefine(o, data)) {
         goto error;
-    } 
+    }
 
     /* Generate _set function */
     if (c_apiTypeSet(o, data)) {
         goto error;
-    }    
+    }
 
     /* Generate _str function */
     if (c_apiTypeStr(o, data)) {
@@ -116,7 +116,7 @@ static int c_apiWalk(corto_object o, void* userData) {
 
         /* Build nameconflict cache */
         if (corto_type(o)->kind == CORTO_COMPOSITE) {
-            data->memberCache = corto_genMemberCacheBuild(o);            
+            data->memberCache = corto_genMemberCacheBuild(o);
         }
 
         if (c_apiWalkType(corto_type(o), userData)) {
@@ -139,7 +139,7 @@ static int c_apiWalk(corto_object o, void* userData) {
             if (corto_interface(o)->kind == CORTO_DELEGATE) {
                 c_apiDelegateCall(corto_delegate(o), userData);
             }
-            corto_genMemberCacheClean(data->memberCache);           
+            corto_genMemberCacheClean(data->memberCache);
         }
     }
 
@@ -229,19 +229,40 @@ static int c_apiCheckDuplicates(void* o, void* userData) {
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         return 1;
     } else {
-        return c_apiCompareCollections(corto_collection(o), corto_collection(userData)) != CORTO_EQ;
+        if (corto_instanceof(corto_collection_o, o)) {
+            return c_apiCompareCollections(
+                corto_collection(o),
+                corto_collection(userData)) != CORTO_EQ;
+        } else if (corto_instanceof(corto_iterator_o, o)) {
+            return corto_iterator(o)->elementType ==
+                corto_iterator(userData)->elementType;
+        }
     }
+
+    return 0;
 }
 
 static int c_apiFindCollections(corto_object o, void* userData) {
     c_apiWalk_t* data = userData;
-    
+
     if (corto_instanceof(corto_type(corto_collection_o), o)) {
         if (!corto_llSize(data->collections) || corto_llWalk(data->collections, c_apiCheckDuplicates, o)) {
             corto_llAppend(data->collections, o);
         }
     }
-    
+
+    return 0;
+}
+
+static int c_apiFindIterators(corto_object o, void* userData) {
+    c_apiWalk_t* data = userData;
+
+    if (corto_instanceof(corto_type(corto_iterator_o), o)) {
+        if (!corto_llSize(data->iterators) || corto_llWalk(data->iterators, c_apiCheckDuplicates, o)) {
+            corto_llAppend(data->iterators, o);
+        }
+    }
+
     return 0;
 }
 
@@ -257,19 +278,28 @@ corto_int16 corto_genMain(corto_generator g) {
     walkData.header = c_apiHeaderOpen(g);
     walkData.source = c_apiSourceOpen(g);
     walkData.collections = corto_llNew();
+    walkData.iterators = corto_llNew();
 
     g_walkRecursive(g, c_apiWalk, &walkData);
-    
-    /* Do a dependency walk over scope to find all collection objects, including anonymous */
+
+    /* Find collection types, including anonymous */
     if (corto_genDepWalk(g, c_apiFindCollections, NULL, &walkData)) {
         corto_trace("generation of api-routines failed while resolving collections.");
         return -1;
     }
-    
     corto_llWalk(walkData.collections, c_apiCollectionWalk, &walkData);
 
+    /* Find iterator types, including anonymous */
+    if (corto_genDepWalk(g, c_apiFindIterators, NULL, &walkData)) {
+        corto_trace("generation of api-routines failed while resolving iterators.");
+        return -1;
+    }
+    corto_llWalk(walkData.iterators, c_apiIteratorWalk, &walkData);
+
     c_apiHeaderClose(walkData.header);
+
     corto_llFree(walkData.collections);
+    corto_llFree(walkData.iterators);
 
     return 0;
 }

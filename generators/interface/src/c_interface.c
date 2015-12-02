@@ -299,7 +299,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
     g_fileDedent(data->wrapper);
     g_fileWrite(data->wrapper, "}\n");
-    g_fileWrite(data->wrapper, "corto_assert(_methodId, \"virtual method '%s' not found in abstract '%%s'\", corto_nameof(_abstract));\n\n", nameString);
+    g_fileWrite(data->wrapper, "corto_assert(_methodId, \"virtual method '%s' not found in interface '%%s'\", corto_nameof(_abstract));\n\n", nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
     g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(this), _methodId);\n\n", nameString);
@@ -902,10 +902,8 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
                 g_fileWrite(data->source, "$end */\n");
                 g_fileDedent(data->source);
             } else {
-                g_fileWrite(data->source, " */\n");
-                g_fileWrite(data->source, "/* Insert code that must be run when component is loaded */\n");
-                g_fileWrite(data->source, "CORTO_UNUSED(argc);\n");
-                g_fileWrite(data->source, "CORTO_UNUSED(argv);\n");
+                g_fileWrite(data->source, " */\n\n");
+                g_fileWrite(data->source, "/* Insert code that must be run when component is loaded */\n\n");
                 g_fileWrite(data->source, "return 0;\n");
                 g_fileDedent(data->source);
                 g_fileWrite(data->source, "/* $end */\n");
