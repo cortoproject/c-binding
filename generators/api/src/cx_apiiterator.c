@@ -6,17 +6,22 @@
 corto_int16 c_apiIteratorForeach(corto_iterator o, c_apiWalk_t *data) {
     corto_id id, elementId;
     corto_bool prefix;
+    corto_bool requiresAlloc = corto_collection_requiresAlloc(o->elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(o->elementType), elementId, &prefix, NULL);
 
     g_fileWrite(data->header, "#define %sForeach(iter, elem) \\\n", id);
-    g_fileWrite(data->header, "while(corto_iterHasNext(&elem##_iter) ? ");
+    g_fileIndent(data->header);
+    g_fileWrite(data->header, "%s elem;\\\n", elementId);
+    g_fileWrite(data->header, "while(corto_iterHasNext(&iter) ? ");
     if (!o->elementType->reference) {
-        g_fileWrite(data->header, "%s *elem;\\\n", elementId);
-        g_fileWrite(data->header, "elem = *(%s*)(corto_word)corto_iterNext(&iter), TRUE", elementId);
+        g_fileWrite(data->header,
+            "elem = %s(%s%s)(corto_word)corto_iterNext(&iter), TRUE",
+            requiresAlloc ? "*" : "",
+            elementId,
+            requiresAlloc ? "*" : "");
     } else {
-        g_fileWrite(data->header, "%s *elem;\\\n", elementId);
         g_fileWrite(data->header, "elem = corto_iterNext(&iter), TRUE");
     }
     g_fileWrite(data->header, " : FALSE)\n");

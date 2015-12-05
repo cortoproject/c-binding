@@ -382,6 +382,40 @@ static corto_int16 c_apiListTypeInsert(corto_list o, corto_string operation, c_a
     return result;
 }
 
+/* Create insert function for types that require no allocation */
+static corto_int16 c_apiListTypeRemove(corto_list o, c_apiWalk_t* data) {
+    corto_id id, elementId;
+    corto_bool prefix;
+    corto_type elementType = corto_collection(o)->elementType;
+
+    c_specifierId(data->g, corto_type(o), id, NULL, NULL);
+    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
+
+    c_writeExport(data->g, data->header);
+
+    g_fileWrite(data->header, "void ");
+    g_fileWrite(data->source, "void ");
+
+    /* Function declaration */
+    g_fileWrite(data->header, "%sRemove(%s list, %s element);\n",
+        id, id, elementId);
+
+    /* Function implementation */
+    g_fileWrite(data->source, "%sRemove(%s list, %s element) {\n",
+        id, id, elementId);
+
+    g_fileIndent(data->source);
+
+    g_fileWrite(data->source, "%sRemove(list, element);\n", id);
+    g_fileWrite(data->source, "corto_release(element);\n");
+
+    g_fileDedent(data->source);
+    g_fileWrite(data->source, "}\n\n");
+
+    return 0;
+}
+
+
 /* Create take function for types that require allocation */
 static corto_int16 c_apiListTypeTake(corto_list o, corto_string operation, c_apiWalk_t* data) {
     corto_id id, elementId, api;
@@ -515,6 +549,12 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
 
     if (c_apiListTypeInsert(o, "Append", data)) {
         goto error;
+    }
+
+    if (corto_collection(o)->elementType->reference) {
+        if (c_apiListTypeRemove(o, data)) {
+            goto error;
+        }
     }
 
     if (c_apiListTypeTake(o, "TakeFirst", data)) {
