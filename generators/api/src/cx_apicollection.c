@@ -406,7 +406,7 @@ static corto_int16 c_apiListTypeRemove(corto_list o, c_apiWalk_t* data) {
 
     g_fileIndent(data->source);
 
-    g_fileWrite(data->source, "%sRemove(list, element);\n", id);
+    g_fileWrite(data->source, "corto_llRemove(list, element);\n");
     g_fileWrite(data->source, "corto_release(element);\n");
 
     g_fileDedent(data->source);
