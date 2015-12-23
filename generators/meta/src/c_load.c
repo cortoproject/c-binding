@@ -264,6 +264,10 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     data = userData;
     t = corto_typeof(o);
 
+    if (!g_mustParse(data->g, o)) {
+        return 1;
+    }
+
     parent = corto_parentof(o);
     if (parent && (parent != root_o) && (!g_mustParse(data->g, parent))) {
         c_loadDeclareWalk(corto_parentof(o), userData);
@@ -525,7 +529,8 @@ static corto_int16 c_initElement(corto_serializer s, corto_value* v, void* userD
 
         if (requiresAlloc) {
             c_specifierId(data->g, t->elementType, specifier, NULL, postfix);
-            g_fileWrite(data->source, "%s = corto_alloc(sizeof(%s%s));\n", c_loadElementId(v, elementId, 0), specifier, postfix);
+            g_fileWrite(data->source, "%s = corto_alloc(sizeof(%s%s));\n",
+                c_loadElementId(v, elementId, 0), specifier, postfix);
         }
         break;
     }
@@ -716,6 +721,10 @@ static int c_loadDeclare(corto_object o, void* userData) {
 
     data = userData;
 
+    if (!g_mustParse(data->g, o)) {
+        return 1;
+    }
+
     /* Only declare scoped objects */
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         c_escapeString(corto_nameof(o), escapedName);
@@ -757,12 +766,14 @@ static int c_loadDeclare(corto_object o, void* userData) {
 /* Define object */
 static int c_loadDefine(corto_object o, void* userData) {
     struct corto_serializer_s s;
+    c_typeWalk_t* data = userData;
+
+    if (!g_mustParse(data->g, o)) {
+        return 1;
+    }
 
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
-        c_typeWalk_t* data;
         corto_id escapedId, fullname, varId, typeId;
-
-        data = userData;
 
         corto_fullname(o, fullname);
         c_loadVarId(data->g, o, varId);

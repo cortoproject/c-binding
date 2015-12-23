@@ -22,7 +22,8 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_fileWrite(file, " */\n\n");
 
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "#include \"%s.h\"\n\n", g_fullOid(g, g_getCurrent(g), topLevelName));
+        g_fileWrite(file, "#include \"%s.h\"\n\n",
+            corto_nameof(g_getCurrent(g)));
         c_writeExport(g, file);
         g_fileWrite(file, "int cortomain(int argc, char* argv[]) {\n");
         g_fileIndent(file);
