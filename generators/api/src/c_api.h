@@ -6,7 +6,7 @@
 #ifndef corto_api_H
 #define corto_api_H
 
-#include "corto.h"
+#include "corto/lang/corto.h"
 
 #ifdef __cplusplus
 extern "C" {

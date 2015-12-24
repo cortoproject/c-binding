@@ -8,8 +8,7 @@
 #ifndef C_COMMON_H_
 #define C_COMMON_H_
 
-#include "corto.h"
-#include "corto_generator.h"
+#include "corto/lang/corto.h"
 
 #ifdef __cplusplus
 extern "c" {
@@ -32,8 +31,6 @@ corto_char* c_escapeString(corto_string str, corto_id id);
 
 corto_bool c_procedureHasThis(corto_function o);
 
-corto_char* c_topath(corto_object o, corto_id id, corto_char separator);
-
 corto_string c_paramName(corto_string name, corto_string buffer);
 
 corto_char* c_usingName(corto_generator g, corto_object o, corto_id id);
@@ -41,6 +38,12 @@ corto_char* c_usingName(corto_generator g, corto_object o, corto_id id);
 corto_char* c_usingConstant(corto_generator g, corto_id id);
 
 void c_writeExport(corto_generator g, g_file file);
+
+char* c_filename(char *fileName, corto_object o, char *ext);
+
+void c_includeFrom(g_file file, corto_object o, corto_string include, ...);
+
+void c_include(g_file file, corto_object o);
 
 #ifdef __cplusplus
 }

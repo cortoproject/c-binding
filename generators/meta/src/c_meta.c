@@ -5,9 +5,8 @@
  *      Author: sander
  */
 
-#include "corto.h"
+#include "corto/lang/corto.h"
 #include "c_common.h"
-#include "corto_string_ser.h"
 
 typedef struct c_typeWalk_t {
     corto_generator g;
@@ -21,7 +20,7 @@ typedef struct c_typeWalk_t {
 static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* src, corto_char* context) {
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         corto_id id, escaped;
-        corto_fullname(o, id);
+        corto_fullpath(id, o);
 
         if (!(src || context)) {
             sprintf(out, "corto_resolve(NULL, \"%s\")", c_escapeString(id, escaped));
@@ -54,7 +53,7 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
         }
         c_escapeString(id, escapedOstr);
 
-        corto_fullname(corto_typeof(o), id);
+        corto_fullpath(id, corto_typeof(o));
         c_escapeString(id, escapedId);
 
         if (!(src || context)) {
@@ -305,16 +304,20 @@ static g_file c_loadHeaderFileOpen(corto_generator g) {
     sprintf(headerFileName, "%s__meta.h", g_getName(g));
     result = g_fileOpen(g, headerFileName);
 
+    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_strupper(path);
+
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
     g_fileWrite(result, " * Loads objects in object store.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    g_fileWrite(result, "#ifndef %s_META_H\n", c_topath(g_getCurrent(g), path, '_'));
-    g_fileWrite(result, "#define %s_META_H\n\n", c_topath(g_getCurrent(g), path, '_'));
-    g_fileWrite(result, "#include \"corto.h\"\n");
-    g_fileWrite(result, "#include \"%s__interface.h\"\n\n", g_getName(g));
+    g_fileWrite(result, "#ifndef %s_META_H\n", path);
+    g_fileWrite(result, "#define %s_META_H\n\n", path);
+    c_includeFrom(result, corto_lang_o, "corto.h");
+    c_includeFrom(result, g_getCurrent(g), "%s__interface.h", g_getName(g));
+    g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
     g_fileWrite(result, "#endif\n\n");
@@ -337,20 +340,19 @@ static void c_loadHeaderFileClose(corto_generator g, g_file file) {
 /* Open generator sourcefile */
 static g_file c_loadSourceFileOpen(corto_generator g) {
     g_file result;
-    corto_id headerFileName;
-    corto_id topLevelName;
+    corto_id fileName;
 
     /* Create file */
-    sprintf(headerFileName, "%s__meta.c", g_getName(g));
-    result = g_hiddenFileOpen(g, headerFileName);
+    sprintf(fileName, "%s__meta.c", g_getName(g));
+    result = g_hiddenFileOpen(g, fileName);
 
     /* Print standard comments and includes */
-    g_fileWrite(result, "/* %s\n", headerFileName);
+    g_fileWrite(result, "/* %s\n", fileName);
     g_fileWrite(result, " *\n");
     g_fileWrite(result, " * Loads objects in object store.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    g_fileWrite(result, "#include \"%s.h\"\n\n", g_fullOid(g, g_getCurrent(g), topLevelName));
+    c_include(result, g_getCurrent(g));
 
     return result;
 }
@@ -730,7 +732,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
         c_escapeString(corto_nameof(o), escapedName);
 
         /* Declaration */
-        g_fileWrite(data->source, "/* Declare %s */\n", corto_fullname(o, id));
+        g_fileWrite(data->source, "/* Declare %s */\n", corto_fullpath(NULL, o));
 
         if (!corto_checkAttr(corto_typeof(o), CORTO_ATTR_SCOPED)) {
             g_fileWrite(data->source, "%s = corto_declareChild(%s, \"%s\", (_a_ ? corto_release(_a_) : 0, _a_ = %s));\n",
@@ -749,7 +751,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
         /* Error checking */
         g_fileWrite(data->source, "if (!%s) {\n", c_loadVarId(data->g, o, id));
         g_fileIndent(data->source);
-        c_escapeString(corto_fullname(o, id), escapedName);
+        c_escapeString(corto_fullpath(NULL, o), escapedName);
         g_fileWrite(data->source, "corto_error(\"%s_load: failed to declare '%s' (%%s)\", corto_lasterr());\n",
                 g_getName(data->g),
                 escapedName);
@@ -775,7 +777,7 @@ static int c_loadDefine(corto_object o, void* userData) {
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         corto_id escapedId, fullname, varId, typeId;
 
-        corto_fullname(o, fullname);
+        corto_fullpath(fullname, o);
         c_loadVarId(data->g, o, varId);
         g_fullOid(data->g, o, typeId);
 
@@ -853,6 +855,7 @@ int corto_genMain(corto_generator g) {
     /* Default prefixes for corto namespaces */
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;

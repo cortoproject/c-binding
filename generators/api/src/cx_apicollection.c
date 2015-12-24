@@ -1,5 +1,4 @@
 
-#include "corto.h"
 #include "c_api.h"
 #include "c_common.h"
 
@@ -213,9 +212,8 @@ static corto_int16 c_apiSequenceTypeClear(corto_sequence o, c_apiWalk_t* data) {
 
 /* Walk sequence */
 static corto_int16 c_apiWalkSequence(corto_sequence o, c_apiWalk_t* data) {
-    corto_id id;
 
-    g_fileWrite(data->header, "\n/* %s */\n", corto_fullname(o, id));
+    g_fileWrite(data->header, "\n/* %s */\n", corto_fullpath(NULL, o));
 
     data->current = o;
 
@@ -533,9 +531,8 @@ static corto_int16 c_apiListTypeSize(corto_list o, c_apiWalk_t* data) {
 
 /* Walk list */
 static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
-    corto_id id;
 
-    g_fileWrite(data->header, "\n/* %s */\n", corto_fullname(o, id));
+    g_fileWrite(data->header, "\n/* %s */\n", corto_fullpath(NULL, o));
 
     data->current = o;
 

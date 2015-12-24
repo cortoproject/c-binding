@@ -5,7 +5,6 @@
  *      Author: sander
  */
 
-#include "corto.h"
 #include "c_api.h"
 #include "c_common.h"
 
@@ -107,10 +106,9 @@ error:
 /* Forward objects for which code will be generated. */
 static int c_apiWalk(corto_object o, void* userData) {
     c_apiWalk_t* data = userData;
-    corto_id id;
 
     if (corto_class_instanceof(corto_type_o, o)) {
-        g_fileWrite(data->header, "/* %s */\n", corto_fullname(o, id));
+        g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, o));
 
         data->current = o;
 
@@ -157,16 +155,20 @@ static g_file c_apiHeaderOpen(corto_generator g) {
     sprintf(headerFileName, "%s__api.h", g_getName(g));
     result = g_fileOpen(g, headerFileName);
 
+    /* Obtain path for macro */
+    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_strupper(path);
+
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
     g_fileWrite(result, " * API convenience functions for C-language.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    g_fileWrite(result, "#ifndef %s__API_H\n", c_topath(g_getCurrent(g), path, '_'));
-    g_fileWrite(result, "#define %s__API_H\n\n", c_topath(g_getCurrent(g), path, '_'));
-    g_fileWrite(result, "#include \"corto.h\"\n");
-    g_fileWrite(result, "#include \"%s__interface.h\"\n", g_getName(g));
+    g_fileWrite(result, "#ifndef %s__API_H\n", path);
+    g_fileWrite(result, "#define %s__API_H\n\n", path);
+    c_includeFrom(result, corto_lang_o, "corto.h");
+    c_includeFrom(result, g_getCurrent(g), "%s__interface.h", g_getName(g));
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
     g_fileWrite(result, "#endif\n");
@@ -188,7 +190,7 @@ static void c_apiHeaderClose(g_file file) {
 /* Open sourcefile */
 static g_file c_apiSourceOpen(corto_generator g) {
     g_file result;
-    corto_id sourceFileName, topLevelName;
+    corto_id sourceFileName;
 
     /* Create file */
     sprintf(sourceFileName, "%s__api.c", g_getName(g));
@@ -204,7 +206,7 @@ static g_file c_apiSourceOpen(corto_generator g) {
     g_fileWrite(result, " * API convenience functions for C-language.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    g_fileWrite(result, "#include \"%s.h\"\n\n", g_fullOid(g, g_getCurrent(g), topLevelName));
+    c_include(result, g_getCurrent(g));
 
     return result;
 }
@@ -273,6 +275,7 @@ corto_int16 corto_genMain(corto_generator g) {
     /* Default prefixes for corto namespaces */
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
 
     walkData.g = g;
     walkData.header = c_apiHeaderOpen(g);

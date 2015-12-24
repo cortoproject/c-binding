@@ -6,9 +6,7 @@
  */
 
 #include "c_common.h"
-#include "stdio.h"
 #include "ctype.h"
-#include "corto_generator.h"
 
 /* Escape language keywords */
 static int c_typeKeywordEscape(corto_string inputName, corto_string buffer) {
@@ -166,8 +164,8 @@ corto_char* c_primitiveId(corto_primitive t, corto_char* buff) {
             appendT = TRUE;
             break;
         default: {
-            corto_id id;
-            corto_seterr("unsupported width for primitive type '%s'.", corto_fullname(t, id));
+            corto_seterr("unsupported width for primitive type '%s'.",
+                corto_fullpath(NULL, t));
             goto error;
             break;
         }
@@ -193,8 +191,8 @@ corto_char* c_primitiveId(corto_primitive t, corto_char* buff) {
             strcpy(buff, "double");
             break;
         default: {
-            corto_id id;
-            corto_seterr("unsupported width for floating point type '%s'", corto_fullname(t, id));
+            corto_seterr("unsupported width for floating point type '%s'",
+                corto_fullpath(NULL, t));
             goto error;
             break;
         }
@@ -420,37 +418,12 @@ corto_char* c_escapeString(corto_string str, corto_id id) {
 corto_bool c_procedureHasThis(corto_function o) {
     corto_bool result;
     if (corto_typeof(o) != corto_type(corto_observer_o)) {
-        result = (corto_instanceof(corto_type(corto_method_o), o) || 
+        result = (corto_instanceof(corto_type(corto_method_o), o) ||
                   corto_instanceof(corto_type(corto_metaprocedure_o), o));
     } else {
         result = corto_class_instanceof(corto_class_o, corto_parentof(o));
     }
     return result;
-}
-
-/* Translate a scope to a path */
-corto_char* c_topath(corto_object o, corto_id id, corto_char separator) {
-    corto_uint32 offset;
-    corto_char ch, *ptr;
-
-    corto_fullname(o, id);
-
-    ptr = id + 1;
-    offset = 1;
-    while((ch = *ptr)) {
-        switch(ch) {
-        case '/':
-            *(ptr-offset) = separator;
-            break;        
-        default:
-            *(ptr-offset) = *ptr;
-            break;
-        }
-        ptr++;
-    }
-    *(ptr-offset) = '\0';
-
-    return id;
 }
 
 corto_string c_paramName(corto_string name, corto_string buffer) {
@@ -491,14 +464,68 @@ corto_char* c_usingConstant(corto_generator g, corto_id id) {
     strcpy(id, "USING_");
     char *ptr = &id[6];
     corto_object o = g_getCurrent(g);
-    c_topath(o, buff, '_');
+    corto_path(buff, root_o, o, "_");
     c_typeToUpper(buff, ptr);
     return id;
 }
 
 void c_writeExport(corto_generator g, g_file file) {
     corto_id upperName;
-    c_topath(g_getCurrent(g), upperName, '_');
+    corto_path(upperName, root_o, g_getCurrent(g), "_");
     corto_strupper(upperName);
     g_fileWrite(file, "%s_EXPORT ", upperName);
+}
+
+static char* c_findPackage(corto_object o) {
+    corto_object package = o;
+    while (package && !corto_instanceof(corto_package_o, package)) {
+        package = corto_parentof(package);
+    }
+    return package;
+}
+
+char* c_filename(
+    char *fileName,
+    corto_object o,
+    char *ext)
+{
+    if (corto_instanceof(corto_package_o, corto_parentof(o))) {
+        sprintf(fileName, "%s.%s", corto_nameof(o), ext);
+    } else {
+        corto_id path;
+        corto_path(path, c_findPackage(o), o, "_");
+        sprintf(fileName, "%s.%s", path, ext);
+    }
+
+    return fileName;
+}
+
+void c_includeFrom(
+    g_file file,
+    corto_object o,
+    corto_string include,
+    ...)
+{
+    corto_id path, filebuff;
+    va_list list;
+
+    va_start(list, include);
+    vsprintf(filebuff, include, list);
+    va_end(list);
+
+    g_fileWrite(file, "#include \"%s/%s\"\n",
+      corto_path(path, root_o, o, "/"),
+      filebuff);
+}
+
+void c_include(g_file file, corto_object o) {
+    corto_id name;
+    corto_object package = c_findPackage(o);
+
+    corto_assert (package != NULL, "can't include from non-package scopes");
+
+    c_includeFrom(
+      file,
+      package,
+      c_filename(name, o, "h"));
 }

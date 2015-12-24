@@ -1,12 +1,11 @@
 
-#include "corto.h"
+#include "corto/lang/corto.h"
 #include "c_common.h"
 
 /* Generate file containing component loader */
 static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     corto_id filename;
     g_file file;
-    corto_id topLevelName;
     corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
 
     sprintf(filename, "%s__load.c", g_getName(g));
@@ -22,8 +21,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_fileWrite(file, " */\n\n");
 
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "#include \"%s.h\"\n\n",
-            corto_nameof(g_getCurrent(g)));
+        c_include(file, g_getCurrent(g));
         c_writeExport(g, file);
         g_fileWrite(file, "int cortomain(int argc, char* argv[]) {\n");
         g_fileIndent(file);
@@ -35,7 +33,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
     } else {
-        g_fileWrite(file, "#include \"corto.h\"\n\n");
+        c_includeFrom(file, corto_lang_o, "corto.h");
         if (isComponent) {
             g_fileWrite(file, "int cortomain(int argc, char* argv[]) {\n");
         } else {
@@ -79,10 +77,9 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     g_fileWrite(file, "#ifndef %s_H\n", g_getName(g));
     g_fileWrite(file, "#define %s_H\n\n", g_getName(g));
 
-    g_fileWrite(file, "#include \"corto.h\"\n");
+    c_includeFrom(file, corto_lang_o, "corto.h");
 
     if ((packages = corto_loadGetPackages())) {
-        corto_id path;
         corto_iter iter = corto_llIter(packages);
         while (corto_iterHasNext(&iter)) {
             corto_string str = corto_iterNext(&iter);
@@ -91,7 +88,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
                 corto_error("corto: package.txt contains unresolved package '%s'", str);
                 goto error;
             }
-            g_fileWrite(file, "#include \"%s/%s.h\"\n", c_topath(package, path, '/'), corto_nameof(package));
+            c_include(file, package);
             corto_release(package);
         }
         corto_loadFreePackages(packages);
@@ -148,7 +145,9 @@ static int c_projectCleanInclude(corto_object o, void *userData) {
 
     if (corto_instanceof(corto_type(corto_interface_o), o) || corto_instanceof(corto_type(corto_package_o), o)) {
         corto_id id;
-        g_fileWrite(data->file, "CLOBBER.include(\"include/%s.h\")\n", g_fullOid(data->g, o, id));
+        g_fileWrite(
+          data->file, "CLOBBER.include(\"include/%s\")\n",
+          c_filename(id, o, "h"));
     }
 
     return 1;
@@ -191,7 +190,7 @@ static corto_int16 c_projectGeneratePackageFile(corto_generator g) {
         while (corto_iterHasNext(&iter)) {
             corto_object import = corto_iterNext(&iter);
             corto_id id;
-            corto_fullname(import, id);
+            corto_fullpath(id, import);
             if (!corto_loadRequiresPackage(id)) {
                 fprintf(corto_fileGet(file), "%s\n", id);
             }

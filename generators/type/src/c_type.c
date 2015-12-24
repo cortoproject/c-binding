@@ -7,7 +7,6 @@
 
 #include "c_type.h"
 #include "c_common.h"
-#include "corto.h"
 
 typedef struct c_typeWalk_t {
     corto_generator g;
@@ -143,7 +142,7 @@ static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData
     t = corto_valueType(v);
     data = userData;
 
-    g_fileWrite(data->header, "/* %s */\n", corto_fullname(t, id));
+    g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
     if (t->reference) {
         g_fileWrite(data->header, "typedef void *%s;\n", g_fullOid(data->g, t, id));
     } else {
@@ -165,7 +164,7 @@ static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData)
     t = corto_valueType(v);
     data = userData;
 
-    g_fileWrite(data->header, "/* %s */\n", corto_fullname(t, id));
+    g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
     g_fileWrite(data->header, "CORTO_ANY(%s);\n\n", g_fullOid(data->g, t, id));
 
     return 0;
@@ -186,13 +185,13 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
     /* Obtain platform type-name for primitive */
     switch(corto_primitive(t)->kind) {
     case CORTO_ENUM:
-        g_fileWrite(data->header, "/* %s */\n", corto_fullname(t, id));
+        g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
         if (c_typePrimitiveEnum(s, v, userData)) {
             goto error;
         }
         break;
     case CORTO_BITMASK:
-        g_fileWrite(data->header, "/* %s */\n", corto_fullname(t, id));
+        g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
         if (c_typePrimitiveBitmask(s, v, userData)) {
             goto error;
         }
@@ -204,7 +203,7 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
 
         /* Write typedef */
         if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
-            g_fileWrite(data->header, "/* %s */\n", corto_fullname(t, id));
+            g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
             g_fileWrite(data->header, "typedef %s %s;\n\n", buff, g_fullOid(data->g, t, id));
         }
         break;
@@ -539,29 +538,31 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
         goto error;
     }
 
+    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_strupper(path);
+
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
     g_fileWrite(result, " * Type definitions for C-language.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    g_fileWrite(result, "#ifndef %s__type_H\n", c_topath(g_getCurrent(g), path, '_'));
-    g_fileWrite(result, "#define %s__type_H\n\n", c_topath(g_getCurrent(g), path, '_'));
+    g_fileWrite(result, "#ifndef %s__TYPE_H\n", path);
+    g_fileWrite(result, "#define %s__TYPE_H\n\n", path);
 
     /* Don't include this file when generating for the bootstrap */
     if (!bootstrap || strcmp(bootstrap, "true")) {
-        g_fileWrite(result, "#include \"corto.h\"\n");
+        c_includeFrom(result, corto_lang_o, "corto.h");
     } else {
-        g_fileWrite(result, "#include \"corto_def.h\"\n\n");
+        c_includeFrom(result, corto_lang_o, "corto_def.h");
     }
 
     /* Include imports */
     if (g->imports) {
-        corto_id path;
         importIter = corto_llIter(g->imports);
         while(corto_iterHasNext(&importIter)) {
             import = corto_iterNext(&importIter);
-            g_fileWrite(result, "#include \"%s/%s__type.h\"\n", c_topath(import, path, '/'), corto_nameof(import));
+            c_includeFrom(result, import, "%s__type.h", corto_nameof(import));
         }
         g_fileWrite(result, "\n");
     }
@@ -599,7 +600,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
     t = o;
 
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
-        g_fileWrite(data->header, "/*  %s */\n", corto_fullname(t, id));
+        g_fileWrite(data->header, "/*  %s */\n", corto_fullpath(NULL, t));
 
         switch(t->kind) {
         case CORTO_COMPOSITE:
@@ -665,6 +666,7 @@ corto_int16 corto_genMain(corto_generator g) {
     /* Default prefixes for corto namespaces */
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
 
     /* Walk classes, print cast-macro's */
     g_fileWrite(walkData.header, "\n");
