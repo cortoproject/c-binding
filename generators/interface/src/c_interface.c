@@ -5,7 +5,7 @@
  *      Author: sander
  */
 
-#include "corto/lang/corto.h"
+#include "corto/corto.h"
 #include "c_common.h"
 
 typedef struct c_interfaceExisting {
@@ -728,7 +728,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n\n", path);
-    c_includeFrom(result, corto_lang_o, "corto.h");
+    c_includeFrom(result, corto_o, "corto.h");
 
     /* If the class extends from another class, include header of baseclass */
     if (corto_class_instanceof(corto_interface_o, o) && corto_interface(o)->base) {

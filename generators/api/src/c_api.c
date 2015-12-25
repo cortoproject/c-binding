@@ -167,7 +167,7 @@ static g_file c_apiHeaderOpen(corto_generator g) {
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s__API_H\n", path);
     g_fileWrite(result, "#define %s__API_H\n\n", path);
-    c_includeFrom(result, corto_lang_o, "corto.h");
+    c_includeFrom(result, corto_o, "corto.h");
     c_includeFrom(result, g_getCurrent(g), "%s__interface.h", g_getName(g));
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");

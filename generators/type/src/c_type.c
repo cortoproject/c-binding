@@ -552,7 +552,7 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
 
     /* Don't include this file when generating for the bootstrap */
     if (!bootstrap || strcmp(bootstrap, "true")) {
-        c_includeFrom(result, corto_lang_o, "corto.h");
+        c_includeFrom(result, corto_o, "corto.h");
     } else {
         c_includeFrom(result, corto_lang_o, "corto_def.h");
     }

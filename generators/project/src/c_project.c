@@ -1,5 +1,5 @@
 
-#include "corto/lang/corto.h"
+#include "corto/corto.h"
 #include "c_common.h"
 
 /* Generate file containing component loader */
@@ -33,7 +33,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
     } else {
-        c_includeFrom(file, corto_lang_o, "corto.h");
+        c_includeFrom(file, corto_o, "corto.h");
         if (isComponent) {
             g_fileWrite(file, "int cortomain(int argc, char* argv[]) {\n");
         } else {
@@ -77,7 +77,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     g_fileWrite(file, "#ifndef %s_H\n", g_getName(g));
     g_fileWrite(file, "#define %s_H\n\n", g_getName(g));
 
-    c_includeFrom(file, corto_lang_o, "corto.h");
+    c_includeFrom(file, corto_o, "corto.h");
 
     if ((packages = corto_loadGetPackages())) {
         corto_iter iter = corto_llIter(packages);
