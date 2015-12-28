@@ -301,7 +301,7 @@ static g_file c_loadHeaderFileOpen(corto_generator g) {
     corto_id headerFileName, path;
 
     /* Create file */
-    sprintf(headerFileName, "%s__meta.h", g_getName(g));
+    sprintf(headerFileName, "_meta.h");
     result = g_fileOpen(g, headerFileName);
 
     corto_path(path, root_o, g_getCurrent(g), "_");
@@ -316,7 +316,7 @@ static g_file c_loadHeaderFileOpen(corto_generator g) {
     g_fileWrite(result, "#ifndef %s_META_H\n", path);
     g_fileWrite(result, "#define %s_META_H\n\n", path);
     c_includeFrom(result, corto_o, "corto.h");
-    c_includeFrom(result, g_getCurrent(g), "%s__interface.h", g_getName(g));
+    c_includeFrom(result, g_getCurrent(g), "_interface.h");
     g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
@@ -343,7 +343,7 @@ static g_file c_loadSourceFileOpen(corto_generator g) {
     corto_id fileName;
 
     /* Create file */
-    sprintf(fileName, "%s__meta.c", g_getName(g));
+    sprintf(fileName, "_meta.c");
     result = g_hiddenFileOpen(g, fileName);
 
     /* Print standard comments and includes */

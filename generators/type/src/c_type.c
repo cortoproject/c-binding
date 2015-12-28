@@ -532,7 +532,7 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
     corto_string bootstrap = gen_getAttribute(g, "bootstrap");
 
     /* Create file */
-    sprintf(headerFileName, "%s__type.h", g_getName(g));
+    sprintf(headerFileName, "_type.h");
     result = g_fileOpen(g, headerFileName);
     if (!result) {
         goto error;
@@ -554,7 +554,11 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
     if (!bootstrap || strcmp(bootstrap, "true")) {
         c_includeFrom(result, corto_o, "corto.h");
     } else {
-        c_includeFrom(result, corto_lang_o, "corto_def.h");
+        if (g_getCurrent(g) == corto_lang_o) {
+            c_includeFrom(result, corto_o, "def.h");
+        } else {
+            c_includeFrom(result, corto_lang_o, "_type.h");
+        }
     }
 
     /* Include imports */
@@ -562,7 +566,7 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
         importIter = corto_llIter(g->imports);
         while(corto_iterHasNext(&importIter)) {
             import = corto_iterNext(&importIter);
-            c_includeFrom(result, import, "%s__type.h", corto_nameof(import));
+            c_includeFrom(result, import, "_type.h");
         }
         g_fileWrite(result, "\n");
     }

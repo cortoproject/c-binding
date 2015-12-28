@@ -152,7 +152,7 @@ static g_file c_apiHeaderOpen(corto_generator g) {
     corto_id headerFileName, path;
 
     /* Create file */
-    sprintf(headerFileName, "%s__api.h", g_getName(g));
+    sprintf(headerFileName, "_api.h");
     result = g_fileOpen(g, headerFileName);
 
     /* Obtain path for macro */
@@ -167,8 +167,14 @@ static g_file c_apiHeaderOpen(corto_generator g) {
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s__API_H\n", path);
     g_fileWrite(result, "#define %s__API_H\n\n", path);
+
     c_includeFrom(result, corto_o, "corto.h");
-    c_includeFrom(result, g_getCurrent(g), "%s__interface.h", g_getName(g));
+    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+        g_fileWrite(result, "#include \"%s/_interface.h\"\n", g_getName(g));
+    } else {
+        c_includeFrom(result, g_getCurrent(g), "_interface.h");
+    }
+
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
     g_fileWrite(result, "#endif\n");
@@ -193,7 +199,7 @@ static g_file c_apiSourceOpen(corto_generator g) {
     corto_id sourceFileName;
 
     /* Create file */
-    sprintf(sourceFileName, "%s__api.c", g_getName(g));
+    strcpy(sourceFileName, "_api.c");
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
         result = g_fileOpen(g, sourceFileName);
     } else {

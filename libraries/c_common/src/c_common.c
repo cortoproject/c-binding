@@ -471,7 +471,7 @@ corto_char* c_usingConstant(corto_generator g, corto_id id) {
 
 void c_writeExport(corto_generator g, g_file file) {
     corto_id upperName;
-    corto_path(upperName, root_o, g_getCurrent(g), "_");
+    strcpy(upperName, g_getName(g));
     corto_strupper(upperName);
     g_fileWrite(file, "%s_EXPORT ", upperName);
 }

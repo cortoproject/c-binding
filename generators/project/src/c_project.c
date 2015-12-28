@@ -8,7 +8,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_file file;
     corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
 
-    sprintf(filename, "%s__load.c", g_getName(g));
+    sprintf(filename, "_load.c");
 
     file = g_hiddenFileOpen(g, filename);
     if(!file) {
@@ -61,8 +61,11 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     corto_id filename;
     g_file file;
     corto_ll packages, components;
+    corto_id upperName;
+    strcpy(upperName, g_getName(g));
+    corto_strupper(upperName);
 
-    sprintf(filename, "include/%s.h", g_getName(g));
+    sprintf(filename, "%s.h", g_getName(g));
 
     file = g_fileOpen(g, filename);
     if(!file) {
@@ -74,8 +77,8 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     g_fileWrite(file, " * This file is generated. Do not modify.\n");
     g_fileWrite(file, " */\n\n");
 
-    g_fileWrite(file, "#ifndef %s_H\n", g_getName(g));
-    g_fileWrite(file, "#define %s_H\n\n", g_getName(g));
+    g_fileWrite(file, "#ifndef %s_H\n", upperName);
+    g_fileWrite(file, "#define %s_H\n\n", upperName);
 
     c_includeFrom(file, corto_o, "corto.h");
 
@@ -202,6 +205,40 @@ static corto_int16 c_projectGeneratePackageFile(corto_generator g) {
     return 0;
 }
 
+/* Generate interface header with macro's for exporting */
+static corto_int16 c_genInterfaceHeader(corto_generator g) {
+    corto_id interfaceHeaderName;
+    sprintf(interfaceHeaderName, "_interface.h");
+    g_file interfaceHeader = g_fileOpen(g, interfaceHeaderName);
+
+    if (!interfaceHeader) {
+        goto error;
+    } else {
+        corto_id upperName;
+        strcpy(upperName, g_getName(g));
+        corto_strupper(upperName);
+
+        g_fileWrite(interfaceHeader, "/* %s\n", interfaceHeaderName);
+        g_fileWrite(interfaceHeader, " *\n");
+        g_fileWrite(interfaceHeader, " * This file contains generated code. Do not modify!\n");
+        g_fileWrite(interfaceHeader, " */\n\n");
+
+        g_fileWrite(interfaceHeader, "#if BUILDING_%s && defined _MSC_VER\n", upperName);
+        g_fileWrite(interfaceHeader, "#define %s_DLL_EXPORTED __declspec(dllexport)\n", upperName);
+        g_fileWrite(interfaceHeader, "#elif BUILDING_%s\n", upperName);
+        g_fileWrite(interfaceHeader, "#define %s_EXPORT __attribute__((__visibility__(\"default\")))\n", upperName);
+        g_fileWrite(interfaceHeader, "#elif defined _MSC_VER\n");
+        g_fileWrite(interfaceHeader, "#define %s_EXPORT __declspec(dllimport)\n", upperName);
+        g_fileWrite(interfaceHeader, "#else\n");
+        g_fileWrite(interfaceHeader, "#define %s_EXPORT\n", upperName);
+        g_fileWrite(interfaceHeader, "#endif\n\n");
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
 /* Generator main */
 corto_int16 corto_genMain(corto_generator g) {
 
@@ -211,6 +248,10 @@ corto_int16 corto_genMain(corto_generator g) {
     corto_mkdir(".corto");
 
     if(c_projectGenerateMainFile(g)) {
+        goto error;
+    }
+
+    if (c_genInterfaceHeader(g)) {
         goto error;
     }
 

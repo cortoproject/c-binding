@@ -232,9 +232,6 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     corto_bool returnsValue;
     corto_id nameString;
     g_file originalSource = data->source;
-    corto_id upperName;
-    corto_path(upperName, root_o, g_getCurrent(data->g), "_");
-    corto_strupper(upperName);
 
     /* Replace the source with the wrapper so that all nested functions use the correct outputfile.
      * This file will be restored at the end of the function */
@@ -257,8 +254,8 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
             g_fullOid(data->g, o, id));
 
     g_fileWrite(data->header, "\n");
-    g_fileWrite(data->header, "%s_EXPORT %s _%s(",
-            upperName,
+    c_writeExport(data->g, data->header);
+    g_fileWrite(data->header, "%s _%s(",
             returnTypeId,
             g_fullOid(data->g, o, id));
 
@@ -266,6 +263,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     c_interfaceParamThis(corto_type(corto_parentof(o)), data, TRUE, TRUE);
     data->firstComma = 1;
     data->generateHeader = TRUE;
+    data->generateSource = TRUE;
 
     /* Walk parameters */
     if (!c_interfaceParamWalk(o, c_interfaceParam, data)) {
@@ -450,10 +448,6 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_procedureKind kind;
         corto_type returnType;
         corto_string doStubs = gen_getAttribute(data->g, "stubs");
-        corto_id upperName;
-
-        corto_path(upperName, root_o, g_getCurrent(data->g), "_");
-        corto_strupper(upperName);
 
         kind = corto_procedure(corto_typeof(o))->kind;
         defined = corto_checkState(o, CORTO_DEFINED) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
@@ -510,7 +504,8 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->header, "\n");
 
         /* Start of function */
-        g_fileWrite(data->header, "%s_EXPORT %s%s _%s", upperName, returnSpec, returnPostfix,
+        c_writeExport(data->g, data->header);
+        g_fileWrite(data->header, "%s%s _%s", returnSpec, returnPostfix,
             functionName);
 
         /* Write to sourcefile */
@@ -652,11 +647,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     corto_id path;
 
     /* Create file */
-    if ((o != topLevelObject) || strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-        c_filename(headerFileName, o, "h");
-    } else {
-        sprintf(headerFileName, "_%s.h", corto_nameof(o));
-    }
+    c_filename(headerFileName, o, "h");
 
     result = g_fileOpen(g, headerFileName);
     if (!result) {
@@ -679,39 +670,6 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
                 goto error;
             }
         }
-
-        /* Create __export.h file with default interface includes and macro's */
-        corto_id interfaceHeaderName;
-        sprintf(interfaceHeaderName, "%s__interface.h", g_getName(g));
-        g_file interfaceHeader = g_fileOpen(g, interfaceHeaderName);
-        if (!interfaceHeader) {
-            goto error;
-        } else {
-            corto_id upperName, path;
-            corto_path(upperName, root_o, g_getCurrent(g), "_");
-            corto_strupper(upperName);
-
-            corto_path(path, root_o, g_getCurrent(g), "/");
-
-            g_fileWrite(interfaceHeader, "/* %s\n", interfaceHeaderName);
-            g_fileWrite(interfaceHeader, " *\n");
-            g_fileWrite(interfaceHeader, " * This file contains generated code. Do not modify!\n");
-            g_fileWrite(interfaceHeader, " */\n\n");
-
-            c_includeFrom(result, g_getCurrent(g), "%s__type.h", g_getName(g));
-            c_includeFrom(result, g_getCurrent(g), "%s__api.h", g_getName(g));
-            c_includeFrom(result, g_getCurrent(g), "%s__meta.h", g_getName(g));
-
-            g_fileWrite(interfaceHeader, "#if BUILDING_%s && defined _MSC_VER\n", upperName);
-            g_fileWrite(interfaceHeader, "#define %s_DLL_EXPORTED __declspec(dllexport)\n", upperName);
-            g_fileWrite(interfaceHeader, "#elif BUILDING_%s\n", upperName);
-            g_fileWrite(interfaceHeader, "#define %s_EXPORT __attribute__((__visibility__(\"default\")))\n", upperName);
-            g_fileWrite(interfaceHeader, "#elif defined _MSC_VER\n");
-            g_fileWrite(interfaceHeader, "#define %s_EXPORT __declspec(dllimport)\n", upperName);
-            g_fileWrite(interfaceHeader, "#else\n");
-            g_fileWrite(interfaceHeader, "#define %s_EXPORT\n", upperName);
-            g_fileWrite(interfaceHeader, "#endif\n\n");
-        }
     }
 
     if (o != topLevelObject) {
@@ -728,18 +686,26 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n\n", path);
-    c_includeFrom(result, corto_o, "corto.h");
 
-    /* If the class extends from another class, include header of baseclass */
-    if (corto_class_instanceof(corto_interface_o, o) && corto_interface(o)->base) {
-       c_include(result, corto_interface(o)->base);
+    /* Include corto, if not generating corto */
+    if (o != corto_o) {
+        c_includeFrom(result, corto_o, "corto.h");
+    }
+    c_includeFrom(result, g_getCurrent(g), "_type.h");
+    c_includeFrom(result, g_getCurrent(g), "_api.h");
+    c_includeFrom(result, g_getCurrent(g), "_meta.h");
+
+    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+        g_fileWrite(result, "#include \"%s/_interface.h\"\n", g_getName(g));
+    } else {
+        c_includeFrom(result, g_getCurrent(g), "_interface.h");
     }
 
-    c_includeFrom(result, g_getCurrent(g), "%s__interface.h", g_getName(g));
+    g_fileWrite(result, "\n");
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
-    g_fileWrite(result, "#endif\n");
+    g_fileWrite(result, "#endif\n\n");
 
     return result;
 error:
@@ -762,7 +728,7 @@ static g_file c_interfaceWrapperFileOpen(corto_generator g) {
     corto_char fileName[512];
 
     corto_object o = g_getCurrent(g);
-    sprintf(fileName, "%s__wrapper.c", g_getName(g));
+    sprintf(fileName, "_wrapper.c");
 
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
         result = g_fileOpen(g, fileName);
@@ -782,7 +748,7 @@ static g_file c_interfaceWrapperFileOpen(corto_generator g) {
     g_fileWrite(result, " */\n\n");
 
     c_include(result, g_getCurrent(g));
-    c_includeFrom(result, g_getCurrent(g), "%s__meta.h", g_getName(g));
+    c_includeFrom(result, g_getCurrent(g), "_meta.h");
 
     return result;
 error:
@@ -894,7 +860,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
     }
 
     /* Close */
-    if (hasProcedures || isInterface || isTopLevelObject) {
+    if ((hasProcedures || isInterface) && !isTopLevelObject) {
         c_interfaceHeaderFileClose(data->header);
     }
 
@@ -1048,6 +1014,12 @@ int corto_genMain(corto_generator g) {
     }
 
     c_interfaceMarkUnusedFiles(&walkData);
+
+    /* Close main header */
+    if (walkData.mainHeader) {
+        c_interfaceHeaderFileClose(walkData.mainHeader);
+    }
+
 
     return 0;
 error:
