@@ -41,9 +41,9 @@ void c_writeExport(corto_generator g, g_file file);
 
 char* c_filename(char *fileName, corto_object o, char *ext);
 
-void c_includeFrom(g_file file, corto_object o, corto_string include, ...);
+void c_includeFrom(corto_generator g, g_file file, corto_object o, corto_string include, ...);
 
-void c_include(g_file file, corto_object o);
+void c_include(corto_generator g, g_file file, corto_object o);
 
 #ifdef __cplusplus
 }

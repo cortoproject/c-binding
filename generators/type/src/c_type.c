@@ -12,7 +12,7 @@ typedef struct c_typeWalk_t {
     corto_generator g;
     g_file header;
     corto_bool prefixComma; /* For printing members and constants */
-}c_typeWalk_t;
+} c_typeWalk_t;
 
 /* Enumeration constant */
 static corto_int16 c_typeConstant(corto_serializer s, corto_value* v, void* userData) {
@@ -552,12 +552,12 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
 
     /* Don't include this file when generating for the bootstrap */
     if (!bootstrap || strcmp(bootstrap, "true")) {
-        c_includeFrom(result, corto_o, "corto.h");
+        c_includeFrom(g, result, corto_o, "corto.h");
     } else {
         if (g_getCurrent(g) == corto_lang_o) {
-            c_includeFrom(result, corto_o, "def.h");
+            c_includeFrom(g, result, corto_o, "def.h");
         } else {
-            c_includeFrom(result, corto_lang_o, "_type.h");
+            c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
     }
 
@@ -566,7 +566,7 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
         importIter = corto_llIter(g->imports);
         while(corto_iterHasNext(&importIter)) {
             import = corto_iterNext(&importIter);
-            c_includeFrom(result, import, "_type.h");
+            c_includeFrom(g, result, import, "_type.h");
         }
         g_fileWrite(result, "\n");
     }

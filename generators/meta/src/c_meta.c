@@ -283,10 +283,10 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
 
     /* Declare objects in headerfile and define in sourcefile */
     if (!prefix) {
-        g_fileWrite(data->header, "extern %s %s%s;\n", specifier, c_loadVarId(data->g, o, objectId), postfix);
+        g_fileWrite(data->header, " extern %s %s%s;\n", specifier, c_loadVarId(data->g, o, objectId), postfix);
         g_fileWrite(data->source, "%s %s%s;\n", specifier, objectId, postfix);
     } else {
-        g_fileWrite(data->header, "extern %s ___ (*%s)%s;\n", specifier, c_loadVarId(data->g, o, objectId), postfix);
+        g_fileWrite(data->header, " extern %s ___ (*%s)%s;\n", specifier, c_loadVarId(data->g, o, objectId), postfix);
         g_fileWrite(data->source, "%s ___ (*%s)%s;\n", specifier, objectId, postfix);
     }
 
@@ -315,8 +315,8 @@ static g_file c_loadHeaderFileOpen(corto_generator g) {
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_META_H\n", path);
     g_fileWrite(result, "#define %s_META_H\n\n", path);
-    c_includeFrom(result, corto_o, "corto.h");
-    c_includeFrom(result, g_getCurrent(g), "_interface.h");
+    c_includeFrom(g, result, corto_o, "corto.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
     g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
@@ -352,7 +352,7 @@ static g_file c_loadSourceFileOpen(corto_generator g) {
     g_fileWrite(result, " * Loads objects in object store.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    c_include(result, g_getCurrent(g));
+    c_include(g, result, g_getCurrent(g));
 
     return result;
 }

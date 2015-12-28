@@ -255,7 +255,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
 
     g_fileWrite(data->header, "\n");
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, "%s _%s(",
+    g_fileWrite(data->header, " %s _%s(",
             returnTypeId,
             g_fullOid(data->g, o, id));
 
@@ -505,7 +505,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
 
         /* Start of function */
         c_writeExport(data->g, data->header);
-        g_fileWrite(data->header, "%s%s _%s", returnSpec, returnPostfix,
+        g_fileWrite(data->header, " %s%s _%s", returnSpec, returnPostfix,
             functionName);
 
         /* Write to sourcefile */
@@ -673,7 +673,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     }
 
     if (o != topLevelObject) {
-        c_include(data->mainHeader, o);
+        c_include(data->g, data->mainHeader, o);
     }
 
     /* Print standard comments and includes */
@@ -689,16 +689,16 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
 
     /* Include corto, if not generating corto */
     if (o != corto_o) {
-        c_includeFrom(result, corto_o, "corto.h");
+        c_includeFrom(g, result, corto_o, "corto.h");
     }
-    c_includeFrom(result, g_getCurrent(g), "_type.h");
-    c_includeFrom(result, g_getCurrent(g), "_api.h");
-    c_includeFrom(result, g_getCurrent(g), "_meta.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_type.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
 
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
         g_fileWrite(result, "#include \"%s/_interface.h\"\n", g_getName(g));
     } else {
-        c_includeFrom(result, g_getCurrent(g), "_interface.h");
+        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
     }
 
     g_fileWrite(result, "\n");
@@ -747,8 +747,8 @@ static g_file c_interfaceWrapperFileOpen(corto_generator g) {
         corto_fullpath(NULL, o));
     g_fileWrite(result, " */\n\n");
 
-    c_include(result, g_getCurrent(g));
-    c_includeFrom(result, g_getCurrent(g), "_meta.h");
+    c_include(g, result, g_getCurrent(g));
+    c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
 
     return result;
 error:
@@ -768,7 +768,7 @@ static g_file c_interfaceSourceFileOpen(corto_object o, c_typeWalk_t *data) {
     }
 
     /* Include main header */
-    c_include(result, g_getCurrent(data->g));
+    c_include(data->g, result, g_getCurrent(data->g));
 
     return result;
 error:
@@ -1008,7 +1008,7 @@ int corto_genMain(corto_generator g) {
                 corto_seterr("package '%s' not found", package);
                 goto error;
             }
-            c_include(walkData.mainHeader, o);
+            c_include(g, walkData.mainHeader, o);
         }
         corto_loadFreePackages(packages);
     }

@@ -21,10 +21,10 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_fileWrite(file, " */\n\n");
 
     if (g_getCurrent(g)) {
-        c_include(file, g_getCurrent(g));
+        c_include(g, file, g_getCurrent(g));
         g_fileWrite(file, "\n");
         c_writeExport(g, file);
-        g_fileWrite(file, "int cortomain(int argc, char* argv[]) {\n");
+        g_fileWrite(file, " int cortomain(int argc, char* argv[]) {\n");
         g_fileIndent(file);
         g_fileWrite(file, "int %s_load(void);\n", g_getName(g));
         g_fileWrite(file, "if (%s_load()) return -1;\n", g_getName(g));
@@ -34,12 +34,12 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
     } else {
-        c_includeFrom(file, corto_o, "corto.h");
+        c_includeFrom(g, file, corto_o, "corto.h");
         g_fileWrite(file, "#include \"%s.h\"\n", g_getName(g));
         g_fileWrite(file, "\n");
         if (isComponent) {
             c_writeExport(g, file);
-            g_fileWrite(file, "int cortomain(int argc, char* argv[]) {\n");
+            g_fileWrite(file, " int cortomain(int argc, char* argv[]) {\n");
         } else {
             g_fileWrite(file, "int main(int argc, char* argv[]) {\n");
             g_fileWrite(file, "corto_start();\n");
@@ -84,7 +84,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     g_fileWrite(file, "#ifndef %s_H\n", upperName);
     g_fileWrite(file, "#define %s_H\n\n", upperName);
 
-    c_includeFrom(file, corto_o, "corto.h");
+    c_includeFrom(g, file, corto_o, "corto.h");
     g_fileWrite(file, "#include \"_interface.h\"\n");
     g_fileWrite(file, "\n");
 
@@ -97,7 +97,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
                 corto_error("corto: package.txt contains unresolved package '%s'", str);
                 goto error;
             }
-            c_include(file, package);
+            c_include(g, file, package);
             corto_release(package);
         }
         corto_loadFreePackages(packages);
@@ -240,11 +240,17 @@ static corto_int16 c_genInterfaceHeader(corto_generator g) {
         g_fileWrite(interfaceHeader, "#if BUILDING_%s && defined _MSC_VER\n", upperFullName);
         g_fileWrite(interfaceHeader, "#define %s_DLL_EXPORTED __declspec(dllexport)\n", upperName);
         g_fileWrite(interfaceHeader, "#elif BUILDING_%s\n", upperFullName);
-        g_fileWrite(interfaceHeader, "#define %s_EXPORT __attribute__((__visibility__(\"default\")))\n", upperName);
+        g_fileWrite(interfaceHeader, "#define ");
+        c_writeExport(g, interfaceHeader);
+        g_fileWrite(interfaceHeader, " __attribute__((__visibility__(\"default\")))\n", upperName);
         g_fileWrite(interfaceHeader, "#elif defined _MSC_VER\n");
-        g_fileWrite(interfaceHeader, "#define %s_EXPORT __declspec(dllimport)\n", upperName);
+        g_fileWrite(interfaceHeader, "#define ");
+        c_writeExport(g, interfaceHeader);
+        g_fileWrite(interfaceHeader, " __declspec(dllimport)\n", upperName);
         g_fileWrite(interfaceHeader, "#else\n");
-        g_fileWrite(interfaceHeader, "#define %s_EXPORT\n", upperName);
+        g_fileWrite(interfaceHeader, "#define ");
+        c_writeExport(g, interfaceHeader);
+        g_fileWrite(interfaceHeader, "\n", upperName);
         g_fileWrite(interfaceHeader, "#endif\n\n");
     }
 

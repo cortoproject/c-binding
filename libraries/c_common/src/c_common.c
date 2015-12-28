@@ -471,9 +471,13 @@ corto_char* c_usingConstant(corto_generator g, corto_id id) {
 
 void c_writeExport(corto_generator g, g_file file) {
     corto_id upperName;
-    strcpy(upperName, g_getName(g));
+    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
+        strcpy(upperName, g_getName(g));
+    } else {
+        corto_path(upperName, root_o, g_getCurrent(g), "_");
+    }
     corto_strupper(upperName);
-    g_fileWrite(file, "%s_EXPORT ", upperName);
+    g_fileWrite(file, "%s_EXPORT", upperName);
 }
 
 static char* c_findPackage(corto_object o) {
@@ -501,6 +505,7 @@ char* c_filename(
 }
 
 void c_includeFrom(
+    corto_generator g,
     g_file file,
     corto_object o,
     corto_string include,
@@ -513,18 +518,26 @@ void c_includeFrom(
     vsprintf(filebuff, include, list);
     va_end(list);
 
-    g_fileWrite(file, "#include \"%s/%s\"\n",
-      corto_path(path, root_o, o, "/"),
-      filebuff);
+    if (strcmp(gen_getAttribute(g, "local"), "true") || (g_getCurrent(g) != o))
+    {
+        g_fileWrite(file, "#include \"%s/%s\"\n",
+          corto_path(path, root_o, o, "/"),
+          filebuff);
+    } else
+    {
+        g_fileWrite(file, "#include \"%s\"\n",
+          filebuff);
+    }
 }
 
-void c_include(g_file file, corto_object o) {
+void c_include(corto_generator g, g_file file, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(o);
 
     corto_assert (package != NULL, "can't include from non-package scopes");
 
     c_includeFrom(
+      g,
       file,
       package,
       c_filename(name, o, "h"));

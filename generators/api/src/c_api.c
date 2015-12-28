@@ -168,11 +168,11 @@ static g_file c_apiHeaderOpen(corto_generator g) {
     g_fileWrite(result, "#ifndef %s__API_H\n", path);
     g_fileWrite(result, "#define %s__API_H\n\n", path);
 
-    c_includeFrom(result, corto_o, "corto.h");
+    c_includeFrom(g, result, corto_o, "corto.h");
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
         g_fileWrite(result, "#include \"%s/_interface.h\"\n", g_getName(g));
     } else {
-        c_includeFrom(result, g_getCurrent(g), "_interface.h");
+        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
@@ -212,7 +212,7 @@ static g_file c_apiSourceOpen(corto_generator g) {
     g_fileWrite(result, " * API convenience functions for C-language.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    c_include(result, g_getCurrent(g));
+    c_include(g, result, g_getCurrent(g));
 
     return result;
 }

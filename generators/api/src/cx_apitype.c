@@ -218,7 +218,7 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, "%s%s _%s%s(", id, t->reference ? "" : "*", id, func);
+    g_fileWrite(data->header, " %s%s _%s%s(", id, t->reference ? "" : "*", id, func);
 
     /* Function implementation */
     g_fileWrite(data->source, "%s%s _%s%s(", id, t->reference ? "" : "*", id, func);
@@ -349,10 +349,10 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     c_writeExport(data->g, data->header);
 
     if (isUpdate && !doUpdate) {
-    	g_fileWrite(data->header, "void ");
+    	g_fileWrite(data->header, " void ");
     	g_fileWrite(data->source, "void ");
     } else {
-    	g_fileWrite(data->header, "corto_int16 ");
+    	g_fileWrite(data->header, " corto_int16 ");
     	g_fileWrite(data->source, "corto_int16 ");
     }
 
@@ -470,7 +470,7 @@ corto_int16 c_apiTypeStr(corto_type t, c_apiWalk_t *data) {
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, "corto_string _%sStr(%s%s value);\n", id, id, pointer ? "*" : "");
+    g_fileWrite(data->header, " corto_string _%sStr(%s%s value);\n", id, id, pointer ? "*" : "");
 
     /* Function implementation */
     g_fileWrite(data->source, "corto_string _%sStr(%s%s value) {\n", id, id, pointer ? "*" : "");
@@ -506,7 +506,7 @@ static corto_int16 c_apiTypeInitIntern(corto_type t, c_apiWalk_t *data, corto_st
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, "corto_int16 _%s%s(%s%s value);\n", id, func, id, t->reference ? "" : "*");
+    g_fileWrite(data->header, " corto_int16 _%s%s(%s%s value);\n", id, func, id, t->reference ? "" : "*");
 
     /* Function implementation */
     g_fileWrite(data->source, "corto_int16 _%s%s(%s%s value) {\n", id, func, id, t->reference ? "" : "*");
@@ -556,7 +556,7 @@ corto_int16 c_apiTypeFromStr(corto_type t, c_apiWalk_t *data) {
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, "%s%s %sFromStr(%s%s value, corto_string str);\n",
+    g_fileWrite(data->header, " %s%s %sFromStr(%s%s value, corto_string str);\n",
     	id, t->reference ? "" : "*", id, id, t->reference ? "" : "*");
 
     /* Function implementation */
@@ -580,7 +580,7 @@ corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string fu
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, "corto_int16 _%s%s(%s%s %sdst, %s%s src);\n",
+    g_fileWrite(data->header, " corto_int16 _%s%s(%s%s %sdst, %s%s src);\n",
     	id, func, id, t->reference ? "" : "*", outParam ? "*" : "", id, t->reference ? "" : "*");
 
     /* Function implementation */
