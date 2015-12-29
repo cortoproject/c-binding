@@ -156,7 +156,7 @@ static int c_projectCleanInclude(corto_object o, void *userData) {
         corto_id id;
         g_fileWrite(
           data->file, "CLOBBER.include(\"include/%s\")\n",
-          c_filename(id, o, "h"));
+          c_filename(data->g, id, o, "h"));
     }
 
     return 1;

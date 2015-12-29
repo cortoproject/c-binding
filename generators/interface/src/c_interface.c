@@ -294,7 +294,10 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
     g_fileDedent(data->wrapper);
     g_fileWrite(data->wrapper, "}\n");
-    g_fileWrite(data->wrapper, "corto_assert(_methodId, \"virtual method '%s' not found in interface '%%s'\", corto_nameof(_abstract));\n\n", nameString);
+    g_fileWrite(
+      data->wrapper,
+      "corto_assert(_methodId, \"virtual '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr()?\": \":\"\", corto_lasterr());\n\n",
+      nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
     g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(this), _methodId);\n\n", nameString);
@@ -647,7 +650,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     corto_id path;
 
     /* Create file */
-    c_filename(headerFileName, o, "h");
+    c_filename(g, headerFileName, o, "h");
 
     result = g_fileOpen(g, headerFileName);
     if (!result) {
@@ -660,7 +663,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
             data->mainHeader = result;
         } else {
             if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-                c_filename(headerFileName, o, "h");
+                c_filename(g, headerFileName, o, "h");
             } else {
                 sprintf(headerFileName, "_%s.h", corto_nameof(o));
             }
@@ -760,7 +763,7 @@ static g_file c_interfaceSourceFileOpen(corto_object o, c_typeWalk_t *data) {
     g_file result;
     corto_id fileName;
 
-    c_filename(fileName, o, "c");
+    c_filename(data->g, fileName, o, "c");
 
     result = c_interfaceOpenFile(fileName, data);
     if (!result) {

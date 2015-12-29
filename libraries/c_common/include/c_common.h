@@ -39,7 +39,7 @@ corto_char* c_usingConstant(corto_generator g, corto_id id);
 
 void c_writeExport(corto_generator g, g_file file);
 
-char* c_filename(char *fileName, corto_object o, char *ext);
+char* c_filename(corto_generator g, char *fileName, corto_object o, char *ext);
 
 void c_includeFrom(corto_generator g, g_file file, corto_object o, corto_string include, ...);
 

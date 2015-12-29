@@ -480,25 +480,40 @@ void c_writeExport(corto_generator g, g_file file) {
     g_fileWrite(file, "%s_EXPORT", upperName);
 }
 
-static char* c_findPackage(corto_object o) {
+static char* c_findPackage(corto_generator g, corto_object o) {
     corto_object package = o;
+    corto_object ptr;
+
     while (package && !corto_instanceof(corto_package_o, package)) {
         package = corto_parentof(package);
     }
+
+    /* If package is in scope of current package, use current package */
+    ptr = package;
+    while (ptr && (ptr != g_getCurrent(g))) {
+        ptr = corto_parentof(ptr);
+        if (ptr == g_getCurrent(g)) {
+            package = ptr;
+        }
+    }
+
     return package;
 }
 
 char* c_filename(
+    corto_generator g,
     char *fileName,
     corto_object o,
     char *ext)
 {
-    if (corto_instanceof(corto_package_o, corto_parentof(o))) {
-        sprintf(fileName, "%s.%s", corto_nameof(o), ext);
-    } else {
-        corto_id path;
-        corto_path(path, c_findPackage(o), o, "_");
+    corto_id path;
+    corto_object package = c_findPackage(g, o);
+
+    if (o != package) {
+        corto_path(path, package, o, "_");
         sprintf(fileName, "%s.%s", path, ext);
+    } else {
+        sprintf(fileName, "%s.%s", corto_nameof(package), ext);
     }
 
     return fileName;
@@ -532,7 +547,7 @@ void c_includeFrom(
 
 void c_include(corto_generator g, g_file file, corto_object o) {
     corto_id name;
-    corto_object package = c_findPackage(o);
+    corto_object package = c_findPackage(g, o);
 
     corto_assert (package != NULL, "can't include from non-package scopes");
 
@@ -540,5 +555,5 @@ void c_include(corto_generator g, g_file file, corto_object o) {
       g,
       file,
       package,
-      c_filename(name, o, "h"));
+      c_filename(g, name, o, "h"));
 }
