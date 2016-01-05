@@ -79,7 +79,13 @@ error:
 static corto_char* c_loadVarId(corto_generator g, corto_object o, corto_char* out) {
     if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         if (o != root_o) {
-            g_fullOid(g, o, out);
+            /* Using fully scoped name for package variables allows using
+             * packages with the same name */
+            if (corto_instanceof(corto_package_o, o)) {
+                corto_path(out, root_o, o, "_");
+            } else {
+                g_fullOid(g, o, out);
+            }
             strcat(out, "_o");
         } else {
             strcpy(out, "root_o");
@@ -277,9 +283,7 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
         goto error;
     }
 
-    if (o != g_getCurrent(data->g)) {
-        c_writeExport(data->g, data->header);
-    }
+    c_writeExport(data->g, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
     if (!prefix) {

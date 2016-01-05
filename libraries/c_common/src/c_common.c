@@ -489,11 +489,13 @@ static char* c_findPackage(corto_generator g, corto_object o) {
     }
 
     /* If package is in scope of current package, use current package */
-    ptr = package;
-    while (ptr && (ptr != g_getCurrent(g))) {
-        ptr = corto_parentof(ptr);
-        if (ptr == g_getCurrent(g)) {
-            package = ptr;
+    if (g_getCurrent(g)) {
+        ptr = package;
+        while (ptr && (ptr != g_getCurrent(g))) {
+            ptr = corto_parentof(ptr);
+            if (ptr == g_getCurrent(g)) {
+                package = ptr;
+            }
         }
     }
 
@@ -549,7 +551,8 @@ void c_include(corto_generator g, g_file file, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(g, o);
 
-    corto_assert (package != NULL, "can't include from non-package scopes");
+    corto_assert (package != NULL, "can't include '%s' from non-package scopes",
+        corto_fullpath(NULL, o));
 
     c_includeFrom(
       g,

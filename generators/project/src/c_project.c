@@ -2,6 +2,19 @@
 #include "corto/corto.h"
 #include "c_common.h"
 
+/* Load dependencies */
+static void c_projectLoadPackages(g_file file) {
+    corto_ll packages;
+
+    if ((packages = corto_loadGetPackages())) {
+        corto_iter iter = corto_llIter(packages);
+        while (corto_iterHasNext(&iter)) {
+            corto_string str = corto_iterNext(&iter);
+            g_fileWrite(file, "if (corto_load(\"%s\", 0, NULL)) return -1;\n", str);
+        }
+    }
+}
+
 /* Generate file containing component loader */
 static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     corto_id filename;
@@ -26,6 +39,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         c_writeExport(g, file);
         g_fileWrite(file, " int cortomain(int argc, char* argv[]) {\n");
         g_fileIndent(file);
+        c_projectLoadPackages(file);
         g_fileWrite(file, "int %s_load(void);\n", g_getName(g));
         g_fileWrite(file, "if (%s_load()) return -1;\n", g_getName(g));
         g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
@@ -45,6 +59,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
             g_fileWrite(file, "corto_start();\n");
         }
         g_fileIndent(file);
+        c_projectLoadPackages(file);
         g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
         g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getName(g));
         if (!isComponent) {
