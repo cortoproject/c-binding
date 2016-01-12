@@ -98,7 +98,7 @@ static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void*
 
     g_fileDedent(data->header);
     g_fileWrite(data->header, "\n");
-    g_fileWrite(data->header, "} %s;\n\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "} %s;\n", g_fullOid(data->g, t, id));
 
     return 0;
 error:
@@ -124,7 +124,6 @@ static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, vo
         goto error;
     }
     g_fileDedent(data->header);
-    g_fileWrite(data->header, "\n");
 
     return 0;
 error:
@@ -148,7 +147,6 @@ static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData
     } else {
         g_fileWrite(data->header, "typedef void %s;\n", g_fullOid(data->g, t, id));
     }
-    g_fileWrite(data->header, "\n");
 
     return 0;
 }
@@ -165,7 +163,7 @@ static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData)
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-    g_fileWrite(data->header, "CORTO_ANY(%s);\n\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "CORTO_ANY(%s);\n", g_fullOid(data->g, t, id));
 
     return 0;
 }
@@ -204,7 +202,7 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
         /* Write typedef */
         if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
             g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-            g_fileWrite(data->header, "typedef %s %s;\n\n", buff, g_fullOid(data->g, t, id));
+            g_fileWrite(data->header, "typedef %s %s;\n", buff, g_fullOid(data->g, t, id));
         }
         break;
     }
@@ -240,8 +238,7 @@ static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userDa
     g_fileDedent(data->header);
 
     /* Close struct */
-    g_fileWrite(data->header, "};\n\n");
-
+    g_fileWrite(data->header, "};\n");
 
     return 0;
 error:
@@ -282,7 +279,7 @@ static corto_int16 c_typeClass(corto_serializer s, corto_value* v, void* userDat
     g_fileDedent(data->header);
 
     /* Close class */
-    g_fileWrite(data->header, "};\n\n");
+    g_fileWrite(data->header, "};\n");
 
     return 0;
 error:
@@ -332,7 +329,7 @@ static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userDat
     t = corto_valueType(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
-    g_fileWrite(data->header, "typedef %s %s[%d];\n\n",
+    g_fileWrite(data->header, "typedef %s %s[%d];\n",
             id3,
             id,
             corto_collection(t)->max);
@@ -366,7 +363,6 @@ static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* user
                 id3);
         g_fileWrite(data->header, "#endif\n");
     }
-    g_fileWrite(data->header, "\n");
 
     return 0;
 }
@@ -383,7 +379,7 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
     data = userData;
     t = corto_valueType(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "CORTO_LIST(%s);\n\n",
+    g_fileWrite(data->header, "CORTO_LIST(%s);\n",
             id);
 
     return 0;
@@ -432,7 +428,7 @@ static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* user
     data = userData;
     t = corto_valueType(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "CORTO_ITERATOR(%s);\n\n",
+    g_fileWrite(data->header, "CORTO_ITERATOR(%s);\n",
             id);
 
     return 0;
@@ -476,6 +472,8 @@ static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userDa
         break;
     }
 
+    g_fileWrite(data->header, "\n");
+
     return result;
 error:
     return -1;
@@ -508,13 +506,13 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
 
     if (corto_class_instanceof(corto_type_o, o)) {
         if ((corto_type(o)->kind != CORTO_VOID) && (corto_type(o)->kind != CORTO_ANY)) {
-            corto_string fullOid = g_fullOid(data->g, o, id);
+            corto_string oid = g_fullOid(data->g, o, id);
             if (corto_type(o)->reference) {
                 g_fileWrite(data->header, "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
-                    fullOid, fullOid, fullOid);
+                    oid, oid, oid);
             } else {
                 g_fileWrite(data->header, "#define %s(o) ((%s *)corto_assertType((corto_type)%s_o, o))\n",
-                    fullOid, fullOid, fullOid);
+                    oid, oid, oid);
             }
         }
     }
@@ -530,6 +528,22 @@ static g_file c_typeHeaderFileOpen(corto_generator g) {
     corto_object import;
     corto_string headerSnippet;
     corto_string bootstrap = gen_getAttribute(g, "bootstrap");
+
+    /* Get & write prefix */
+    g_object *go = g_findObjectInclusive(g, g_getCurrent(g), NULL);
+    corto_assert(go != NULL, "scope currently generated for should be found");
+
+    if (go->prefix) {
+        /* Create prefix file */
+        g_file prefixFile = g_fileOpen(g, "include/.prefix");
+        if (prefixFile) {
+            g_fileWrite(prefixFile, go->prefix);
+            g_fileClose(prefixFile);
+        } else {
+            corto_seterr("failed to create include/.prefix");
+            goto error;
+        }
+    }
 
     /* Create file */
     sprintf(headerFileName, "_type.h");
