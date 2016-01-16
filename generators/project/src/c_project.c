@@ -167,7 +167,9 @@ typedef struct c_projectCleanInclude_t {
 static int c_projectCleanInclude(corto_object o, void *userData) {
     c_projectCleanInclude_t *data = userData;
 
-    if (corto_instanceof(corto_type(corto_interface_o), o) || corto_instanceof(corto_type(corto_package_o), o)) {
+    if ((o != g_getCurrent(data->g)) &&
+        (corto_instanceof(corto_type(corto_interface_o), o) ||
+        corto_instanceof(corto_type(corto_package_o), o))) {
         corto_id id;
         g_fileWrite(
           data->file, "CLOBBER.include(\"include/%s\")\n",
