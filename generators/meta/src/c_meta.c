@@ -821,7 +821,7 @@ static int c_loadDefine(corto_object o, void* userData) {
 
         /* Do size validation - this makes porting to other platforms easier */
         if (corto_instanceof(corto_type(corto_type_o), o)) {
-            if (corto_type(o)->reference) {
+            if (corto_type(o)->reference && (corto_type(o)->kind != CORTO_VOID)) {
                 g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
                     varId,
                     typeId);

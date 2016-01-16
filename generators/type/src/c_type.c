@@ -506,7 +506,12 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
 
     if (corto_class_instanceof(corto_type_o, o)) {
         if ((corto_type(o)->kind != CORTO_VOID) && (corto_type(o)->kind != CORTO_ANY)) {
-            corto_string oid = g_fullOid(data->g, o, id);
+            corto_id postfix;
+            if (c_specifierId(data->g, o, id, NULL, postfix)) {
+                goto error;
+            }
+            corto_string oid = id;
+
             if (corto_type(o)->reference) {
                 g_fileWrite(data->header, "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
                     oid, oid, oid);
@@ -518,6 +523,8 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
     }
 
     return 1;
+error:
+    return -1;
 }
 
 /* Open headerfile, write standard header. */
@@ -661,6 +668,9 @@ static int c_typeDefine(corto_object o, void* userData) {
 
     /* Do metawalk on type */
     result = corto_metaWalk(&s, corto_type(o), userData);
+
+    /* TODO: Print cast macro */
+    /* c_typeClassCastWalk(o, userData); */
 
     return result;
 }
