@@ -272,6 +272,18 @@ static corto_char c_lastLetter(corto_string str) {
     return ptr >= str ? ch : '\0';
 }
 
+corto_bool c_typeHasCaps(corto_string str) {
+    char *ptr = str, ch;
+
+    for (;(ch = *ptr); ptr ++) {
+        if (isupper(ch)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 /* Translate constant to C-language id */
 corto_char* c_constantId(corto_generator g, corto_constant* c, corto_char* buffer) {
     corto_string prefixOrig;
@@ -287,14 +299,17 @@ corto_char* c_constantId(corto_generator g, corto_constant* c, corto_char* buffe
 
     strcpy(prefix, prefixOrig);
 
-    /* Find last letter */
-    ch = c_lastLetter(name);
+    /* If the prefix contains capitals, leave names unaltered */
+    if (!c_typeHasCaps(prefix)) {
+        /* Find last letter */
+        ch = c_lastLetter(name);
 
-    if (isupper(name[0])) {
-        if (isupper(ch)) { /* All caps */
-            c_typeToUpper(prefixOrig, prefix);
-        } else { /* Initial caps */
-            prefix[0] = toupper(prefix[0]);
+        if (isupper(name[0])) {
+            if (isupper(ch)) { /* All caps */
+                c_typeToUpper(prefixOrig, prefix);
+            } else { /* Initial caps */
+                prefix[0] = toupper(prefix[0]);
+            }
         }
     }
 

@@ -81,6 +81,9 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     g_file file;
     corto_ll packages, components;
     corto_id upperName;
+    corto_bool error = FALSE;
+    corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
+
     strcpy(upperName, g_getName(g));
     corto_strupper(upperName);
 
@@ -100,7 +103,11 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     g_fileWrite(file, "#define %s_H\n\n", upperName);
 
     c_includeFrom(g, file, corto_o, "corto.h");
-    g_fileWrite(file, "#include \"_interface.h\"\n");
+    if (g_getCurrent(g)) {
+        g_fileWrite(file, "#include \"_interface.h\"\n");
+    } else if (isComponent) {
+        g_fileWrite(file, "#include \"%s/_interface.h\"\n", g_getName(g));
+    }
     g_fileWrite(file, "\n");
 
     if ((packages = corto_loadGetPackages())) {
@@ -109,11 +116,15 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
             corto_string str = corto_iterNext(&iter);
             corto_object package = corto_resolve(NULL, str);
             if (!package) {
-                corto_error("corto: package.txt contains unresolved package '%s'", str);
-                goto error;
+                corto_seterr("corto: package.txt contains unresolved package '%s'", str);
+
+                /* Don't break out of generation here, as this will mess up the
+                 * file's code snippet */
+                error = TRUE;
+            } else {
+                c_include(g, file, package);
+                corto_release(package);
             }
-            c_include(g, file, package);
-            corto_release(package);
         }
         corto_loadFreePackages(packages);
     }
@@ -154,7 +165,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
 
     g_fileClose(file);
 
-    return 0;
+    return error ? -1 : 0;
 error:
     return -1;
 }
@@ -231,7 +242,13 @@ static corto_int16 c_projectGeneratePackageFile(corto_generator g) {
 /* Generate interface header with macro's for exporting */
 static corto_int16 c_genInterfaceHeader(corto_generator g) {
     corto_id interfaceHeaderName;
-    sprintf(interfaceHeaderName, "_interface.h");
+
+    if (g_getCurrent(g)) {
+        sprintf(interfaceHeaderName, "_interface.h");
+    } else {
+        sprintf(interfaceHeaderName, "%s/_interface.h", g_getName(g));
+    }
+
     g_file interfaceHeader = g_fileOpen(g, interfaceHeaderName);
 
     if (!interfaceHeader) {
@@ -278,6 +295,7 @@ error:
 
 /* Generator main */
 corto_int16 corto_genMain(corto_generator g) {
+    corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
 
     /* Create source and include directories */
     corto_mkdir("include");
@@ -288,8 +306,10 @@ corto_int16 corto_genMain(corto_generator g) {
         goto error;
     }
 
-    if (c_genInterfaceHeader(g)) {
-        goto error;
+    if (g->objects || isComponent) {
+        if (c_genInterfaceHeader(g)) {
+            goto error;
+        }
     }
 
     if (g->objects) {

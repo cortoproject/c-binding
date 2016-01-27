@@ -25,6 +25,62 @@ static void c_apiCastMacroFreeArgs(corto_ll args) {
     corto_llFree(args);
 }
 
+static corto_int16 c_apiCastAuto(corto_string id, corto_bool scoped, corto_bool ref, corto_string func, c_apiWalk_t *data) {
+    corto_uint32 count = 0;
+
+    g_fileWrite(
+        data->header,
+        "#define %s%s_auto(",
+        id,
+        func);
+
+    if (!scoped) {
+        g_fileWrite(data->header, "_name");
+        count = 1;
+    }
+
+    corto_iter iter = corto_llIter(data->args);
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        if (count) {
+            g_fileWrite(data->header, ", ");
+        }
+        g_fileWrite(data->header, "%s", arg->name);
+        count++;
+    }
+
+    g_fileWrite(
+        data->header,
+        ") %s%s _name##_o = %s%s(%s",
+        id,
+        ref ? "" : "*",
+        id,
+        func,
+        scoped ? "_parent, #_name" : "");
+
+    iter = corto_llIter(data->args);
+    count = 0;
+
+    if (scoped) {
+        corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _parent */
+        corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _name */
+        count = 2;
+    }
+
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        if (count) {
+            g_fileWrite(data->header, ", ");
+        }
+        g_fileWrite(data->header, "%s", arg->name);
+        count++;
+    }
+
+    g_fileWrite(data->header, "); (void)_name##_o\n");
+
+    return 0;
+}
+
 static corto_int16 c_apiCastMacro(corto_string id, corto_string name, c_apiWalk_t *data) {
     corto_uint32 count = 0;
 
@@ -225,18 +281,18 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
 
     if (scoped) {
         g_fileWrite(data->header, "corto_object _parent, corto_string _name");
-    	g_fileWrite(data->source, "corto_object _parent, corto_string _name");
+        g_fileWrite(data->source, "corto_object _parent, corto_string _name");
         c_apiCastMacroAddArg(args, "_parent", corto_object_o);
         c_apiCastMacroAddArg(args, "_name", corto_type(corto_string_o));
-    	data->parameterCount = 2;
+        data->parameterCount = 2;
     }
 
     /* Write public members as arguments for source and header */
     if (define) {
-	    if (t->kind == CORTO_COMPOSITE) {
-		    s = c_apiParamSerializer();
-		    corto_metaWalk(&s, corto_type(t), data);
-		}
+        if (t->kind == CORTO_COMPOSITE) {
+            s = c_apiParamSerializer();
+            corto_metaWalk(&s, corto_type(t), data);
+        }
 
         if ((t->kind != CORTO_COMPOSITE) && (t->kind != CORTO_COLLECTION) && (t->kind != CORTO_VOID)) {
             if (data->parameterCount) {
@@ -259,7 +315,7 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
             c_apiCastMacroAddArg(args, "_impl", NULL);
             data->parameterCount++;
         }
-	}
+    }
 
     /* If there are no parameters, write 'void' */
     if (!data->parameterCount) {
@@ -272,6 +328,7 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
 
     /* Write casting macro */
     c_apiCastMacro(id, func, data);
+    c_apiCastAuto(id, scoped, t->reference, func, data);
     c_apiCastMacroFreeArgs(data->args);
     data->args = NULL;
 
@@ -280,10 +337,10 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "%s%s this;\n", id, t->reference ? "" : "*");
     if (scoped) {
-		g_fileWrite(data->source, "this = corto_declareChild(_parent, _name, %s_o);\n", id);
+        g_fileWrite(data->source, "this = corto_declareChild(_parent, _name, %s_o);\n", id);
     } else {
-	    g_fileWrite(data->source, "this = corto_declare(%s_o);\n", id);
-	}
+        g_fileWrite(data->source, "this = corto_declare(%s_o);\n", id);
+    }
 
     g_fileWrite(data->source, "if (!this) {\n");
     g_fileIndent(data->source);
@@ -292,12 +349,12 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
     g_fileWrite(data->source, "}\n");
 
     if (define) {
-	    /* Assignments */
+      /* Assignments */
         if ((t->kind != CORTO_COMPOSITE) && (t->kind != CORTO_COLLECTION) && (t->kind != CORTO_VOID)) {
             g_fileWrite(data->source, "*this = value;\n");
         } else {
-    	    s = c_apiAssignSerializer();
-    	    corto_metaWalk(&s, corto_type(t), data);
+            s = c_apiAssignSerializer();
+            corto_metaWalk(&s, corto_type(t), data);
 
             if (corto_instanceof(corto_procedure_o, t)) {
                 g_fileWrite(data->source, "corto_function(this)->impl = (corto_word)_impl;\n");
@@ -312,7 +369,7 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
             g_fileDedent(data->source);
             g_fileWrite(data->source, "}\n");
         }
-	}
+    }
 
     g_fileWrite(data->source, "return this;\n");
     g_fileDedent(data->source);
@@ -322,19 +379,19 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
 }
 
 corto_int16 c_apiTypeCreate(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeCreateIntern(t, data, "Create", FALSE, TRUE);
+    return c_apiTypeCreateIntern(t, data, "Create", FALSE, TRUE);
 }
 
 corto_int16 c_apiTypeCreateChild(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeCreateIntern(t, data, "CreateChild", TRUE, TRUE);
+    return c_apiTypeCreateIntern(t, data, "CreateChild", TRUE, TRUE);
 }
 
 corto_int16 c_apiTypeDeclare(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeCreateIntern(t, data, "Declare", FALSE, FALSE);
+    return c_apiTypeCreateIntern(t, data, "Declare", FALSE, FALSE);
 }
 
 corto_int16 c_apiTypeDeclareChild(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeCreateIntern(t, data, "DeclareChild", TRUE, FALSE);
+    return c_apiTypeCreateIntern(t, data, "DeclareChild", TRUE, FALSE);
 }
 
 corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool isUpdate, corto_bool doUpdate) {
@@ -349,11 +406,11 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     c_writeExport(data->g, data->header);
 
     if (isUpdate && !doUpdate) {
-    	g_fileWrite(data->header, " void ");
-    	g_fileWrite(data->source, "void ");
+      g_fileWrite(data->header, " void ");
+      g_fileWrite(data->source, "void ");
     } else {
-    	g_fileWrite(data->header, " corto_int16 ");
-    	g_fileWrite(data->source, "corto_int16 ");
+      g_fileWrite(data->header, " corto_int16 ");
+      g_fileWrite(data->source, "corto_int16 ");
     }
 
     /* Function declaration */
@@ -366,9 +423,9 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
 
     /* Write public members as arguments for source and header */
     if (t->kind == CORTO_COMPOSITE) {
-	    s = c_apiParamSerializer();
-	    corto_metaWalk(&s, corto_type(t), data);
-	}
+      s = c_apiParamSerializer();
+      corto_metaWalk(&s, corto_type(t), data);
+  }
 
     if ((data->parameterCount == 1) &&
         (t->kind != CORTO_COMPOSITE) &&
@@ -400,7 +457,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     data->args = NULL;
 
     if (isUpdate && doUpdate && (t->kind != CORTO_VOID)) {
-    	g_fileWrite(data->source, "if (!corto_updateBegin(this)) {\n");
+      g_fileWrite(data->source, "if (!corto_updateBegin(this)) {\n");
         g_fileIndent(data->source);
     }
 
@@ -440,8 +497,8 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         if (corto_instanceof(corto_procedure_o, t)) {
             g_fileWrite(data->source, "corto_function(this)->impl = (corto_word)_impl;\n");
         }
-	    g_fileWrite(data->source, "return corto_define(this);\n");
-	}
+      g_fileWrite(data->source, "return corto_define(this);\n");
+  }
 
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");
@@ -450,11 +507,11 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
 }
 
 corto_int16 c_apiTypeDefine(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeDefineIntern(t, data, FALSE, FALSE);
+  return c_apiTypeDefineIntern(t, data, FALSE, FALSE);
 }
 
 corto_int16 c_apiTypeUpdate(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeDefineIntern(t, data, TRUE, TRUE);
+  return c_apiTypeDefineIntern(t, data, TRUE, TRUE);
 }
 
 corto_int16 c_apiTypeSet(corto_type t, c_apiWalk_t *data) {
@@ -542,11 +599,11 @@ static corto_int16 c_apiTypeInitIntern(corto_type t, c_apiWalk_t *data, corto_st
 }
 
 corto_int16 c_apiTypeInit(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeInitIntern(t, data, "Init");
+  return c_apiTypeInitIntern(t, data, "Init");
 }
 
 corto_int16 c_apiTypeDeinit(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeInitIntern(t, data, "Deinit");
+  return c_apiTypeInitIntern(t, data, "Deinit");
 }
 
 corto_int16 c_apiTypeFromStr(corto_type t, c_apiWalk_t *data) {
@@ -557,11 +614,11 @@ corto_int16 c_apiTypeFromStr(corto_type t, c_apiWalk_t *data) {
     /* Function declaration */
     c_writeExport(data->g, data->header);
     g_fileWrite(data->header, " %s%s %sFromStr(%s%s value, corto_string str);\n",
-    	id, t->reference ? "" : "*", id, id, t->reference ? "" : "*");
+      id, t->reference ? "" : "*", id, id, t->reference ? "" : "*");
 
     /* Function implementation */
     g_fileWrite(data->source, "%s%s %sFromStr(%s%s value, corto_string str) {\n",
-    	id, t->reference ? "" : "*", id, id, t->reference ? "" : "*");
+      id, t->reference ? "" : "*", id, id, t->reference ? "" : "*");
 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_fromStrp(&value, corto_type(%s_o), str);\n", id);
@@ -581,11 +638,11 @@ corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string fu
     /* Function declaration */
     c_writeExport(data->g, data->header);
     g_fileWrite(data->header, " corto_int16 _%s%s(%s%s %sdst, %s%s src);\n",
-    	id, func, id, t->reference ? "" : "*", outParam ? "*" : "", id, t->reference ? "" : "*");
+      id, func, id, t->reference ? "" : "*", outParam ? "*" : "", id, t->reference ? "" : "*");
 
     /* Function implementation */
     g_fileWrite(data->source, "corto_int16 _%s%s(%s%s %sdst, %s%s src) {\n",
-    	id, func, id, t->reference ? "" : "*", outParam ? "*" : "", id, t->reference ? "" : "*");
+      id, func, id, t->reference ? "" : "*", outParam ? "*" : "", id, t->reference ? "" : "*");
 
     if (outParam) {
         c_apiCastMacroAddArg(data->args, "dst", NULL);
@@ -602,27 +659,27 @@ corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string fu
     strcpy(funcLower, func);
     *funcLower = tolower(*funcLower);
 
-	if (t->reference) {
-		g_fileWrite(data->source, "return corto_%s(%sdst, src);\n", funcLower, outParam ? "(corto_object*)" : "");
-	} else {
-		g_fileWrite(data->source, "corto_value v1, v2;\n", id);
-	    g_fileWrite(data->source, "corto_valueValueInit(&v1, NULL, corto_type(%s_o), dst);\n", id);
-	    g_fileWrite(data->source, "corto_valueValueInit(&v2, NULL, corto_type(%s_o), src);\n", id);
-	    g_fileWrite(data->source, "return corto_%sv(&v1, &v2);\n", funcLower);
-	}
+  if (t->reference) {
+      g_fileWrite(data->source, "return corto_%s(%sdst, src);\n", funcLower, outParam ? "(corto_object*)" : "");
+  } else {
+      g_fileWrite(data->source, "corto_value v1, v2;\n", id);
+      g_fileWrite(data->source, "corto_valueValueInit(&v1, NULL, corto_type(%s_o), dst);\n", id);
+      g_fileWrite(data->source, "corto_valueValueInit(&v2, NULL, corto_type(%s_o), src);\n", id);
+      g_fileWrite(data->source, "return corto_%sv(&v1, &v2);\n", funcLower);
+  }
 
-	g_fileDedent(data->source);
-	g_fileWrite(data->source, "}\n\n");
+  g_fileDedent(data->source);
+  g_fileWrite(data->source, "}\n\n");
 
-	return 0;
+  return 0;
 }
 
 corto_int16 c_apiTypeCopy(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeCopyIntern(t, data, "Copy", TRUE);
+    return c_apiTypeCopyIntern(t, data, "Copy", TRUE);
 }
 
 corto_int16 c_apiTypeCompare(corto_type t, c_apiWalk_t *data) {
-	return c_apiTypeCopyIntern(t, data, "Compare", FALSE);
+    return c_apiTypeCopyIntern(t, data, "Compare", FALSE);
 }
 
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
