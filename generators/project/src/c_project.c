@@ -114,16 +114,18 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
         corto_iter iter = corto_llIter(packages);
         while (corto_iterHasNext(&iter)) {
             corto_string str = corto_iterNext(&iter);
-            corto_object package = corto_resolve(NULL, str);
+            corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
             if (!package) {
-                corto_seterr("corto: package.txt contains unresolved package '%s'", str);
+                corto_seterr("package.txt contains unresolved package '%s'", str);
 
                 /* Don't break out of generation here, as this will mess up the
                  * file's code snippet */
                 error = TRUE;
             } else {
-                c_include(g, file, package);
-                corto_release(package);
+                corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
+                g_fileWrite(file, "#include \"%s/%s.h\"\n", package, name);
+                corto_dealloc(name);
+                corto_dealloc(package);
             }
         }
         corto_loadFreePackages(packages);

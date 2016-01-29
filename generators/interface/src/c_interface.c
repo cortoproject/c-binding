@@ -116,7 +116,7 @@ static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isRefere
 /* Walk parameters of function */
 static int c_interfaceParamWalk(corto_object f, int(*action)(corto_parameter*, void*), void *userData) {
     corto_uint32 i;
-    corto_parameterseq *params;
+    corto_parameterseq *params = NULL;
 
     if (corto_instanceof(corto_function_o, f)) {
         params = &corto_function(f)->parameters;
@@ -428,10 +428,10 @@ static void c_interfaceClassFptrDeclaration(
 /* Generate a wrapper for a procedure */
 static int c_interfaceClassProcedureWrapper(corto_object o, c_typeWalk_t *data) {
     corto_id id, actualFunction;
-    corto_type returnType;
+    corto_type returnType = NULL;
     corto_id returnSpec, returnPostfix;
-    corto_parameterseq *params;
-    corto_bool isDelegate;
+    corto_parameterseq *params = NULL;
+    corto_bool isDelegate = FALSE;
 
     /* Write wrapper signature */
     g_fileWrite(data->wrapper, "\n");
@@ -1075,13 +1075,18 @@ int corto_genMain(corto_generator g) {
     if (packages) {
         corto_iter iter = corto_llIter(packages);
         while (corto_iterHasNext(&iter)) {
-            corto_string package = corto_iterNext(&iter);
-            corto_object o = corto_resolve(NULL, package);
-            if (!o) {
-                corto_seterr("package '%s' not found", package);
+            corto_string str = corto_iterNext(&iter);
+            corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
+            if (!package) {
+                corto_seterr("package.txt contains unresolved package '%s'", str);
                 goto error;
+            } else {
+                corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
+                g_fileWrite(
+                  walkData.mainHeader, "#include \"%s/%s.h\"\n", package, name);
+                corto_dealloc(name);
+                corto_dealloc(package);
             }
-            c_include(g, walkData.mainHeader, o);
         }
         corto_loadFreePackages(packages);
     }
@@ -1092,7 +1097,6 @@ int corto_genMain(corto_generator g) {
     if (walkData.mainHeader) {
         c_interfaceHeaderFileClose(walkData.mainHeader);
     }
-
 
     return 0;
 error:
