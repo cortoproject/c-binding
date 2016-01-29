@@ -33,6 +33,10 @@ corto_bool c_procedureHasThis(corto_function o);
 
 corto_string c_paramName(corto_string name, corto_string buffer);
 
+corto_bool c_paramRequiresPtr(corto_parameter *p);
+
+corto_bool c_typeRequiresPtr(corto_type t);
+
 corto_char* c_usingName(corto_generator g, corto_object o, corto_id id);
 
 corto_char* c_usingConstant(corto_generator g, corto_id id);

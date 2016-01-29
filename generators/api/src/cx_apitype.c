@@ -51,7 +51,7 @@ static corto_int16 c_apiCastAuto(corto_string id, corto_bool scoped, corto_bool 
 
     g_fileWrite(
         data->header,
-        ") %s%s _name##_o = %s%s(%s",
+        ") %s%s _name = %s%s(%s",
         id,
         ref ? "" : "*",
         id,
@@ -76,7 +76,7 @@ static corto_int16 c_apiCastAuto(corto_string id, corto_bool scoped, corto_bool 
         count++;
     }
 
-    g_fileWrite(data->header, "); (void)_name##_o\n");
+    g_fileWrite(data->header, "); (void)_name\n");
 
     return 0;
 }
@@ -157,6 +157,8 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
         } else {
             if (m->type->reference) {
                 g_fileWrite(data->source, "corto_setref(&");
+            } else if (m->type->kind == CORTO_COMPOSITE) {
+                g_fileWrite(data->source, "corto_copyp(&");
             } else if ((m->type->kind == CORTO_PRIMITIVE) && (corto_primitive(m->type)->kind == CORTO_TEXT)) {
                 g_fileWrite(data->source, "corto_setstr(&");
             }
@@ -187,6 +189,11 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
                 } else {
                     g_fileWrite(data->source, ", %s);\n", memberParamId);
                 }
+            } else if (m->type->kind == CORTO_COMPOSITE) {
+                corto_id objId;
+                g_fileWrite(data->source, ", %s_o, %s);\n",
+                g_fullOid(data->g, m->type, objId),
+                memberParamId);
             } else {
                 g_fileWrite(data->source, " = %s;\n", memberParamId);
             }
@@ -225,11 +232,17 @@ static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* us
             c_apiCastMacroAddArg(data->args, g_id(data->g, memberIdTmp, memberId), m->type);
         }
 
-        g_fileWrite(data->header, "%s%s %s",
-               typeSpec, typePostfix, g_id(data->g, memberIdTmp, memberId));
+        g_fileWrite(data->header, "%s%s%s %s",
+               typeSpec,
+               typePostfix,
+               c_typeRequiresPtr(m->type) ? "*" : "",
+               g_id(data->g, memberIdTmp, memberId));
 
-        g_fileWrite(data->source, "%s%s %s",
-                typeSpec, typePostfix, g_id(data->g, memberIdTmp, memberId));
+        g_fileWrite(data->source, "%s%s%s %s",
+                typeSpec,
+                typePostfix,
+                c_typeRequiresPtr(m->type) ? "*" : "",
+                g_id(data->g, memberIdTmp, memberId));
 
         data->parameterCount++;
     }
@@ -680,6 +693,129 @@ corto_int16 c_apiTypeCopy(corto_type t, c_apiWalk_t *data) {
 
 corto_int16 c_apiTypeCompare(corto_type t, c_apiWalk_t *data) {
     return c_apiTypeCopyIntern(t, data, "Compare", FALSE);
+}
+
+corto_int16 c_apiDelegateInitCallbackAuto(
+    corto_delegate t,
+    corto_bool instance,
+    c_apiWalk_t *data)
+{
+    corto_id id;
+
+    g_fullOid(data->g, t, id);
+
+    if (!instance) {
+        g_fileWrite(data->header, "#define %sInitC_auto(d, callback) ", id);
+        g_fileWrite(data->header, "%s d; %sInitC(&d, callback)\n", id, id);
+    } else {
+        g_fileWrite(
+            data->header,
+            "#define %sInitCInstance_auto(d, instance, callback)",
+            id);
+        g_fileWrite(
+            data->header,
+            "%s d; %sInitCInstance(&d, instance, callback)\n", id, id);
+    }
+
+    return 0;
+}
+
+corto_int16 c_apiDelegateInitCallback(
+    corto_delegate t,
+    corto_bool instance,
+    c_apiWalk_t *data)
+{
+    corto_id returnId, id, paramId;
+    int i, firstComma = 0;
+
+    if (c_apiDelegateInitCallbackAuto(t, instance, data)) {
+        goto error;
+    }
+
+    g_fullOid(data->g, t, id);
+    g_fullOid(data->g, t->returnType, returnId);
+
+    c_writeExport(data->g, data->header);
+    if (!instance) {
+        g_fileWrite(data->header, " corto_int16 %sInitC(%s *d, ", id, id);
+        g_fileWrite(data->source, "corto_int16 %sInitC(%s *d, ", id, id);
+    } else {
+        g_fileWrite(
+            data->header,
+            " corto_int16 %sInitCInstance(%s *d, corto_object instance, ",
+            id, id);
+
+        g_fileWrite(
+            data->source,
+            "corto_int16 %sInitCInstance(%s *d, corto_object instance, ",
+            id, id);
+    }
+
+    g_fileWrite(data->header, "%s(*callback)(", returnId);
+    g_fileWrite(data->source, "%s(*callback)(", returnId);
+
+    if (instance) {
+        g_fileWrite(data->header, "corto_object");
+        g_fileWrite(data->source, "corto_object");
+        firstComma = 1;
+    }
+
+    for (i = 0; i < t->parameters.length; i++) {
+        corto_parameter *p = &t->parameters.buffer[i];
+        if (firstComma) {
+            g_fileWrite(data->header, ", ");
+            g_fileWrite(data->source, ", ");
+        }
+        g_fileWrite(data->header, "%s", g_fullOid(data->g, p->type, paramId));
+        g_fileWrite(data->source, "%s", g_fullOid(data->g, p->type, paramId));
+        if (c_paramRequiresPtr(p)) {
+            g_fileWrite(data->header, "*");
+            g_fileWrite(data->source, "*");
+        }
+        firstComma ++;
+    }
+
+    g_fileWrite(data->header, "));\n");
+    g_fileWrite(data->source, ")) {\n");
+    g_fileIndent(data->source);
+
+    if (instance) {
+        g_fileWrite(data->source, "d->_parent.instance = instance;\n");
+        g_fileWrite(data->source, "corto_claim(instance);\n");
+    }
+    g_fileWrite(data->source, "d->_parent.procedure = corto_functionDeclare();\n");
+    g_fileWrite(data->source, "void __%s(corto_function f, void *result, void *args);\n", id);
+    g_fileWrite(data->source, "d->_parent.procedure->impl = (corto_word)__%s;\n", id);
+    g_fileWrite(
+        data->source, "corto_function_parseParamString(d->_parent.procedure, \"(");
+
+    firstComma = 0;
+    if (instance) {
+        g_fileWrite(data->source, "object instance");
+        firstComma = 1;
+    }
+
+    for (i = 0; i < t->parameters.length; i++) {
+        corto_parameter *p = &t->parameters.buffer[i];
+        if (firstComma) {
+            g_fileWrite(data->source, ", ");
+        }
+        g_fileWrite(data->source, "%s %s", corto_fullpath(NULL, p->type), p->name);
+        firstComma ++;
+    }
+
+    g_fileWrite(data->source, ")\");\n");
+    g_fileWrite(
+        data->source, "d->_parent.procedure->implData = (corto_word)callback;\n");
+
+    g_fileWrite(data->source, "corto_define(d->_parent.procedure);\n");
+    g_fileWrite(data->source, "return 0;\n");
+    g_fileDedent(data->source);
+    g_fileWrite(data->source, "}\n\n");
+
+    return 0;
+error:
+    return -1;
 }
 
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {

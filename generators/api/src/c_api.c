@@ -135,7 +135,15 @@ static int c_apiWalk(corto_object o, void* userData) {
         /* Clear nameconflict cache */
         if (corto_type(o)->kind == CORTO_COMPOSITE) {
             if (corto_interface(o)->kind == CORTO_DELEGATE) {
-                c_apiDelegateCall(corto_delegate(o), userData);
+                if (c_apiDelegateCall(corto_delegate(o), userData)) {
+                    goto error;
+                }
+                if (c_apiDelegateInitCallback(corto_delegate(o), FALSE, userData)) {
+                    goto error;
+                }
+                if (c_apiDelegateInitCallback(corto_delegate(o), TRUE, userData)) {
+                    goto error;
+                }
             }
             corto_genMemberCacheClean(data->memberCache);
         }

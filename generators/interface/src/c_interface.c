@@ -61,7 +61,7 @@ static int c_interfaceParam(corto_parameter *o, void *userData) {
     if (data->generateSource) g_fileWrite(data->source, "%s ", specifier);
     if (data->generateHeader) g_fileWrite(data->header, "%s ", specifier);
 
-    if (!o->type->reference && (o->passByReference || (o->type->kind == CORTO_COMPOSITE))) {
+    if (c_paramRequiresPtr(o)) {
         if (data->generateSource) g_fileWrite(data->source, "*");
         if (data->generateHeader) g_fileWrite(data->header, "*");
     }
@@ -114,14 +114,22 @@ static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isRefere
 }
 
 /* Walk parameters of function */
-static int c_interfaceParamWalk(corto_object _f, int(*action)(corto_parameter*, void*), void *userData) {
+static int c_interfaceParamWalk(corto_object f, int(*action)(corto_parameter*, void*), void *userData) {
     corto_uint32 i;
-    corto_function f = _f;
-    for (i=0; i<f->parameters.length; i++) {
-        if (!action(&(f->parameters.buffer[i]), userData)) {
+    corto_parameterseq *params;
+
+    if (corto_instanceof(corto_function_o, f)) {
+        params = &corto_function(f)->parameters;
+    } else if (corto_instanceof(corto_delegate_o, f)) {
+        params = &corto_delegate(f)->parameters;
+    }
+
+    for (i = 0; i < params->length; i++) {
+        if (!action(&(params->buffer[i]), userData)) {
             return 0;
         }
     }
+
     return 1;
 }
 
@@ -376,49 +384,103 @@ int c_procedureWrapperParam(corto_parameter *o, void *userData) {
     c_typeWalk_t* data;
     data = userData;
 
-    /* Write comma */
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ",\n");
     }
 
-    /* Add type to size expression and add argument*/
     c_procedureAddToSizeExpr(o->type, o->passByReference, data);
 
     return 1;
 }
 
+int c_procedureFptrDeclParam(corto_parameter *o, void *userData) {
+    c_typeWalk_t* data;
+    data = userData;
+    corto_id id, postfix;
+    c_specifierId(data->g, o->type, id, NULL, postfix);
+
+    if (data->firstComma) {
+        g_fileWrite(data->wrapper, ",");
+    }
+
+    g_fileWrite(data->wrapper, "%s", id);
+
+    return 1;
+}
+
+/* Declare function pointer for delegate */
+static void c_interfaceClassFptrDeclaration(
+    corto_delegate d,
+    c_typeWalk_t *data)
+{
+    corto_id returnSpec, returnPostfix;
+
+    c_specifierId(data->g, d->returnType, returnSpec, NULL, returnPostfix);
+    g_fileWrite(data->wrapper, "%s (*_fptr)(corto_object", returnSpec);
+    data->firstComma = 1;
+    c_interfaceParamWalk(d, c_procedureFptrDeclParam, data);
+    g_fileWrite(data->wrapper, ") = (%s(*)(corto_object", returnSpec);
+    data->firstComma = 1;
+    c_interfaceParamWalk(d, c_procedureFptrDeclParam, data);
+    g_fileWrite(data->wrapper, "))f->implData;\n");
+}
+
 /* Generate a wrapper for a procedure */
-static int c_interfaceClassProcedureWrapper(corto_function o, c_typeWalk_t *data) {
+static int c_interfaceClassProcedureWrapper(corto_object o, c_typeWalk_t *data) {
     corto_id id, actualFunction;
     corto_type returnType;
     corto_id returnSpec, returnPostfix;
+    corto_parameterseq *params;
+    corto_bool isDelegate;
+
+    /* Write wrapper signature */
+    g_fileWrite(data->wrapper, "\n");
+    g_fileWrite(
+        data->wrapper,
+        "void __%s(corto_function f, void *result, void *args) {\n",
+        c_functionName(o, id, data));
+    g_fileIndent(data->wrapper);
+
+    if (corto_instanceof(corto_delegate_o, o)) {
+        params = &corto_delegate(o)->parameters;
+        returnType = corto_delegate(o)->returnType;
+        isDelegate = TRUE;
+    } else if (corto_instanceof(corto_function_o, o)) {
+        params = &corto_function(o)->parameters;
+        returnType = corto_function(o)->returnType;
+        isDelegate = FALSE;
+    }
+
+    c_specifierId(data->g, returnType, returnSpec, NULL, returnPostfix);
 
     *(data->sizeExpr) = '\0';
     data->firstComma = 0;
 
-    /* Write wrapper signature */
-    g_fileWrite(data->wrapper, "\n");
-    g_fileWrite(data->wrapper, "void __%s(corto_function f, void *result, void *args) {\n", c_functionName(o, id, data));
-    g_fileIndent(data->wrapper);
-
-    /* Obtain returntype string */
     g_fileWrite(data->wrapper, "CORTO_UNUSED(f);\n");
-    if (!o->parameters.length) {
+    if (!params->length) {
         g_fileWrite(data->wrapper, "CORTO_UNUSED(args);\n");
     }
-    returnType = ((corto_function)o)->returnType;
+
+    if (isDelegate) {
+        c_interfaceClassFptrDeclaration(corto_delegate(o), data);
+    }
+
     if (returnType && corto_type_sizeof(returnType)) {
-        c_specifierId(data->g, returnType, returnSpec, NULL, returnPostfix);
         g_fileWrite(data->wrapper, "*(%s%s*)result = ", returnSpec, returnPostfix);
     } else {
         g_fileWrite(data->wrapper, "CORTO_UNUSED(result);\n");
     }
 
-    /* Call function and assign result */
-    g_fileWrite(data->wrapper, "_%s(\n", c_functionName(o, actualFunction, data));
-    g_fileIndent(data->wrapper);
+    if (isDelegate) {
+        g_fileWrite(data->wrapper, "_fptr(\n");
+        g_fileIndent(data->wrapper);
+    } else {
+        g_fileWrite(data->wrapper, "_%s(\n", c_functionName(o, actualFunction, data));
+        g_fileIndent(data->wrapper);
+    }
 
-    /* Add this */
+    data->firstComma = 0;
+
     if (c_procedureHasThis(o)) {
         if(corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
             c_procedureAddToSizeExpr(corto_parentof(o), TRUE, data);
@@ -426,9 +488,11 @@ static int c_interfaceClassProcedureWrapper(corto_function o, c_typeWalk_t *data
             c_procedureAddToSizeExpr(corto_type(corto_any_o), FALSE, data);
         }
         data->firstComma = TRUE;
+    } else if (isDelegate) {
+        c_procedureAddToSizeExpr(corto_object_o, TRUE, data);
+        data->firstComma = TRUE;
     }
 
-    /* Add parameters */
     c_interfaceParamWalk(o, c_procedureWrapperParam, data);
 
     g_fileWrite(data->wrapper, ");\n");
@@ -625,6 +689,10 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
 
         /* Write the macro wrapper for automatic casting of parameter types */
         c_interfaceCastMacro(o, functionName, data);
+    } else if (corto_instanceof(corto_delegate_o, o)) {
+        if (c_interfaceClassProcedureWrapper(corto_delegate(o), data)) {
+            goto error;
+        }
     }
 
 ok:

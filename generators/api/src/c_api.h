@@ -42,6 +42,10 @@ corto_int16 c_apiTypeInit(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiTypeDeinit(corto_type o, c_apiWalk_t *data);
 
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data);
+corto_int16 c_apiDelegateInitCallback(
+    corto_delegate t,
+    corto_bool instance,
+    c_apiWalk_t *data);
 
 int c_apiCollectionWalk(void* o, void* userData);
 int c_apiIteratorWalk(void* o, void* userData);
