@@ -37,6 +37,12 @@ corto_bool c_paramRequiresPtr(corto_parameter *p);
 
 corto_bool c_typeRequiresPtr(corto_type t);
 
+corto_string c_typeptr(corto_generator g, corto_type t, corto_id id);
+
+corto_string c_typeval(corto_generator g, corto_type t, corto_id id);
+
+corto_string c_typeret(corto_generator g, corto_type t, corto_id id);
+
 corto_char* c_usingName(corto_generator g, corto_object o, corto_id id);
 
 corto_char* c_usingConstant(corto_generator g, corto_id id);
@@ -48,6 +54,10 @@ char* c_filename(corto_generator g, char *fileName, corto_object o, char *ext);
 void c_includeFrom(corto_generator g, g_file file, corto_object o, corto_string include, ...);
 
 void c_include(corto_generator g, g_file file, corto_object o);
+
+corto_ll c_findType(corto_generator g, corto_class type);
+
+corto_char* c_varId(corto_generator g, corto_object o, corto_char* out);
 
 #ifdef __cplusplus
 }

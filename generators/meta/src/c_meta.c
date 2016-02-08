@@ -14,6 +14,8 @@ typedef struct c_typeWalk_t {
     g_file source;
     corto_uint32 firstComma;
     corto_uint32 errorCount;
+    corto_ll collections;
+    corto_bool scoped; /* Switch between generating scoped and anonymous */
 } c_typeWalk_t;
 
 /* Resolve object */
@@ -73,28 +75,6 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
     return out;
 error:
     return NULL;
-}
-
-/* Get variable id */
-static corto_char* c_loadVarId(corto_generator g, corto_object o, corto_char* out) {
-    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
-        if (o != root_o) {
-            /* Using fully scoped name for package variables allows using
-             * packages with the same name */
-            if (corto_instanceof(corto_package_o, o)) {
-                corto_path(out, root_o, o, "_");
-            } else {
-                g_fullOid(g, o, out);
-            }
-            strcat(out, "_o");
-        } else {
-            strcpy(out, "root_o");
-        }
-    } else {
-        corto_id id;
-        sprintf(out, "%s", c_loadResolve(o, id, NULL, NULL));
-    }
-    return out;
 }
 
 /* Get element id, for lists and maps. */
@@ -165,11 +145,11 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
         corto_id id, parentId, objectId;
         sprintf(id, "%s(%s)",
                 g_fullOid(data->g, thisType, parentId),
-                c_loadVarId(data->g, corto_valueObject(v), objectId));
+                c_varId(data->g, corto_valueObject(v), objectId));
         strcat(out, id);
     } else {
         corto_id objectId;
-        strcat(out, c_loadVarId(data->g, corto_valueObject(v), objectId));
+        strcat(out, c_varId(data->g, corto_valueObject(v), objectId));
     }
 
     /* End bracket used for dereferencing object */
@@ -273,9 +253,11 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
         return 1;
     }
 
-    parent = corto_parentof(o);
-    if (parent && (parent != root_o) && (!g_mustParse(data->g, parent))) {
-        c_loadDeclareWalk(corto_parentof(o), userData);
+    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+        parent = corto_parentof(o);
+        if (parent && (parent != root_o) && (!g_mustParse(data->g, parent))) {
+            c_loadDeclareWalk(corto_parentof(o), userData);
+        }
     }
 
     /* Get C typespecifier */
@@ -283,14 +265,16 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
         goto error;
     }
 
+    c_varId(data->g, o, objectId);
+
     c_writeExport(data->g, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
     if (!prefix) {
-        g_fileWrite(data->header, " extern %s %s%s;\n", specifier, c_loadVarId(data->g, o, objectId), postfix);
+        g_fileWrite(data->header, " extern %s %s%s;\n", specifier, objectId, postfix);
         g_fileWrite(data->source, "%s %s%s;\n", specifier, objectId, postfix);
     } else {
-        g_fileWrite(data->header, " extern %s ___ (*%s)%s;\n", specifier, c_loadVarId(data->g, o, objectId), postfix);
+        g_fileWrite(data->header, " extern %s ___ (*%s)%s;\n", specifier, objectId, postfix);
         g_fileWrite(data->source, "%s ___ (*%s)%s;\n", specifier, objectId, postfix);
     }
 
@@ -508,7 +492,7 @@ static corto_int16 c_initReference(corto_serializer s, corto_value* v, void* use
 
     if ((o = *optr)) {
         corto_id id, src, context;
-        c_loadVarId(data->g, corto_valueObject(v), src);
+        c_varId(data->g, corto_valueObject(v), src);
         corto_strving(v, context, 256);
         g_fileWrite(data->source, "%s", c_loadResolve(o, id, src, context));
     } else {
@@ -723,48 +707,46 @@ static struct corto_serializer_s c_initSerializer(void) {
 /* Declare object */
 static int c_loadDeclare(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id id, parentId, typeId, escapedName;
+    corto_id varId, parentId, typeId, escapedName;
 
     data = userData;
 
-    if (!g_mustParse(data->g, o)) {
-        return 1;
-    }
+    c_varId(data->g, o, varId);
 
-    /* Only declare scoped objects */
-    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
-        c_escapeString(corto_nameof(o), escapedName);
-
-        /* Declaration */
-        g_fileWrite(data->source, "/* Declare %s */\n", corto_fullpath(NULL, o));
-
-        if (!corto_checkAttr(corto_typeof(o), CORTO_ATTR_SCOPED)) {
-            g_fileWrite(data->source, "%s = corto_declareChild(%s, \"%s\", (_a_ ? corto_release(_a_) : 0, _a_ = %s));\n",
-                    c_loadVarId(data->g, o, id),
-                    c_loadVarId(data->g, corto_parentof(o), parentId),
-                    escapedName,
-                    c_loadVarId(data->g, corto_typeof(o), typeId));
-        } else {
-            g_fileWrite(data->source, "%s = corto_declareChild(%s, \"%s\", %s);\n",
-                    c_loadVarId(data->g, o, id),
-                    c_loadVarId(data->g, corto_parentof(o), parentId),
-                    escapedName,
-                    c_loadVarId(data->g, corto_typeof(o), typeId));
+    if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+        if (!g_mustParse(data->g, o)) {
+            return 1;
         }
-
-        /* Error checking */
-        g_fileWrite(data->source, "if (!%s) {\n", c_loadVarId(data->g, o, id));
-        g_fileIndent(data->source);
-        c_escapeString(corto_fullpath(NULL, o), escapedName);
-        g_fileWrite(data->source, "corto_error(\"%s_load: failed to declare '%s' (%%s)\", corto_lasterr());\n",
-                g_getName(data->g),
-                escapedName);
-        g_fileWrite(data->source, "goto error;\n");
-        data->errorCount++;
-        g_fileDedent(data->source);
-
-        g_fileWrite(data->source, "}\n\n");
+        g_fileWrite(data->source, "%s = corto_declare(", varId);
+    } else {
+        c_escapeString(corto_nameof(o), escapedName);
+        g_fileWrite(data->source, "%s = corto_declareChild(%s, \"%s\", ",
+            varId,
+            c_varId(data->g, corto_parentof(o), parentId),
+            escapedName);
     }
+
+    /* Declaration */
+    if (!corto_checkAttr(corto_typeof(o), CORTO_ATTR_SCOPED)) {
+        g_fileWrite(data->source, "(_a_ ? corto_release(_a_) : 0, _a_ = %s));\n",
+            c_varId(data->g, corto_typeof(o), typeId));
+    } else {
+        g_fileWrite(data->source, "%s);\n",
+            c_varId(data->g, corto_typeof(o), typeId));
+    }
+
+    /* Error checking */
+    g_fileWrite(data->source, "if (!%s) {\n", varId);
+    g_fileIndent(data->source);
+    c_escapeString(corto_fullpath(NULL, o), escapedName);
+    g_fileWrite(data->source, "corto_error(\"%s_load: failed to declare '%s' (%%s)\", corto_lasterr());\n",
+            g_getName(data->g),
+            varId);
+    g_fileWrite(data->source, "goto error;\n");
+    data->errorCount++;
+    g_fileDedent(data->source);
+
+    g_fileWrite(data->source, "}\n\n");
 
     return 1;
 }
@@ -778,72 +760,69 @@ static int c_loadDefine(corto_object o, void* userData) {
         return 1;
     }
 
-    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
-        corto_id escapedId, fullname, varId, typeId;
+    corto_id escapedId, varId, typeId, postfix;
 
-        corto_fullpath(fullname, o);
-        c_loadVarId(data->g, o, varId);
-        g_fullOid(data->g, o, typeId);
+    c_varId(data->g, o, varId);
+    c_specifierId(data->g, o, typeId, NULL, postfix);
 
-        g_fileWrite(data->source, "/* Define %s */\n", fullname);
-        g_fileWrite(data->source, "if (!corto_checkState(%s, CORTO_DEFINED)) {\n", varId);
-        g_fileIndent(data->source);
+    g_fileWrite(data->source, "if (!corto_checkState(%s, CORTO_DEFINED)) {\n", varId);
+    g_fileIndent(data->source);
 
-        /* Serialize object if object is not a primitive */
-        s = c_initSerializer();
-        corto_serialize(&s, o, userData);
+    /* Serialize object if object is not a primitive */
+    s = c_initSerializer();
+    corto_serialize(&s, o, userData);
 
-        /* If object is a procedure, set function implementation */
-        if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-            corto_id name;
-            g_fileWrite(data->source, "\n");
-            if (!corto_function(o)->impl) {
-                g_fileWrite(data->source, "/* Bind %s with C-function */\n", fullname);
-                g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
-                c_loadCFunction(o, data, name);
-                g_fileWrite(data->source, "void __%s(void *args, void *result);\n", name);
-                g_fileWrite(data->source, "corto_function(%s)->impl = (corto_word)__%s;\n", varId, name);
-            }
+    /* If object is a procedure, set function implementation */
+    if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
+        corto_id name;
+        g_fileWrite(data->source, "\n");
+        if (!corto_function(o)->impl) {
+            g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
+            c_loadCFunction(o, data, name);
+            g_fileWrite(data->source, "void __%s(void *args, void *result);\n", name);
+            g_fileWrite(data->source, "corto_function(%s)->impl = (corto_word)__%s;\n", varId, name);
         }
+    }
 
-        /* Define object */
-        g_fileWrite(data->source, "if (corto_define(%s)) {\n", varId);
-        g_fileIndent(data->source);
-        g_fileWrite(data->source, "corto_error(\"%s_load: failed to define '%s' (%%s)\", corto_lasterr());\n",
+    /* Define object */
+    g_fileWrite(data->source, "if (corto_define(%s)) {\n", varId);
+    g_fileIndent(data->source);
+    g_fileWrite(data->source, "corto_error(\"%s_load: failed to define '%s' (%%s)\", corto_lasterr());\n",
+            g_getName(data->g),
+            c_escapeString(varId, escapedId));
+    g_fileWrite(data->source, "goto error;\n");
+    data->errorCount++;
+    g_fileDedent(data->source);
+    g_fileWrite(data->source, "}\n");
+    g_fileDedent(data->source);
+    g_fileWrite(data->source, "}\n\n");
+
+    /* Do size validation - this makes porting to other platforms easier */
+    if (corto_instanceof(corto_type(corto_type_o), o)) {
+        if ((corto_type(o)->kind == CORTO_COMPOSITE) && corto_type(o)->reference) {
+            g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
+                varId,
+                typeId);
+            g_fileIndent(data->source);
+            g_fileWrite(data->source,
+                "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
                 g_getName(data->g),
-                c_escapeString(fullname, escapedId));
-        g_fileWrite(data->source, "goto error;\n");
-        data->errorCount++;
-        g_fileDedent(data->source);
-        g_fileWrite(data->source, "}\n");
-        g_fileDedent(data->source);
-        g_fileWrite(data->source, "}\n\n");
-
-        /* Do size validation - this makes porting to other platforms easier */
-        if (corto_instanceof(corto_type(corto_type_o), o)) {
-            if (corto_type(o)->reference && (corto_type(o)->kind != CORTO_VOID)) {
-                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
-                    varId,
-                    typeId);
-                g_fileIndent(data->source);
-                g_fileWrite(data->source,
-                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
-                    g_getName(data->g),
-                    fullname,
-                    varId,
-                    typeId);
-            } else {
-                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(%s)) {\n",
-                    varId,
-                    typeId);
-                g_fileIndent(data->source);
-                g_fileWrite(data->source,
-                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n",
-                    g_getName(data->g),
-                    fullname,
-                    varId,
-                    typeId);
-            }
+                varId,
+                varId,
+                typeId);
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "}\n\n");
+        } else if (corto_type(o)->reference || (corto_type(o)->kind != CORTO_VOID)) {
+            g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(%s)) {\n",
+                varId,
+                typeId);
+            g_fileIndent(data->source);
+            g_fileWrite(data->source,
+                "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n",
+                g_getName(data->g),
+                varId,
+                varId,
+                typeId);
             g_fileDedent(data->source);
             g_fileWrite(data->source, "}\n\n");
         }
@@ -865,13 +844,14 @@ int corto_genMain(corto_generator g) {
     walkData.g = g;
     walkData.header = c_loadHeaderFileOpen(g);
     walkData.source = c_loadSourceFileOpen(g);
+    walkData.collections = c_findType(g, corto_collection_o);
     walkData.errorCount = 0;
 
     /* Write comment indicating definitions in sourcefile */
     c_sourceWriteVarDefStart(walkData.source);
 
     /* Walk objects, declare variables in header and sourcefile */
-    if (!g_walkRecursive(g, c_loadDeclareWalk, &walkData)) {
+    if (corto_genDepWalk(g, c_loadDeclareWalk, NULL, &walkData)) {
         goto error;
     }
 

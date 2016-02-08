@@ -138,20 +138,16 @@ static void c_interfaceParamThis(corto_type parentType, c_typeWalk_t* data, cort
     corto_id classId;
 
     g_fullOid(data->g, parentType, classId);
-    if (parentType->reference) {
-        if (toSource) {
-            g_fileWrite(data->source, "%s this", classId);
-        }
-        if (toHeader) {
-            g_fileWrite(data->header, "%s _this", classId);
-        }
-    } else {
-        if (toSource) {
-            g_fileWrite(data->source, "%s *this", classId);
-        }
-        if (toHeader) {
-            g_fileWrite(data->header, "%s *_this", classId);
-        }
+
+    if (toSource) {
+        g_fileWrite(data->source,
+            "%s this",
+            c_typeptr(data->g, parentType, classId));
+    }
+    if (toHeader) {
+        g_fileWrite(data->header,
+            "%s _this",
+            c_typeptr(data->g, parentType, classId));
     }
 }
 

@@ -500,7 +500,7 @@ struct corto_serializer_s c_typeSerializer(void) {
 /* Print class-cast macro's */
 static int c_typeClassCastWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id id;
+    corto_id id, ptr;
 
     data = userData;
 
@@ -510,15 +510,10 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
             if (c_specifierId(data->g, o, id, NULL, postfix)) {
                 goto error;
             }
-            corto_string oid = id;
 
-            if (corto_type(o)->reference) {
-                g_fileWrite(data->header, "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
-                    oid, oid, oid);
-            } else {
-                g_fileWrite(data->header, "#define %s(o) ((%s *)corto_assertType((corto_type)%s_o, o))\n",
-                    oid, oid, oid);
-            }
+            g_fileWrite(data->header,
+                "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
+                id, c_typeret(data->g, o, ptr), id);
         }
     }
 

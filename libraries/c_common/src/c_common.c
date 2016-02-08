@@ -461,12 +461,47 @@ corto_string c_paramName(corto_string name, corto_string buffer) {
 
 corto_bool c_paramRequiresPtr(corto_parameter *p) {
     return !p->type->reference &&
-           (p->passByReference ||
-           (p->type->kind == CORTO_COMPOSITE));
+           (p->passByReference || (p->type->kind == CORTO_COMPOSITE));
 }
 
 corto_bool c_typeRequiresPtr(corto_type t) {
-    return !t->reference && (t->kind == CORTO_COMPOSITE);
+    return (!t->reference &&
+           (t->kind == CORTO_COMPOSITE));
+}
+
+corto_string c_typeptr(corto_generator g, corto_type t, corto_id id) {
+    g_fullOid(g, t, id);
+    if (!t->reference &&
+        !(t->kind == CORTO_COLLECTION &&
+        (corto_collection(t)->kind == CORTO_ARRAY)))
+    {
+        strcat(id, "*");
+    }
+    return id;
+}
+
+corto_string c_typeret(corto_generator g, corto_type t, corto_id id) {
+    if ((t->kind == CORTO_COLLECTION &&
+        (corto_collection(t)->kind == CORTO_ARRAY)))
+    {
+        g_fullOid(g, corto_collection(t)->elementType, id);
+        strcat(id, "*");
+    } else {
+        g_fullOid(g, t, id);
+        if (!t->reference) {
+            strcat(id, "*");
+        }
+    }
+
+    return id;
+}
+
+corto_string c_typeval(corto_generator g, corto_type t, corto_id id) {
+    g_fullOid(g, t, id);
+    if (!t->reference && (t->kind == CORTO_COMPOSITE)) {
+        strcat(id, "*");
+    }
+    return id;
 }
 
 corto_char* c_usingName(corto_generator g, corto_object o, corto_id id) {
@@ -584,4 +619,90 @@ void c_include(corto_generator g, g_file file, corto_object o) {
       file,
       package,
       c_filename(g, name, o, "h"));
+}
+
+static corto_equalityKind c_compareCollections(corto_collection c1, corto_collection c2) {
+    corto_equalityKind result = CORTO_EQ;
+    if (c1->kind != c2->kind) {
+        result = CORTO_NEQ;
+    } else if (c1->elementType != c2->elementType) {
+        result = CORTO_NEQ;
+    } else if (c1->max != c2->max) {
+        result = CORTO_NEQ ;
+    } else if (c1->kind == CORTO_MAP) {
+        if (corto_map(c1)->keyType != corto_map(c2)->keyType) {
+            result = CORTO_NEQ;
+        }
+    }
+    return result;
+}
+
+static int c_checkDuplicates(void* o, void* userData) {
+    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+        return 1;
+    } else {
+        if (corto_instanceof(corto_collection_o, o)) {
+            return c_compareCollections(
+                corto_collection(o),
+                corto_collection(userData)) != CORTO_EQ;
+        } else if (corto_instanceof(corto_iterator_o, o)) {
+            return corto_iterator(o)->elementType ==
+                corto_iterator(userData)->elementType;
+        }
+    }
+
+    return 0;
+}
+
+typedef struct c_findTypeWalk_t {
+    corto_ll result;
+    corto_class t;
+} c_findTypeWalk_t;
+
+static int c_findTypeWalk(corto_object o, void* userData) {
+    c_findTypeWalk_t* data = userData;
+
+    if (corto_instanceof(data->t, o)) {
+        if (!corto_llSize(data->result) || corto_llWalk(data->result, c_checkDuplicates, o)) {
+            corto_llAppend(data->result, o);
+        }
+    }
+
+    return 0;
+}
+
+corto_ll c_findType(corto_generator g, corto_class t) {
+    c_findTypeWalk_t walkData;
+
+    walkData.result = corto_llNew();
+    walkData.t = t;
+
+    if (corto_genDepWalk(g, c_findTypeWalk, NULL, &walkData)) {
+        corto_seterr("generation of api-routines failed while resolving %s.",
+            corto_fullpath(NULL, t));
+        goto error;
+    }
+
+    return walkData.result;
+error:
+    return NULL;
+}
+
+corto_char* c_varId(corto_generator g, corto_object o, corto_char* out) {
+
+    if (o != root_o) {
+        /* Using fully scoped name for package variables allows using
+         * packages with the same name */
+        if (corto_instanceof(corto_package_o, o)) {
+            corto_path(out, root_o, o, "_");
+        } else {
+            corto_id postfix;
+            c_specifierId(g, o, out, NULL, postfix);
+        }
+        strcat(out, "_o");
+    } else {
+        strcpy(out, "root_o");
+    }
+
+    return out;
 }

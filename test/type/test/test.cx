@@ -1,0 +1,109 @@
+#package /test
+
+test/Suite voidApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_update()
+    void onUpdate() observer
+    updated: bool
+
+test/Suite voidReferenceApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_update()
+    void onUpdate() observer
+    updated: bool
+
+test/Suite anyApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_declare()
+    void tc_declareChild()
+    void tc_declareAuto()
+    void tc_declareChildAuto()
+    void tc_define()
+    void tc_update()
+    void tc_set()
+    void tc_str()
+    void tc_fromStr()
+    void tc_compare()
+    void onUpdate() observer
+    updated: bool
+
+test/Suite primitiveApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_declare()
+    void tc_declareChild()
+    void tc_declareAuto()
+    void tc_declareChildAuto()
+    void tc_define()
+    void tc_update()
+    void tc_set()
+    void tc_str()
+    void tc_fromStr()
+    void tc_compare()
+    void onUpdate() observer
+    updated: bool
+
+test/Suite compositeApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_declare()
+    void tc_declareChild()
+    void tc_declareAuto()
+    void tc_declareChildAuto()
+    void tc_define()
+    void tc_update()
+    void tc_set()
+    void tc_str()
+    void tc_fromStr()
+    void tc_compare()
+    void onUpdate() observer
+    updated: bool
+
+test/Suite compositeReferenceApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_declare()
+    void tc_declareChild()
+    void tc_declareAuto()
+    void tc_declareChildAuto()
+    void tc_define()
+    void tc_update()
+    void tc_set()
+    void tc_str()
+    void tc_fromStr()
+    void tc_compare()
+    void onUpdate() observer
+    updated: bool
+
+test/Suite collectionApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_declare()
+    void tc_declareChild()
+    void tc_declareAuto()
+    void tc_declareChildAuto()
+    void tc_define()
+    void tc_update()
+    void tc_set()
+    void tc_str()
+    void tc_fromStr()
+    void tc_compare()
+    void onUpdate() observer
+    updated: bool
