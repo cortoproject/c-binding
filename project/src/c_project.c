@@ -15,11 +15,10 @@ static void c_projectLoadPackages(g_file file) {
     }
 }
 
-/* Generate file containing component loader */
+/* Generate file containing loader */
 static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     corto_id filename;
     g_file file;
-    corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
 
     sprintf(filename, "_load.c");
 
@@ -51,20 +50,13 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         c_includeFrom(g, file, corto_o, "corto.h");
         g_fileWrite(file, "#include \"%s.h\"\n", g_getName(g));
         g_fileWrite(file, "\n");
-        if (isComponent) {
-            c_writeExport(g, file);
-            g_fileWrite(file, " int cortomain(int argc, char* argv[]) {\n");
-        } else {
-            g_fileWrite(file, "int main(int argc, char* argv[]) {\n");
-            g_fileWrite(file, "corto_start();\n");
-        }
+        g_fileWrite(file, "int main(int argc, char* argv[]) {\n");
+        g_fileWrite(file, "corto_start();\n");
         g_fileIndent(file);
         c_projectLoadPackages(file);
         g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
         g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getName(g));
-        if (!isComponent) {
-            g_fileWrite(file, "corto_stop();\n");
-        }
+        g_fileWrite(file, "corto_stop();\n");
         g_fileWrite(file, "return 0;\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
@@ -79,10 +71,9 @@ error:
 static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     corto_id filename;
     g_file file;
-    corto_ll packages, components;
+    corto_ll packages;
     corto_id upperName;
     corto_bool error = FALSE;
-    corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
 
     strcpy(upperName, g_getName(g));
     corto_strupper(upperName);
@@ -105,8 +96,6 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     c_includeFrom(g, file, corto_o, "corto.h");
     if (g_getCurrent(g)) {
         g_fileWrite(file, "#include \"_interface.h\"\n");
-    } else if (isComponent) {
-        g_fileWrite(file, "#include \"%s/_interface.h\"\n", g_getName(g));
     }
     g_fileWrite(file, "\n");
 
@@ -129,15 +118,6 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
             }
         }
         corto_loadFreePackages(packages);
-    }
-
-    if ((components = corto_loadGetComponents())) {
-        corto_iter iter = corto_llIter(components);
-        while (corto_iterHasNext(&iter)) {
-            corto_string str = corto_iterNext(&iter);
-            g_fileWrite(file, "#include \"%s.h\"\n", str);
-        }
-        corto_loadFreeComponents(components);
     }
 
     g_fileWrite(file, "#ifdef __cplusplus\n");
@@ -297,7 +277,6 @@ error:
 
 /* Generator main */
 corto_int16 corto_genMain(corto_generator g) {
-    corto_bool isComponent = !strcmp(gen_getAttribute(g, "component"), "true");
 
     /* Create source and include directories */
     corto_mkdir("include");
@@ -308,13 +287,10 @@ corto_int16 corto_genMain(corto_generator g) {
         goto error;
     }
 
-    if (g->objects || isComponent) {
+    if (g->objects) {
         if (c_genInterfaceHeader(g)) {
             goto error;
         }
-    }
-
-    if (g->objects) {
         if(c_projectGenerateDepMakefile(g)) {
             goto error;
         }
