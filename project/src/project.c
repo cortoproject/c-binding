@@ -19,6 +19,7 @@ static void c_projectLoadPackages(g_file file) {
 static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     corto_id filename;
     g_file file;
+    corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
 
     sprintf(filename, "_load.c");
 
@@ -50,13 +51,13 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         c_includeFrom(g, file, corto_o, "corto.h");
         g_fileWrite(file, "#include \"%s.h\"\n", g_getName(g));
         g_fileWrite(file, "\n");
-        g_fileWrite(file, "int main(int argc, char* argv[]) {\n");
-        g_fileWrite(file, "corto_start();\n");
+        g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
         g_fileIndent(file);
+        if (app) g_fileWrite(file, "corto_start();\n");
         c_projectLoadPackages(file);
         g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
         g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getName(g));
-        g_fileWrite(file, "corto_stop();\n");
+        if (app) g_fileWrite(file, "corto_stop();\n");
         g_fileWrite(file, "return 0;\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");

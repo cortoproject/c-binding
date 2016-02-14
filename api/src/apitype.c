@@ -573,6 +573,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     g_fileWrite(data->header, ");\n");
     g_fileWrite(data->source, ") {\n");
     g_fileIndent(data->source);
+    g_fileWrite(data->source, "CORTO_UNUSED(this);\n");
 
     /* Write cast macro */
     c_apiCastMacro(id, func, data);
