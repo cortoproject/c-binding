@@ -4,7 +4,7 @@ COMPONENTS = [] <<
     :api <<
     :type <<
     :interface <<
-    :meta <<
+    :load <<
     :project
 
 require "#{ENV['CORTO_BUILD']}/forward"

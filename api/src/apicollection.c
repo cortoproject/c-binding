@@ -1,6 +1,6 @@
 
-#include "c_api.h"
-#include "c_common.h"
+#include "api.h"
+#include "corto/gen/c/common/common.h"
 
 static corto_bool c_apiElementRequiresInit(corto_type elementType) {
     corto_bool result = FALSE;

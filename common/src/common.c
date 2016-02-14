@@ -5,7 +5,7 @@
  *      Author: sander
  */
 
-#include "c_common.h"
+#include "corto/gen/c/common/common.h"
 #include "ctype.h"
 
 /* Escape language keywords */

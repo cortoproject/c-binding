@@ -1,6 +1,6 @@
 
 #include "corto/corto.h"
-#include "c_common.h"
+#include "corto/gen/c/common/common.h"
 
 /* Load dependencies */
 static void c_projectLoadPackages(g_file file) {

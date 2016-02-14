@@ -1,5 +1,7 @@
-TARGET = :c_common
+PACKAGE = "corto/gen/c/common"
 
+NOCORTO = true
 CFLAGS = ["-Wunused-parameter"]
+USE_PACKAGE = ["corto"]
 
-require "#{ENV['CORTO_BUILD']}/library"
+require "#{ENV['CORTO_BUILD']}/package"

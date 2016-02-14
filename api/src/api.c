@@ -5,8 +5,8 @@
  *      Author: sander
  */
 
-#include "c_api.h"
-#include "c_common.h"
+#include "api.h"
+#include "corto/gen/c/common/common.h"
 
 /* Walk all types */
 static corto_int16 c_apiWalkType(corto_type o, c_apiWalk_t* data) {

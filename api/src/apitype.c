@@ -1,6 +1,6 @@
 
-#include "c_api.h"
-#include "c_common.h"
+#include "api.h"
+#include "corto/gen/c/common/common.h"
 #include "ctype.h"
 
 typedef struct c_arg {

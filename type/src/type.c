@@ -5,8 +5,8 @@
  *      Author: sander
  */
 
-#include "c_type.h"
-#include "c_common.h"
+#include "type.h"
+#include "corto/gen/c/common/common.h"
 
 typedef struct c_typeWalk_t {
     corto_generator g;
