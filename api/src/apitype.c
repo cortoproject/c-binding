@@ -384,6 +384,7 @@ corto_int16 c_apiTypeAssignComposite(corto_type t, c_apiWalk_t *data) {
 /* Assign collection */
 corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
     corto_id id, cVar, lvalue;
+    corto_type elementType = corto_collection(t)->elementType;
 
     g_fullOid(data->g, t, id);
 
@@ -398,7 +399,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
         g_fileIndent(data->source);
         sprintf(lvalue, "%s[i]", cVar);
-        if (corto_collection(t)->elementType->reference) {
+        if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
             c_apiAssign(
               corto_collection(t)->elementType, FALSE, lvalue, "elements[i]", data);
         } else {

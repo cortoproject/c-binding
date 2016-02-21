@@ -40,8 +40,6 @@ static corto_int16 c_apiSequenceTypeForeach(corto_sequence o, c_apiWalk_t* data)
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
 
-
-
     /* Macro */
     g_fileWrite(data->header, "#define %sForeach(seq, elem) \\\n", id);
     g_fileIndent(data->header);
