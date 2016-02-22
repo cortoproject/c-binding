@@ -413,7 +413,11 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
         g_fileIndent(data->source);
-        g_fileWrite(data->source, "%sAppend(%s, elements[i]);\n", id, cVar);
+        if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
+            g_fileWrite(data->source, "%sAppend(*%s, elements[i]);\n", id, cVar);
+        } else {
+            g_fileWrite(data->source, "%sAppend(*%s, &elements[i]);\n", id, cVar);
+        }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
         break;
