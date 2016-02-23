@@ -15,6 +15,19 @@ static void c_projectLoadPackages(g_file file) {
     }
 }
 
+/* Get name from package name */
+char* c_projectGetName(corto_string package) {
+    char *ptr = &package[strlen(package) - 1];
+    while ((ptr != package)) {
+        ptr --;
+        if (*ptr == '/') {
+            ptr ++;
+            break;
+        }
+    }
+    return ptr;
+}
+
 /* Generate file containing loader */
 static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     corto_id filename;
@@ -53,14 +66,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
         corto_string name = g_getName(g);
 
         if (!app && !local) {
-            char *ptr = &name[strlen(name) - 1];
-            while ((ptr != name)) {
-                ptr --;
-                if (*ptr == '/') {
-                    ptr ++;
-                    break;
-                }
-            }
+            char *ptr = c_projectGetName(name);
             sprintf(header, "%s/%s.h", g_getName(g), ptr);
             name = ptr;
         } else {
@@ -93,11 +99,19 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     corto_ll packages;
     corto_id upperName;
     corto_bool error = FALSE;
+    char *name = c_projectGetName(g_getName(g));
 
     strcpy(upperName, g_getName(g));
     corto_strupper(upperName);
+    char *ptr = upperName, ch;
+    while ((ch = *ptr)) {
+        if (ch == '/') {
+            *ptr = '_';
+        }
+        ptr++;
+    }
 
-    sprintf(filename, "%s.h", g_getName(g));
+    sprintf(filename, "%s.h", name);
 
     file = g_fileOpen(g, filename);
     if(!file) {
