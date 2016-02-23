@@ -6,10 +6,10 @@
  * when the file is regenerated.
  */
 
-#include "type/type.h"
+#include "basic/basic.h"
 
-corto_int16 _type_primitiveType_init(type_primitiveType* this) {
-/* $begin(type/primitiveType/init) */
+corto_int16 _basic_primitiveType_init(basic_primitiveType* this) {
+/* $begin(basic/primitiveType/init) */
     *this = 5;
     return 0;
 /* $end */

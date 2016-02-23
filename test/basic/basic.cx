@@ -1,4 +1,4 @@
-#package /type
+#package /basic
 
 // Create one VOID, ANY, PRIMITIVE, COMPOSITE and COLLECTION type. The test will
 // validate that appropriate functions are generated for each type.

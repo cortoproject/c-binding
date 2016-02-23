@@ -1,4 +1,4 @@
 
-PACKAGE = 'type'
+PACKAGE = 'basic'
 
 require "#{ENV['CORTO_BUILD']}/package"

@@ -1,15 +1,15 @@
 /* $CORTO_GENERATED
  *
- * compositeReferenceType.c
+ * compositeType.c
  *
  * Only code written between the begin and end tags will be preserved
  * when the file is regenerated.
  */
 
-#include "type/type.h"
+#include "basic/basic.h"
 
-corto_int16 _type_compositeReferenceType_init(type_compositeReferenceType this) {
-/* $begin(type/compositeReferenceType/init) */
+corto_int16 _basic_compositeType_init(basic_compositeType* this) {
+/* $begin(basic/compositeType/init) */
 
     this->x = 1;
     this->y = 2;

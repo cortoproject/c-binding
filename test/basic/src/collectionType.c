@@ -6,10 +6,10 @@
  * when the file is regenerated.
  */
 
-#include "type/type.h"
+#include "basic/basic.h"
 
-corto_int16 _type_collectionType_init(type_collectionType this) {
-/* $begin(type/collectionType/init) */
+corto_int16 _basic_collectionType_init(basic_collectionType this) {
+/* $begin(basic/collectionType/init) */
 
     this[0] = 1;
     this[1] = 2;

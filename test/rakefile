@@ -1,6 +1,6 @@
 
 COMPONENTS = %w(
-    type
+    basic
 )
 
 require "#{ENV['CORTO_BUILD']}/forward"
