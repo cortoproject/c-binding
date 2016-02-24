@@ -50,8 +50,11 @@ static int c_interfaceParam(corto_parameter *o, void *userData) {
 
     /* Write comma */
     if (data->firstComma) {
-        if (data->generateSource) g_fileWrite(data->source, ", ");
-        if (data->generateHeader) g_fileWrite(data->header, ", ");
+        if (data->generateSource) g_fileWrite(data->source, ",\n    ");
+        if (data->generateHeader) g_fileWrite(data->header, ",\n    ");
+    } else {
+        if (data->generateSource) g_fileWrite(data->source, "\n    ");
+        if (data->generateHeader) g_fileWrite(data->header, "\n    ");
     }
 
     if (c_specifierId(data->g, o->type, specifier, NULL, postfix)) {
@@ -587,8 +590,8 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->source, "%s%s _%s", returnSpec, returnPostfix,
             functionName);
 
-        g_fileWrite(data->source, "(");
-        g_fileWrite(data->header, "(");
+        g_fileWrite(data->source, "(\n    ");
+        g_fileWrite(data->header, "(\n    ");
 
         /* Add 'this' parameter to methods */
         if (c_procedureHasThis(o)) {
@@ -617,7 +620,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         }
 
         /* Begin of function */
-        g_fileWrite(data->source, ") {\n");
+        g_fileWrite(data->source, ")\n{\n");
         g_fileWrite(data->source, "/* $begin(%s)", signatureName);
         g_fileIndent(data->source);
 
