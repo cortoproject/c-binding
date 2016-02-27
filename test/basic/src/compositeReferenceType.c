@@ -8,7 +8,9 @@
 
 #include "basic/basic.h"
 
-corto_int16 _basic_compositeReferenceType_init(basic_compositeReferenceType this) {
+corto_int16 _basic_compositeReferenceType_init(
+    basic_compositeReferenceType this)
+{
 /* $begin(basic/compositeReferenceType/init) */
 
     this->x = 1;

@@ -17,7 +17,8 @@ extern "C" {
 #endif
 
 
-BASIC_EXPORT corto_int16 _basic_primitiveType_init(basic_primitiveType* _this);
+BASIC_EXPORT corto_int16 _basic_primitiveType_init(
+    basic_primitiveType* _this);
 #define basic_primitiveType_init(_this) _basic_primitiveType_init(_this)
 
 #ifdef __cplusplus

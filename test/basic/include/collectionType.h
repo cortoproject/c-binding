@@ -17,7 +17,8 @@ extern "C" {
 #endif
 
 
-BASIC_EXPORT corto_int16 _basic_collectionType_init(basic_collectionType _this);
+BASIC_EXPORT corto_int16 _basic_collectionType_init(
+    basic_collectionType _this);
 #define basic_collectionType_init(_this) _basic_collectionType_init(_this)
 
 #ifdef __cplusplus

@@ -144,12 +144,12 @@ static void c_interfaceParamThis(corto_type parentType, c_typeWalk_t* data, cort
 
     if (toSource) {
         g_fileWrite(data->source,
-            "%s this",
+            "\n    %s this",
             c_typeptr(data->g, parentType, classId));
     }
     if (toHeader) {
         g_fileWrite(data->header,
-            "%s _this",
+            "\n    %s _this",
             c_typeptr(data->g, parentType, classId));
     }
 }
@@ -590,8 +590,8 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->source, "%s%s _%s", returnSpec, returnPostfix,
             functionName);
 
-        g_fileWrite(data->source, "(\n    ");
-        g_fileWrite(data->header, "(\n    ");
+        g_fileWrite(data->source, "(");
+        g_fileWrite(data->header, "(");
 
         /* Add 'this' parameter to methods */
         if (c_procedureHasThis(o)) {

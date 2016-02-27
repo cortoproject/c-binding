@@ -8,13 +8,18 @@
 
 #include "test.h"
 
-corto_void _test_primitiveApi_onUpdate(test_primitiveApi this, corto_object observable) {
+corto_void _test_primitiveApi_onUpdate(
+    test_primitiveApi this,
+    corto_object observable)
+{
 /* $begin(test/primitiveApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_compare(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_compare(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_compare) */
     corto_equalityKind eq;
 
@@ -30,7 +35,9 @@ corto_void _test_primitiveApi_tc_compare(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_create(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_create(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_create) */
 
     basic_primitiveType *o = basic_primitiveTypeCreate(10);
@@ -43,7 +50,9 @@ corto_void _test_primitiveApi_tc_create(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_createAuto(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_createAuto(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_createAuto) */
 
     basic_primitiveTypeCreate_auto(o, 10);
@@ -56,7 +65,9 @@ corto_void _test_primitiveApi_tc_createAuto(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_createChild(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_createChild(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_createChild) */
 
     basic_primitiveType *o = basic_primitiveTypeCreateChild(root_o, "o", 10);
@@ -72,7 +83,9 @@ corto_void _test_primitiveApi_tc_createChild(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_createChildAuto(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_createChildAuto(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_createChildAuto) */
 
     basic_primitiveTypeCreateChild_auto(root_o, o, 10);
@@ -88,7 +101,9 @@ corto_void _test_primitiveApi_tc_createChildAuto(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_declare(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_declare(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_declare) */
 
     basic_primitiveType *o = basic_primitiveTypeDeclare();
@@ -101,7 +116,9 @@ corto_void _test_primitiveApi_tc_declare(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_declareAuto(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_declareAuto(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_declareAuto) */
 
     basic_primitiveTypeDeclare_auto(o);
@@ -114,7 +131,9 @@ corto_void _test_primitiveApi_tc_declareAuto(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_declareChild(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_declareChild(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_declareChild) */
 
     basic_primitiveType *o = basic_primitiveTypeDeclareChild(root_o, "o");
@@ -130,7 +149,9 @@ corto_void _test_primitiveApi_tc_declareChild(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_declareChildAuto(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_declareChildAuto(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_declareChildAuto) */
 
     basic_primitiveTypeDeclareChild_auto(root_o, o);
@@ -146,7 +167,9 @@ corto_void _test_primitiveApi_tc_declareChildAuto(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_define(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_define(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_define) */
     corto_int16 result;
 
@@ -169,7 +192,9 @@ corto_void _test_primitiveApi_tc_define(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_fromStr(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_fromStr(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_fromStr) */
 
     basic_primitiveType *o = basic_primitiveTypeCreate(10);
@@ -181,7 +206,9 @@ corto_void _test_primitiveApi_tc_fromStr(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_set(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_set(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_set) */
 
     basic_primitiveType *o = basic_primitiveTypeCreate(10);
@@ -193,7 +220,9 @@ corto_void _test_primitiveApi_tc_set(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_str(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_str(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_str) */
 
     basic_primitiveType *o = basic_primitiveTypeCreate(10);
@@ -206,7 +235,9 @@ corto_void _test_primitiveApi_tc_str(test_primitiveApi this) {
 /* $end */
 }
 
-corto_void _test_primitiveApi_tc_update(test_primitiveApi this) {
+corto_void _test_primitiveApi_tc_update(
+    test_primitiveApi this)
+{
 /* $begin(test/primitiveApi/tc_update) */
     corto_int16 result;
 

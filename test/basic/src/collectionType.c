@@ -8,7 +8,9 @@
 
 #include "basic/basic.h"
 
-corto_int16 _basic_collectionType_init(basic_collectionType this) {
+corto_int16 _basic_collectionType_init(
+    basic_collectionType this)
+{
 /* $begin(basic/collectionType/init) */
 
     this[0] = 1;

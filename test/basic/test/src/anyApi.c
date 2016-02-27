@@ -8,7 +8,10 @@
 
 #include "test.h"
 
-corto_void _test_anyApi_onUpdate(test_anyApi this, corto_object observable) {
+corto_void _test_anyApi_onUpdate(
+    test_anyApi this,
+    corto_object observable)
+{
 /* $begin(test/anyApi/onUpdate) */
 
     this->updated = TRUE;
@@ -16,7 +19,9 @@ corto_void _test_anyApi_onUpdate(test_anyApi this, corto_object observable) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_compare(test_anyApi this) {
+corto_void _test_anyApi_tc_compare(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_compare) */
     corto_int32 i1 = 10, i2 = 20;
     basic_anyType a = {corto_type(corto_int32_o), &i1, FALSE};
@@ -35,7 +40,9 @@ corto_void _test_anyApi_tc_compare(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_create(test_anyApi this) {
+corto_void _test_anyApi_tc_create(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_create) */
     corto_string v = "Foo";
     basic_anyType *o = basic_anyTypeCreate(corto_string_o, &v);
@@ -53,7 +60,9 @@ corto_void _test_anyApi_tc_create(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_createAuto(test_anyApi this) {
+corto_void _test_anyApi_tc_createAuto(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_createAuto) */
     corto_string v = "Foo";
     basic_anyTypeCreate_auto(o, corto_string_o, &v);
@@ -71,7 +80,9 @@ corto_void _test_anyApi_tc_createAuto(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_createChild(test_anyApi this) {
+corto_void _test_anyApi_tc_createChild(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_createChild) */
     corto_string v = "Foo";
     basic_anyType *o = basic_anyTypeCreateChild(root_o, "o", corto_string_o, &v);
@@ -92,7 +103,9 @@ corto_void _test_anyApi_tc_createChild(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_createChildAuto(test_anyApi this) {
+corto_void _test_anyApi_tc_createChildAuto(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_createChildAuto) */
     corto_string v = "Foo";
     basic_anyTypeCreateChild_auto(root_o, o, corto_string_o, &v);
@@ -113,7 +126,9 @@ corto_void _test_anyApi_tc_createChildAuto(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_declare(test_anyApi this) {
+corto_void _test_anyApi_tc_declare(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_declare) */
     basic_anyType *o = basic_anyTypeDeclare();
     test_assert(o != NULL);
@@ -127,7 +142,9 @@ corto_void _test_anyApi_tc_declare(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_declareAuto(test_anyApi this) {
+corto_void _test_anyApi_tc_declareAuto(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_declareAuto) */
     basic_anyTypeDeclare_auto(o);
     test_assert(o != NULL);
@@ -142,7 +159,9 @@ corto_void _test_anyApi_tc_declareAuto(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_declareChild(test_anyApi this) {
+corto_void _test_anyApi_tc_declareChild(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_declareChild) */
     basic_anyType *o = basic_anyTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
@@ -159,7 +178,9 @@ corto_void _test_anyApi_tc_declareChild(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_declareChildAuto(test_anyApi this) {
+corto_void _test_anyApi_tc_declareChildAuto(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_declareChildAuto) */
     basic_anyTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
@@ -176,7 +197,9 @@ corto_void _test_anyApi_tc_declareChildAuto(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_define(test_anyApi this) {
+corto_void _test_anyApi_tc_define(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_define) */
     corto_int16 result;
     corto_int32 v = 10;
@@ -204,7 +227,9 @@ corto_void _test_anyApi_tc_define(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_fromStr(test_anyApi this) {
+corto_void _test_anyApi_tc_fromStr(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_fromStr) */
     corto_string v = "Foo";
     basic_anyType o = {corto_type(corto_string_o), &v, FALSE};
@@ -218,7 +243,9 @@ corto_void _test_anyApi_tc_fromStr(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_set(test_anyApi this) {
+corto_void _test_anyApi_tc_set(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_set) */
     corto_int32 v1 = 10;
     corto_string v2 = "Foo";
@@ -234,7 +261,9 @@ corto_void _test_anyApi_tc_set(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_str(test_anyApi this) {
+corto_void _test_anyApi_tc_str(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_str) */
     corto_int32 v1 = 10;
     basic_anyType o = {corto_type(corto_int32_o), &v1, FALSE};
@@ -246,7 +275,9 @@ corto_void _test_anyApi_tc_str(test_anyApi this) {
 /* $end */
 }
 
-corto_void _test_anyApi_tc_update(test_anyApi this) {
+corto_void _test_anyApi_tc_update(
+    test_anyApi this)
+{
 /* $begin(test/anyApi/tc_update) */
     corto_int16 result;
 

@@ -8,13 +8,18 @@
 
 #include "test.h"
 
-corto_void _test_compositeApi_onUpdate(test_compositeApi this, corto_object observable) {
+corto_void _test_compositeApi_onUpdate(
+    test_compositeApi this,
+    corto_object observable)
+{
 /* $begin(test/compositeApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_compare(test_compositeApi this) {
+corto_void _test_compositeApi_tc_compare(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_compare) */
     corto_equalityKind eq;
     basic_compositeType a = {10, 20}, b = {20, 30};
@@ -31,7 +36,9 @@ corto_void _test_compositeApi_tc_compare(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_create(test_compositeApi this) {
+corto_void _test_compositeApi_tc_create(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_create) */
 
     basic_compositeType *o = basic_compositeTypeCreate(10, 20);
@@ -45,7 +52,9 @@ corto_void _test_compositeApi_tc_create(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_createAuto(test_compositeApi this) {
+corto_void _test_compositeApi_tc_createAuto(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_createAuto) */
 
     basic_compositeTypeCreate_auto(o, 10, 20);
@@ -59,7 +68,9 @@ corto_void _test_compositeApi_tc_createAuto(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_createChild(test_compositeApi this) {
+corto_void _test_compositeApi_tc_createChild(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_createChild) */
 
     basic_compositeType *o = basic_compositeTypeCreateChild(root_o, "o", 10, 20);
@@ -76,7 +87,9 @@ corto_void _test_compositeApi_tc_createChild(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_createChildAuto(test_compositeApi this) {
+corto_void _test_compositeApi_tc_createChildAuto(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_createChildAuto) */
 
     basic_compositeTypeCreateChild_auto(root_o, o, 10, 20);
@@ -93,7 +106,9 @@ corto_void _test_compositeApi_tc_createChildAuto(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_declare(test_compositeApi this) {
+corto_void _test_compositeApi_tc_declare(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_declare) */
 
     basic_compositeType *o = basic_compositeTypeDeclare();
@@ -107,7 +122,9 @@ corto_void _test_compositeApi_tc_declare(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_declareAuto(test_compositeApi this) {
+corto_void _test_compositeApi_tc_declareAuto(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_declareAuto) */
 
     basic_compositeTypeDeclare_auto(o);
@@ -121,7 +138,9 @@ corto_void _test_compositeApi_tc_declareAuto(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_declareChild(test_compositeApi this) {
+corto_void _test_compositeApi_tc_declareChild(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_declareChild) */
 
     basic_compositeType *o = basic_compositeTypeDeclareChild(root_o, "o");
@@ -138,7 +157,9 @@ corto_void _test_compositeApi_tc_declareChild(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_declareChildAuto(test_compositeApi this) {
+corto_void _test_compositeApi_tc_declareChildAuto(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_declareChildAuto) */
 
     basic_compositeTypeDeclareChild_auto(root_o, o);
@@ -155,7 +176,9 @@ corto_void _test_compositeApi_tc_declareChildAuto(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_define(test_compositeApi this) {
+corto_void _test_compositeApi_tc_define(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_define) */
     corto_int16 result;
 
@@ -180,7 +203,9 @@ corto_void _test_compositeApi_tc_define(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_fromStr(test_compositeApi this) {
+corto_void _test_compositeApi_tc_fromStr(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_fromStr) */
     basic_compositeType o = {10, 20};
 
@@ -191,7 +216,9 @@ corto_void _test_compositeApi_tc_fromStr(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_set(test_compositeApi this) {
+corto_void _test_compositeApi_tc_set(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_set) */
     basic_compositeType o = {10, 20};
 
@@ -202,7 +229,9 @@ corto_void _test_compositeApi_tc_set(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_str(test_compositeApi this) {
+corto_void _test_compositeApi_tc_str(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_str) */
     basic_compositeType o = {10, 20};
 
@@ -213,7 +242,9 @@ corto_void _test_compositeApi_tc_str(test_compositeApi this) {
 /* $end */
 }
 
-corto_void _test_compositeApi_tc_update(test_compositeApi this) {
+corto_void _test_compositeApi_tc_update(
+    test_compositeApi this)
+{
 /* $begin(test/compositeApi/tc_update) */
     corto_int16 result;
 

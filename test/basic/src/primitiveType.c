@@ -8,7 +8,9 @@
 
 #include "basic/basic.h"
 
-corto_int16 _basic_primitiveType_init(basic_primitiveType* this) {
+corto_int16 _basic_primitiveType_init(
+    basic_primitiveType* this)
+{
 /* $begin(basic/primitiveType/init) */
     *this = 5;
     return 0;

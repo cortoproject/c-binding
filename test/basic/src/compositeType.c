@@ -8,7 +8,9 @@
 
 #include "basic/basic.h"
 
-corto_int16 _basic_compositeType_init(basic_compositeType* this) {
+corto_int16 _basic_compositeType_init(
+    basic_compositeType* this)
+{
 /* $begin(basic/compositeType/init) */
 
     this->x = 1;

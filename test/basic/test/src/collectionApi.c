@@ -8,13 +8,18 @@
 
 #include "test.h"
 
-corto_void _test_collectionApi_onUpdate(test_collectionApi this, corto_object observable) {
+corto_void _test_collectionApi_onUpdate(
+    test_collectionApi this,
+    corto_object observable)
+{
 /* $begin(test/collectionApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_compare(test_collectionApi this) {
+corto_void _test_collectionApi_tc_compare(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_compare) */
     corto_equalityKind eq;
     basic_collectionType a = {10, 20}, b = {20, 30};
@@ -31,7 +36,9 @@ corto_void _test_collectionApi_tc_compare(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_create(test_collectionApi this) {
+corto_void _test_collectionApi_tc_create(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_create) */
 
     corto_int32* o =
@@ -46,7 +53,9 @@ corto_void _test_collectionApi_tc_create(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_createAuto(test_collectionApi this) {
+corto_void _test_collectionApi_tc_createAuto(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_createAuto) */
 
     basic_collectionTypeCreate_auto(o, 2, ((corto_int32[]){10, 20}));
@@ -60,7 +69,9 @@ corto_void _test_collectionApi_tc_createAuto(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_createChild(test_collectionApi this) {
+corto_void _test_collectionApi_tc_createChild(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_createChild) */
 
     corto_int32 *o =
@@ -78,7 +89,9 @@ corto_void _test_collectionApi_tc_createChild(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_createChildAuto(test_collectionApi this) {
+corto_void _test_collectionApi_tc_createChildAuto(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_createChildAuto) */
 
     basic_collectionTypeCreateChild_auto(root_o, o, 2, ((corto_int32[]){10, 20}));
@@ -95,7 +108,9 @@ corto_void _test_collectionApi_tc_createChildAuto(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_declare(test_collectionApi this) {
+corto_void _test_collectionApi_tc_declare(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_declare) */
 
     corto_int32 *o = basic_collectionTypeDeclare();
@@ -109,7 +124,9 @@ corto_void _test_collectionApi_tc_declare(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_declareAuto(test_collectionApi this) {
+corto_void _test_collectionApi_tc_declareAuto(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_declareAuto) */
 
     basic_collectionTypeDeclare_auto(o);
@@ -123,7 +140,9 @@ corto_void _test_collectionApi_tc_declareAuto(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_declareChild(test_collectionApi this) {
+corto_void _test_collectionApi_tc_declareChild(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_declareChild) */
 
     corto_int32 *o = basic_collectionTypeDeclareChild(root_o, "o");
@@ -140,7 +159,9 @@ corto_void _test_collectionApi_tc_declareChild(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_declareChildAuto(test_collectionApi this) {
+corto_void _test_collectionApi_tc_declareChildAuto(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_declareChildAuto) */
 
     basic_collectionTypeDeclareChild_auto(root_o, o);
@@ -157,7 +178,9 @@ corto_void _test_collectionApi_tc_declareChildAuto(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_define(test_collectionApi this) {
+corto_void _test_collectionApi_tc_define(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_define) */
     corto_int16 result;
 
@@ -182,7 +205,9 @@ corto_void _test_collectionApi_tc_define(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_fromStr(test_collectionApi this) {
+corto_void _test_collectionApi_tc_fromStr(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_fromStr) */
     basic_collectionType o = {10, 20};
 
@@ -193,7 +218,9 @@ corto_void _test_collectionApi_tc_fromStr(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_set(test_collectionApi this) {
+corto_void _test_collectionApi_tc_set(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_set) */
     basic_collectionType o = {10, 20};
 
@@ -204,7 +231,9 @@ corto_void _test_collectionApi_tc_set(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_str(test_collectionApi this) {
+corto_void _test_collectionApi_tc_str(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_str) */
     basic_collectionType o = {10, 20};
 
@@ -214,7 +243,9 @@ corto_void _test_collectionApi_tc_str(test_collectionApi this) {
 /* $end */
 }
 
-corto_void _test_collectionApi_tc_update(test_collectionApi this) {
+corto_void _test_collectionApi_tc_update(
+    test_collectionApi this)
+{
 /* $begin(test/collectionApi/tc_update) */
     corto_int16 result;
 

@@ -8,13 +8,18 @@
 
 #include "test.h"
 
-corto_void _test_voidReferenceApi_onUpdate(test_voidReferenceApi this, corto_object observable) {
+corto_void _test_voidReferenceApi_onUpdate(
+    test_voidReferenceApi this,
+    corto_object observable)
+{
 /* $begin(test/voidReferenceApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_create(test_voidReferenceApi this) {
+corto_void _test_voidReferenceApi_tc_create(
+    test_voidReferenceApi this)
+{
 /* $begin(test/voidReferenceApi/tc_create) */
 
     basic_voidReferenceType o = basic_voidReferenceTypeCreate();
@@ -26,7 +31,9 @@ corto_void _test_voidReferenceApi_tc_create(test_voidReferenceApi this) {
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_createAuto(test_voidReferenceApi this) {
+corto_void _test_voidReferenceApi_tc_createAuto(
+    test_voidReferenceApi this)
+{
 /* $begin(test/voidReferenceApi/tc_createAuto) */
 
     basic_voidReferenceTypeCreate_auto(o);
@@ -38,7 +45,9 @@ corto_void _test_voidReferenceApi_tc_createAuto(test_voidReferenceApi this) {
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_createChild(test_voidReferenceApi this) {
+corto_void _test_voidReferenceApi_tc_createChild(
+    test_voidReferenceApi this)
+{
 /* $begin(test/voidReferenceApi/tc_createChild) */
 
     basic_voidReferenceType o = basic_voidReferenceTypeCreateChild(root_o, "o");
@@ -53,7 +62,9 @@ corto_void _test_voidReferenceApi_tc_createChild(test_voidReferenceApi this) {
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_createChildAuto(test_voidReferenceApi this) {
+corto_void _test_voidReferenceApi_tc_createChildAuto(
+    test_voidReferenceApi this)
+{
 /* $begin(test/voidReferenceApi/tc_createChildAuto) */
 
     basic_voidReferenceTypeCreateChild_auto(root_o, o);
@@ -68,7 +79,9 @@ corto_void _test_voidReferenceApi_tc_createChildAuto(test_voidReferenceApi this)
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_update(test_voidReferenceApi this) {
+corto_void _test_voidReferenceApi_tc_update(
+    test_voidReferenceApi this)
+{
 /* $begin(test/voidReferenceApi/tc_update) */
     corto_int16 result;
 
