@@ -898,6 +898,11 @@ corto_int16 c_apiDelegateInitCallback(
         firstComma ++;
     }
 
+    if (!firstComma) {
+        g_fileWrite(data->header, "void");
+        g_fileWrite(data->source, "void");
+    }
+
     g_fileWrite(data->header, "));\n");
     g_fileWrite(data->source, ")) {\n");
     g_fileIndent(data->source);
