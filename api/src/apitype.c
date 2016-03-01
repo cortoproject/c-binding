@@ -130,10 +130,12 @@ static corto_int16 c_apiAssign (
     c_apiWalk_t *data)
 {
     if (t->reference) {
-        g_fileWrite(data->source, "corto_setref(&%s, %s);\n", lvalue, rvalue);
+        g_fileWrite(data->source, "corto_setref(%s%s, %s);\n",
+                ptr ? "" : "&", lvalue, rvalue);
     } else if (t->kind == CORTO_PRIMITIVE) {
         if (corto_primitive(t)->kind == CORTO_TEXT) {
-            g_fileWrite(data->source, "corto_setstr(&%s, %s);\n", lvalue, rvalue);
+            g_fileWrite(data->source, "corto_setstr(%s%s, %s);\n",
+                ptr ? "" : "&", lvalue, rvalue);
         } else {
             g_fileWrite(data->source, "%s%s = %s;\n",
                 (!c_typeRequiresPtr(t) && ptr) ? "*" : "",
@@ -872,8 +874,8 @@ corto_int16 c_apiDelegateInitCallback(
             id, id);
     }
 
-    g_fileWrite(data->header, "%s(*callback)(", returnId);
-    g_fileWrite(data->source, "%s(*callback)(", returnId);
+    g_fileWrite(data->header, "%s ___ (*callback)(", returnId);
+    g_fileWrite(data->source, "%s ___ (*callback)(", returnId);
 
     if (instance) {
         g_fileWrite(data->header, "corto_object");

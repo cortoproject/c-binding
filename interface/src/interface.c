@@ -415,10 +415,10 @@ static void c_interfaceClassFptrDeclaration(
     corto_id returnSpec, returnPostfix;
 
     c_specifierId(data->g, d->returnType, returnSpec, NULL, returnPostfix);
-    g_fileWrite(data->wrapper, "%s (*_fptr)(corto_object", returnSpec);
+    g_fileWrite(data->wrapper, "%s ___ (*_fptr)(corto_object", returnSpec);
     data->firstComma = 1;
     c_interfaceParamWalk(d, c_procedureFptrDeclParam, data);
-    g_fileWrite(data->wrapper, ") = (%s(*)(corto_object", returnSpec);
+    g_fileWrite(data->wrapper, ") = (%s ___ (*)(corto_object", returnSpec);
     data->firstComma = 1;
     c_interfaceParamWalk(d, c_procedureFptrDeclParam, data);
     g_fileWrite(data->wrapper, "))f->implData;\n");
@@ -708,6 +708,10 @@ static int c_interfaceCheckProcedures(void *o, void *udata) {
     if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
         return 0;
     }
+    if (corto_instanceof(corto_delegate_o, o)) {
+        return 0;
+    }
+
     return 1;
 }
 
@@ -909,7 +913,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         }
 
         /* If top level file, generate main function */
-        if (isTopLevelObject) {
+        if (isTopLevelObject && !isBootstrap) {
             g_fileWrite(data->source, "\n");
             g_fileWrite(data->source, "int %sMain(int argc, char* argv[]) {\n", corto_nameof(o));
             g_fileWrite(data->source, "/* $begin(main)");
