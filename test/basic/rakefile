@@ -1,4 +1,6 @@
 
 PACKAGE = 'basic'
 
+COVERAGE = false
+
 require "#{ENV['CORTO_BUILD']}/package"

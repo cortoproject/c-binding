@@ -318,6 +318,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
     corto_bool requiresAlloc = corto_collection_requiresAlloc(elementType);
+    corto_bool ptr = c_typeRequiresPtr(elementType);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
@@ -334,18 +335,18 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
 
     /* Function declaration */
     g_fileWrite(data->header, "%s%s(%s list, %s%s element);\n",
-        id, operation, id, elementId, requiresAlloc ? "*" : "");
+        id, operation, id, elementId, ptr ? "*" : "");
 
     /* Function implementation */
     g_fileWrite(data->source, "%s%s(%s list, %s%s element) {\n",
-        id, operation, id, elementId, requiresAlloc ? "*" : "");
+        id, operation, id, elementId, ptr ? "*" : "");
 
     g_fileIndent(data->source);
 
     /* Insert element to list */
     if (requiresAlloc) {
         g_fileWrite(data->source, "%s *result = %s%sAlloc(list);\n", elementId, id, operation);
-        g_fileWrite(data->source, "corto_copyp(result, %s_o, element);\n", elementId);
+        g_fileWrite(data->source, "corto_copyp(result, %s_o, %selement);\n", elementId, ptr ? "" : "&");
     } else {
         g_fileWrite(data->source, "%s(list, (void*)(corto_word)element);\n", corto_operationToApi(operation, api));
         if (elementType->reference) {
@@ -439,41 +440,6 @@ static corto_int16 c_apiListTypeTake(corto_list o, corto_string operation, c_api
     return 0;
 }
 
-/* Create clear function for types that require allocation */
-static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
-    corto_id id, elementId;
-    corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
-    corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
-
-    c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-
-    /* Function declaration */
-    c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " void %sClear(%s list);\n", id, id);
-
-    /* Function implementation */
-    g_fileWrite(data->source, "void %sClear(%s list) {\n", id, id);
-    g_fileIndent(data->source);
-    g_fileWrite(data->source, "void *element;\n\n");
-    g_fileWrite(data->source, "while((element = corto_llTakeFirst(list))) {\n");
-    g_fileIndent(data->source);
-    if (allocRequired) {
-        c_apiElementInit(elementId, "element", FALSE, data);
-        g_fileWrite(data->source, "corto_dealloc(element);\n");
-    } else if (elementType->reference) {
-        g_fileWrite(data->source, "corto_release(element);\n");
-    }
-    g_fileDedent(data->source);
-    g_fileWrite(data->source, "}\n");
-
-    g_fileDedent(data->source);
-    g_fileWrite(data->source, "}\n\n");
-
-    return 0;
-}
-
 /* Create get function for types that require allocation */
 static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId;
@@ -527,6 +493,44 @@ static corto_int16 c_apiListTypeSize(corto_list o, c_apiWalk_t* data) {
     return 0;
 }
 
+static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
+    corto_id id, elementId;
+    corto_bool prefix;
+    corto_type elementType = corto_collection(o)->elementType;
+
+    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
+
+    /* Function declaration */
+    c_writeExport(data->g, data->header);
+    g_fileWrite(data->header, " void %sClear(%s list);\n", id, id);
+
+    /* Function implementation */
+    g_fileWrite(data->source, "void %sClear(%s list) {\n", id, id);
+    g_fileIndent(data->source);
+
+    g_fileWrite(data->source, "corto_iter iter = corto_llIter(list);\n");
+    g_fileWrite(data->source, "while(corto_iterHasNext(&iter)) {\n");
+    g_fileIndent(data->source);
+    g_fileWrite(data->source, "void *ptr = corto_iterNext(&iter);\n");
+
+    if (elementType->reference) {
+        g_fileWrite(data->source, "corto_release(ptr);\n");
+    } else {
+        g_fileWrite(data->source, "corto_deinitp(ptr, %s_o);\n", elementId);
+        if (corto_collection_requiresAlloc(elementType)) {
+            g_fileWrite(data->source, "corto_dealloc(ptr);\n");
+        }
+    }
+    g_fileDedent(data->source);
+    g_fileWrite(data->source, "}\n");
+    g_fileWrite(data->source, "corto_llClear(list);\n");
+
+    g_fileDedent(data->source);
+    g_fileWrite(data->source, "}\n\n");
+
+    return 0;
+}
+
 /* Walk list */
 static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
 
@@ -560,15 +564,15 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
         goto error;
     }
 
-    if (c_apiListTypeClear(o, data)) {
-        goto error;
-    }
-
     if (c_apiListTypeGet(o, data)) {
         goto error;
     }
 
     if (c_apiListTypeSize(o, data)) {
+        goto error;
+    }
+
+    if (c_apiListTypeClear(o, data)) {
         goto error;
     }
 

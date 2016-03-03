@@ -413,6 +413,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
         break;
     case CORTO_LIST:
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
+        g_fileWrite(data->source, "%sClear(*%s);\n", id, cVar);
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
         g_fileIndent(data->source);
         if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
