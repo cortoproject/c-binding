@@ -446,20 +446,43 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
     corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
+    corto_bool deref = (!elementType->reference && (elementType->kind == CORTO_COMPOSITE));
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " %s%s %sGet(%s list, corto_uint32 index);\n", elementId, allocRequired?"*":"", id, id);
+    g_fileWrite(
+      data->header,
+      " %s%s %sGet(%s list, corto_uint32 index);\n",
+      elementId,
+      deref ? "*" : "", id, id);
 
     /* Function implementation */
-    g_fileWrite(data->source, "%s%s %sGet(%s list, corto_uint32 index) {\n", elementId, allocRequired?"*":"", id, id);
+    g_fileWrite(
+      data->source,
+      "%s%s %sGet(%s list, corto_uint32 index) {\n",
+      elementId,
+      deref ? "*" : "", id, id);
+
     g_fileIndent(data->source);
 
     /* Insert element to list */
-    g_fileWrite(data->source, "return (%s%s)(corto_word)corto_llGet(list, index);\n", elementId, allocRequired?"*":"");
+    if (allocRequired) {
+        g_fileWrite(
+          data->source,
+          "return %s(%s%s)corto_llGet(list, index);\n",
+          (elementType->kind == CORTO_PRIMITIVE) ? "*" : "",
+          elementId,
+          allocRequired ? "*" : "");
+    } else {
+        g_fileWrite(
+          data->source,
+          "return (%s%s)(corto_word)corto_llGet(list, index);\n",
+          elementId,
+          allocRequired ? "*" : "");
+    }
 
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");
