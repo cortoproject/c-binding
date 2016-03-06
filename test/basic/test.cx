@@ -1,5 +1,36 @@
 #package /test
 
+// Create one VOID, ANY, PRIMITIVE, COMPOSITE and COLLECTION type. The test will
+// validate that appropriate functions are generated for each type.
+
+// VOID type
+type voidType: lang/typeKind/VOID, false
+
+// VOID reference type
+type voidReferenceType: lang/typeKind/VOID, true
+
+// ANY type
+type anyType: lang/typeKind/ANY, false
+
+// PRIMITIVE type
+int primitiveType: Width_32 ::
+    int16 init() method
+
+// COMPOSITE type
+struct compositeType::
+    x, y: int32
+    int16 init()
+
+// COMPOSITE reference type
+class compositeReferenceType::
+    x, y: int32
+    int16 init()
+
+// COLLECTION type
+array collectionType: int32, 2 ::
+    int16 init() method
+
+
 test/Suite voidApi::
     void tc_create()
     void tc_createChild()

@@ -6,12 +6,12 @@
  * when the file is regenerated.
  */
 
-#include "basic/basic.h"
+#include "test.h"
 
-corto_int16 _basic_collectionType_init(
-    basic_collectionType this)
+corto_int16 _test_collectionType_init(
+    test_collectionType this)
 {
-/* $begin(basic/collectionType/init) */
+/* $begin(test/collectionType/init) */
 
     this[0] = 1;
     this[1] = 2;

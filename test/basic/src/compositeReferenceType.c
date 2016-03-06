@@ -6,12 +6,12 @@
  * when the file is regenerated.
  */
 
-#include "basic/basic.h"
+#include "test.h"
 
-corto_int16 _basic_compositeReferenceType_init(
-    basic_compositeReferenceType this)
+corto_int16 _test_compositeReferenceType_init(
+    test_compositeReferenceType this)
 {
-/* $begin(basic/compositeReferenceType/init) */
+/* $begin(test/compositeReferenceType/init) */
 
     this->x = 1;
     this->y = 2;

@@ -22,15 +22,15 @@ corto_void _test_collectionApi_tc_compare(
 {
 /* $begin(test/collectionApi/tc_compare) */
     corto_equalityKind eq;
-    basic_collectionType a = {10, 20}, b = {20, 30};
+    test_collectionType a = {10, 20}, b = {20, 30};
 
-    eq = basic_collectionTypeCompare(a, b);
+    eq = test_collectionTypeCompare(a, b);
     test_assert(eq == CORTO_LT);
 
-    eq = basic_collectionTypeCompare(b, a);
+    eq = test_collectionTypeCompare(b, a);
     test_assert(eq == CORTO_GT);
 
-    eq = basic_collectionTypeCompare(a, a);
+    eq = test_collectionTypeCompare(a, a);
     test_assert(eq == CORTO_EQ);
 
 /* $end */
@@ -42,9 +42,9 @@ corto_void _test_collectionApi_tc_create(
 /* $begin(test/collectionApi/tc_create) */
 
     corto_int32* o =
-        basic_collectionTypeCreate(2, ((corto_int32[]){10, 20}));
+        test_collectionTypeCreate(2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
@@ -58,9 +58,9 @@ corto_void _test_collectionApi_tc_createAuto(
 {
 /* $begin(test/collectionApi/tc_createAuto) */
 
-    basic_collectionTypeCreate_auto(o, 2, ((corto_int32[]){10, 20}));
+    test_collectionTypeCreate_auto(o, 2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
@@ -75,9 +75,9 @@ corto_void _test_collectionApi_tc_createChild(
 /* $begin(test/collectionApi/tc_createChild) */
 
     corto_int32 *o =
-      basic_collectionTypeCreateChild(root_o, "o", 2, ((corto_int32[]){10, 20}));
+      test_collectionTypeCreateChild(root_o, "o", 2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -94,9 +94,9 @@ corto_void _test_collectionApi_tc_createChildAuto(
 {
 /* $begin(test/collectionApi/tc_createChildAuto) */
 
-    basic_collectionTypeCreateChild_auto(root_o, o, 2, ((corto_int32[]){10, 20}));
+    test_collectionTypeCreateChild_auto(root_o, o, 2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -113,9 +113,9 @@ corto_void _test_collectionApi_tc_declare(
 {
 /* $begin(test/collectionApi/tc_declare) */
 
-    corto_int32 *o = basic_collectionTypeDeclare();
+    corto_int32 *o = test_collectionTypeDeclare();
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
@@ -129,9 +129,9 @@ corto_void _test_collectionApi_tc_declareAuto(
 {
 /* $begin(test/collectionApi/tc_declareAuto) */
 
-    basic_collectionTypeDeclare_auto(o);
+    test_collectionTypeDeclare_auto(o);
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
@@ -145,9 +145,9 @@ corto_void _test_collectionApi_tc_declareChild(
 {
 /* $begin(test/collectionApi/tc_declareChild) */
 
-    corto_int32 *o = basic_collectionTypeDeclareChild(root_o, "o");
+    corto_int32 *o = test_collectionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -164,9 +164,9 @@ corto_void _test_collectionApi_tc_declareChildAuto(
 {
 /* $begin(test/collectionApi/tc_declareChildAuto) */
 
-    basic_collectionTypeDeclareChild_auto(root_o, o);
+    test_collectionTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -184,9 +184,9 @@ corto_void _test_collectionApi_tc_define(
 /* $begin(test/collectionApi/tc_define) */
     corto_int16 result;
 
-    corto_int32 *o = basic_collectionTypeDeclareChild(root_o, "o");
+    corto_int32 *o = test_collectionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == corto_type(basic_collectionType_o));
+    test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -194,7 +194,7 @@ corto_void _test_collectionApi_tc_define(
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
 
-    result = basic_collectionTypeDefine(o, 2, ((corto_int32[]){10, 20}));
+    result = test_collectionTypeDefine(o, 2, ((corto_int32[]){10, 20}));
     test_assert(result == 0);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(o[0] == 10);
@@ -209,9 +209,9 @@ corto_void _test_collectionApi_tc_fromStr(
     test_collectionApi this)
 {
 /* $begin(test/collectionApi/tc_fromStr) */
-    basic_collectionType o = {10, 20};
+    test_collectionType o = {10, 20};
 
-    basic_collectionTypeFromStr(o, "{20, 30}");
+    test_collectionTypeFromStr(o, "{20, 30}");
     test_assert(o[0] == 20);
     test_assert(o[1] == 30);
 
@@ -222,9 +222,9 @@ corto_void _test_collectionApi_tc_set(
     test_collectionApi this)
 {
 /* $begin(test/collectionApi/tc_set) */
-    basic_collectionType o = {10, 20};
+    test_collectionType o = {10, 20};
 
-    basic_collectionTypeSet(o, 2, ((corto_int32[]){20, 30}));
+    test_collectionTypeSet(o, 2, ((corto_int32[]){20, 30}));
     test_assert(o[0] == 20);
     test_assert(o[1] == 30);
 
@@ -235,9 +235,9 @@ corto_void _test_collectionApi_tc_str(
     test_collectionApi this)
 {
 /* $begin(test/collectionApi/tc_str) */
-    basic_collectionType o = {10, 20};
+    test_collectionType o = {10, 20};
 
-    corto_string str = basic_collectionTypeStr(o);
+    corto_string str = test_collectionTypeStr(o);
     test_assert(!strcmp(str, "{10,20}"));
 
 /* $end */
@@ -250,13 +250,13 @@ corto_void _test_collectionApi_tc_update(
     corto_int16 result;
 
     corto_int32 *o =
-        basic_collectionTypeCreate(2, ((corto_int32[]){10, 20}));
+        test_collectionTypeCreate(2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
 
     result = corto_listen(this, test_collectionApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
     test_assert(result == 0);
 
-    result = basic_collectionTypeUpdate(o, 2, ((corto_int32[]){20, 30}));
+    result = test_collectionTypeUpdate(o, 2, ((corto_int32[]){20, 30}));
     test_assert(result == 0);
     test_assert(this->updated == TRUE);
     test_assert(o[0] == 20);

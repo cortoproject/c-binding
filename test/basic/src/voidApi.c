@@ -22,9 +22,9 @@ corto_void _test_voidApi_tc_create(
 {
 /* $begin(test/voidApi/tc_create) */
 
-    basic_voidType *o = basic_voidTypeCreate();
+    test_voidType *o = test_voidTypeCreate();
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidType_o);
+    test_assert(corto_typeof(o) == test_voidType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(!corto_delete(o));
 
@@ -36,9 +36,9 @@ corto_void _test_voidApi_tc_createAuto(
 {
 /* $begin(test/voidApi/tc_createAuto) */
 
-    basic_voidTypeCreate_auto(o);
+    test_voidTypeCreate_auto(o);
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidType_o);
+    test_assert(corto_typeof(o) == test_voidType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(!corto_delete(o));
 
@@ -50,9 +50,9 @@ corto_void _test_voidApi_tc_createChild(
 {
 /* $begin(test/voidApi/tc_createChild) */
 
-    basic_voidType *o = basic_voidTypeCreateChild(root_o, "o");
+    test_voidType *o = test_voidTypeCreateChild(root_o, "o");
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidType_o);
+    test_assert(corto_typeof(o) == test_voidType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -67,9 +67,9 @@ corto_void _test_voidApi_tc_createChildAuto(
 {
 /* $begin(test/voidApi/tc_createChildAuto) */
 
-    basic_voidTypeCreateChild_auto(root_o, o);
+    test_voidTypeCreateChild_auto(root_o, o);
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidType_o);
+    test_assert(corto_typeof(o) == test_voidType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -85,13 +85,13 @@ corto_void _test_voidApi_tc_update(
 /* $begin(test/voidApi/tc_update) */
     corto_int16 result;
 
-    basic_voidType *o = basic_voidTypeCreate();
+    test_voidType *o = test_voidTypeCreate();
     test_assert(o != NULL);
 
     result = corto_listen(this, test_voidApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
     test_assert(result == 0);
 
-    result = basic_voidTypeUpdate(o);
+    result = test_voidTypeUpdate(o);
     test_assert(result == 0);
     test_assert(this->updated == TRUE);
 

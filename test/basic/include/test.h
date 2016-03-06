@@ -18,9 +18,13 @@ extern "C" {
 
 #include "anyApi.h"
 #include "collectionApi.h"
+#include "collectionType.h"
 #include "compositeApi.h"
 #include "compositeReferenceApi.h"
+#include "compositeReferenceType.h"
+#include "compositeType.h"
 #include "primitiveApi.h"
+#include "primitiveType.h"
 #include "voidApi.h"
 #include "voidReferenceApi.h"
 #include "corto/test/test.h"

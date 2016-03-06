@@ -22,9 +22,9 @@ corto_void _test_voidReferenceApi_tc_create(
 {
 /* $begin(test/voidReferenceApi/tc_create) */
 
-    basic_voidReferenceType o = basic_voidReferenceTypeCreate();
+    test_voidReferenceType o = test_voidReferenceTypeCreate();
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidReferenceType_o);
+    test_assert(corto_typeof(o) == test_voidReferenceType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(!corto_delete(o));
 
@@ -36,9 +36,9 @@ corto_void _test_voidReferenceApi_tc_createAuto(
 {
 /* $begin(test/voidReferenceApi/tc_createAuto) */
 
-    basic_voidReferenceTypeCreate_auto(o);
+    test_voidReferenceTypeCreate_auto(o);
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidReferenceType_o);
+    test_assert(corto_typeof(o) == test_voidReferenceType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(!corto_delete(o));
 
@@ -50,9 +50,9 @@ corto_void _test_voidReferenceApi_tc_createChild(
 {
 /* $begin(test/voidReferenceApi/tc_createChild) */
 
-    basic_voidReferenceType o = basic_voidReferenceTypeCreateChild(root_o, "o");
+    test_voidReferenceType o = test_voidReferenceTypeCreateChild(root_o, "o");
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidReferenceType_o);
+    test_assert(corto_typeof(o) == test_voidReferenceType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -67,9 +67,9 @@ corto_void _test_voidReferenceApi_tc_createChildAuto(
 {
 /* $begin(test/voidReferenceApi/tc_createChildAuto) */
 
-    basic_voidReferenceTypeCreateChild_auto(root_o, o);
+    test_voidReferenceTypeCreateChild_auto(root_o, o);
     test_assert(o != NULL);
-    test_assert(corto_typeof(o) == basic_voidReferenceType_o);
+    test_assert(corto_typeof(o) == test_voidReferenceType_o);
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
@@ -85,13 +85,13 @@ corto_void _test_voidReferenceApi_tc_update(
 /* $begin(test/voidReferenceApi/tc_update) */
     corto_int16 result;
 
-    basic_voidReferenceType o = basic_voidReferenceTypeCreate();
+    test_voidReferenceType o = test_voidReferenceTypeCreate();
     test_assert(o != NULL);
 
     result = corto_listen(this, test_voidReferenceApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
     test_assert(result == 0);
 
-    result = basic_voidReferenceTypeUpdate(o);
+    result = test_voidReferenceTypeUpdate(o);
     test_assert(result == 0);
     test_assert(this->updated == TRUE);
 
