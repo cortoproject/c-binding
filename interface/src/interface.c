@@ -246,7 +246,10 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
      * This file will be restored at the end of the function */
     data->source = data->wrapper;
 
-    if (((corto_function)o)->returnType && (corto_function(o)->returnType->kind != CORTO_VOID)) {
+    if (((corto_function)o)->returnType &&
+        ((corto_function(o)->returnType->kind != CORTO_VOID) ||
+         corto_function(o)->returnType->reference))
+    {
         returnsValue = TRUE;
         c_specifierId(data->g, corto_function(o)->returnType, returnTypeId, NULL, returnPostfix);
     } else {
