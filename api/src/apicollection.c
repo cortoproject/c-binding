@@ -521,6 +521,7 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     corto_bool prefix;
     corto_type elementType = corto_collection(o)->elementType;
 
+    c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
 
     /* Function declaration */
