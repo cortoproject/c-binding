@@ -269,7 +269,7 @@ corto_void _test_anyApi_tc_str(
     test_anyType o = {corto_type(corto_int32_o), &v1, FALSE};
 
     corto_string str = test_anyTypeStr(o);
-    test_assert(!strcmp(str, "{/corto/lang/int32,10}"));
+    test_assert(!strcmp(str, "{int32,10}"));
     corto_dealloc(str);
 
 /* $end */
