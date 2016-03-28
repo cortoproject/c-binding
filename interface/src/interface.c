@@ -139,14 +139,28 @@ static int c_interfaceParamWalk(corto_object f, int(*action)(corto_parameter*, v
 /* Add this to parameter-list */
 static void c_interfaceParamThis(corto_type parentType, c_typeWalk_t* data, corto_bool toSource, corto_bool toHeader) {
     corto_id classId;
+    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
 
     g_fullOid(data->g, parentType, classId);
 
-    if (toSource) {
-        g_fileWrite(data->source,
-            "\n    %s this",
-            c_typeptr(data->g, parentType, classId));
+    /* If 'cpp' is enabled, the code will be compiled with a C++ compiler.
+     * Therefore, avoid using the 'this' keyword */
+    if (!cpp) {
+        if (toSource) {
+            g_fileWrite(data->source,
+                "\n    %s this",
+                c_typeptr(data->g, parentType, classId));
+        }
+    } else {
+        if (toSource) {
+            g_fileWrite(data->source,
+                "\n    %s _this",
+                c_typeptr(data->g, parentType, classId));
+        }
     }
+
+    /* 'this' in headers is always prefixed by '_' so headers can be included
+     * by c++ applications */
     if (toHeader) {
         g_fileWrite(data->header,
             "\n    %s _this",
@@ -241,6 +255,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     corto_bool returnsValue;
     corto_id nameString;
     g_file originalSource = data->source;
+    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
 
     /* Replace the source with the wrapper so that all nested functions use the correct outputfile.
      * This file will be restored at the end of the function */
@@ -299,7 +314,11 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
         g_fileWrite(data->wrapper, "%s _result;\n", returnTypeId);
     }
     g_fileWrite(data->wrapper, "corto_interface _abstract;\n\n");
-    g_fileWrite(data->wrapper, "_abstract = corto_interface(corto_typeof(this));\n\n");
+    if (!cpp) {
+        g_fileWrite(data->wrapper, "_abstract = corto_interface(corto_typeof(this));\n\n");
+    } else {
+        g_fileWrite(data->wrapper, "_abstract = corto_interface(corto_typeof(_this));\n\n");
+    }
     g_fileWrite(data->wrapper, "/* Determine methodId once, then cache it for subsequent calls. */\n");
     g_fileWrite(data->wrapper, "if (!_methodId) {\n");
     g_fileIndent(data->wrapper);
@@ -312,13 +331,22 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
       nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
-    g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(this), _methodId);\n\n", nameString);
-
-    if (returnsValue) {
-        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, this");
+    if (!cpp) {
+        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(this), _methodId);\n\n", nameString);
+        if (returnsValue) {
+            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, this");
+        } else {
+            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, this");
+        }
     } else {
-        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, this");
+        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(_this), _methodId);\n\n", nameString);
+        if (returnsValue) {
+            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, _this");
+        } else {
+            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, _this");
+        }
     }
+
     data->firstComma = 3;
     if (!c_interfaceParamWalk(o, c_interfaceParamNameSource, data)) {
         goto error;
@@ -519,6 +547,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_procedureKind kind;
         corto_type returnType;
         corto_string doStubs = gen_getAttribute(data->g, "stubs");
+        corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
 
         kind = corto_procedure(corto_typeof(o))->kind;
         defined = corto_checkState(o, CORTO_DEFINED) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
@@ -601,7 +630,11 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
             if (corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
                 c_interfaceParamThis(corto_parentof(o), data, TRUE, TRUE);
             } else {
-                g_fileWrite(data->source, "corto_any this");
+                if (!cpp) {
+                    g_fileWrite(data->source, "corto_any this");
+                } else {
+                    g_fileWrite(data->source, "corto_any _this");
+                }
                 g_fileWrite(data->header, "corto_any _this");
             }
             data->firstComma = 1;
@@ -668,7 +701,11 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
             }
             if (corto_class_instanceof(corto_interface_o, corto_parentof(o))) {
                 if (corto_procedure(corto_typeof(o))->kind != CORTO_FUNCTION) {
-                    g_fileWrite(data->source, ",this");
+                    if (!cpp) {
+                        g_fileWrite(data->source, ",this");
+                    } else {
+                        g_fileWrite(data->source, ",_this");
+                    }
                 }
             }
             for (i=0; i<corto_function(o)->parameters.length; i++) {

@@ -50,13 +50,17 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     if (g_getCurrent(g)) {
         c_include(g, file, g_getCurrent(g));
         g_fileWrite(file, "\n");
+        g_fileWrite(file, "int %s_load(void);\n", g_getName(g));
+        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
+        g_fileWrite(file, "\n");
+        g_fileWrite(file, "#ifdef __cplusplus\n");
+        g_fileWrite(file, "extern \"C\"\n");
+        g_fileWrite(file, "#endif\n");
         c_writeExport(g, file);
         g_fileWrite(file, " int cortomain(int argc, char* argv[]) {\n");
         g_fileIndent(file);
         c_projectLoadPackages(file);
-        g_fileWrite(file, "int %s_load(void);\n", g_getName(g));
         g_fileWrite(file, "if (%s_load()) return -1;\n", g_getName(g));
-        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
         g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getName(g));
         g_fileWrite(file, "return 0;\n");
         g_fileDedent(file);

@@ -178,7 +178,7 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
         g_fullOid(data->g, corto_parentof(m), type);
 
         sprintf(lvalue,
-            "((%s)this)->%s",
+            "((%s)_this)->%s",
             c_typeptr(data->g, corto_parentof(m), ptr),
             memberId);
 
@@ -357,14 +357,14 @@ corto_int16 c_apiTypeAssignAny(corto_type t, c_apiWalk_t *data) {
     g_fileWrite(data->source, "corto_any v;\n");
     g_fileWrite(data->source, "v.value = value;\n");
     g_fileWrite(data->source, "v.type = type;\n");
-    g_fileWrite(data->source, "this->owner = TRUE;\n");
-    g_fileWrite(data->source, "corto_copyp(this, corto_any_o, &v);\n");
+    g_fileWrite(data->source, "_this->owner = TRUE;\n");
+    g_fileWrite(data->source, "corto_copyp(_this, corto_any_o, &v);\n");
     return 0;
 }
 
 /* Assign primitve */
 corto_int16 c_apiTypeAssignPrimitive(corto_type t, c_apiWalk_t *data) {
-    c_apiAssign(t, TRUE, "this", "value", data);
+    c_apiAssign(t, TRUE, "_this", "value", data);
     return 0;
 }
 
@@ -378,7 +378,7 @@ corto_int16 c_apiTypeAssignComposite(corto_type t, c_apiWalk_t *data) {
     corto_metaWalk(&s, corto_type(t), data);
 
     if (corto_instanceof(corto_procedure_o, t)) {
-        g_fileWrite(data->source, "corto_function(this)->impl = (corto_word)_impl;\n");
+        g_fileWrite(data->source, "corto_function(_this)->impl = (corto_word)_impl;\n");
     }
     return 0;
 }
@@ -390,12 +390,12 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
 
     g_fullOid(data->g, t, id);
 
-    strcpy(cVar, "this");
+    strcpy(cVar, "_this");
 
     switch(corto_collection(t)->kind) {
     case CORTO_SEQUENCE:
-        strcpy(cVar, "this->buffer");
-        g_fileWrite(data->source, "%sSize(this, length);\n", id);
+        strcpy(cVar, "_this->buffer");
+        g_fileWrite(data->source, "%sSize(_this, length);\n", id);
     case CORTO_ARRAY:
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
@@ -501,14 +501,18 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
     data->args = NULL;
 
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "%s this;\n", ret);
+    g_fileWrite(data->source, "%s _this;\n", ret);
     if (scoped) {
-        g_fileWrite(data->source, "this = corto_declareChild(_parent, _name, %s_o);\n", id);
+        g_fileWrite(
+          data->source,
+          "_this = %s(corto_declareChild(_parent, _name, %s_o));\n", id, id);
     } else {
-        g_fileWrite(data->source, "this = corto_declare(%s_o);\n", id);
+        g_fileWrite(
+          data->source,
+          "_this = %s(corto_declare(%s_o));\n", id, id);
     }
 
-    g_fileWrite(data->source, "if (!this) {\n");
+    g_fileWrite(data->source, "if (!_this) {\n");
     g_fileIndent(data->source);
     g_fileWrite(data->source, "return NULL;\n");
     g_fileDedent(data->source);
@@ -520,16 +524,16 @@ corto_int16 c_apiTypeCreateIntern(corto_type t, c_apiWalk_t *data, corto_string 
 
         if (t->kind != CORTO_VOID) {
             /* Define object */
-            g_fileWrite(data->source, "if (corto_define(this)) {\n");
+            g_fileWrite(data->source, "if (corto_define(_this)) {\n");
             g_fileIndent(data->source);
-            g_fileWrite(data->source, "corto_release(this);\n");
-            g_fileWrite(data->source, "this = NULL;\n");
+            g_fileWrite(data->source, "corto_release(_this);\n");
+            g_fileWrite(data->source, "_this = NULL;\n");
             g_fileDedent(data->source);
             g_fileWrite(data->source, "}\n");
         }
     }
 
-    g_fileWrite(data->source, "return this;\n");
+    g_fileWrite(data->source, "return _this;\n");
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");
 
@@ -572,7 +576,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     }
 
     g_fileWrite(data->header, "_%s%s(%s _this", id, func, c_typeptr(g, t, ptr));
-    g_fileWrite(data->source, "_%s%s(%s this", id, func, c_typeptr(g, t, ptr));
+    g_fileWrite(data->source, "_%s%s(%s _this", id, func, c_typeptr(g, t, ptr));
     c_apiCastMacroAddArg(data->args, "_this", t);
 
     c_apiTypeInitArgs(t, data);
@@ -581,7 +585,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     g_fileWrite(data->header, ");\n");
     g_fileWrite(data->source, ") {\n");
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "CORTO_UNUSED(this);\n");
+    g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
 
     /* Write cast macro */
     c_apiCastMacro(id, func, data);
@@ -589,7 +593,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     data->args = NULL;
 
     if (isUpdate && doUpdate && (t->kind != CORTO_VOID)) {
-      g_fileWrite(data->source, "if (!corto_updateBegin(this)) {\n");
+      g_fileWrite(data->source, "if (!corto_updateBegin(_this)) {\n");
         g_fileIndent(data->source);
     }
 
@@ -599,7 +603,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     /* Define object */
     if (isUpdate && doUpdate) {
         if (t->kind != CORTO_VOID) {
-            g_fileWrite(data->source, "corto_updateEnd(this);\n");
+            g_fileWrite(data->source, "corto_updateEnd(_this);\n");
             g_fileDedent(data->source);
             g_fileWrite(data->source, "} else {\n");
             g_fileIndent(data->source);
@@ -608,10 +612,10 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             g_fileWrite(data->source, "}\n");
             g_fileWrite(data->source, "return 0;\n");
         } else {
-            g_fileWrite(data->source, "return corto_update(this);\n");
+            g_fileWrite(data->source, "return corto_update(_this);\n");
         }
     } else if (!isUpdate) {
-        g_fileWrite(data->source, "return corto_define(this);\n");
+        g_fileWrite(data->source, "return corto_define(_this);\n");
     }
 
     g_fileDedent(data->source);

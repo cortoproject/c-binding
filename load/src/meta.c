@@ -491,10 +491,13 @@ static corto_int16 c_initReference(corto_serializer s, corto_value* v, void* use
     c_varPrintStart(v, userData);
 
     if ((o = *optr)) {
-        corto_id id, src, context;
+        corto_id id, src, context, typeId, postfix;
         c_varId(data->g, corto_valueObject(v), src);
+        c_specifierId(data->g, corto_valueType(v), typeId, NULL, postfix);
         corto_strving(v, context, 256);
-        g_fileWrite(data->source, "%s", c_loadResolve(o, id, src, context));
+        g_fileWrite(data->source, "%s(%s)",
+          typeId,
+          c_loadResolve(o, id, src, context));
     } else {
         g_fileWrite(data->source, "NULL");
     }
@@ -707,31 +710,33 @@ static struct corto_serializer_s c_initSerializer(void) {
 /* Declare object */
 static int c_loadDeclare(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id varId, parentId, typeId, escapedName;
+    corto_id varId, parentId, typeId, escapedName, typeCast;
 
     data = userData;
 
     c_varId(data->g, o, varId);
+    g_fullOid(data->g, corto_typeof(o), typeCast);
 
     if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         if (!g_mustParse(data->g, o)) {
             return 1;
         }
-        g_fileWrite(data->source, "%s = corto_declare(", varId);
+        g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
     } else {
         c_escapeString(corto_nameof(o), escapedName);
-        g_fileWrite(data->source, "%s = corto_declareChild(%s, \"%s\", ",
+        g_fileWrite(data->source, "%s = %s(corto_declareChild(%s, \"%s\", ",
             varId,
+            typeCast,
             c_varId(data->g, corto_parentof(o), parentId),
             escapedName);
     }
 
     /* Declaration */
     if (!corto_checkAttr(corto_typeof(o), CORTO_ATTR_SCOPED)) {
-        g_fileWrite(data->source, "(_a_ ? corto_release(_a_) : 0, _a_ = %s));\n",
+        g_fileWrite(data->source, "(_a_ ? corto_release(_a_) : 0, _a_ = %s)));\n",
             c_varId(data->g, corto_typeof(o), typeId));
     } else {
-        g_fileWrite(data->source, "%s);\n",
+        g_fileWrite(data->source, "%s));\n",
             c_varId(data->g, corto_typeof(o), typeId));
     }
 
@@ -779,7 +784,7 @@ static int c_loadDefine(corto_object o, void* userData) {
         if (!corto_function(o)->impl) {
             g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
             c_loadCFunction(o, data, name);
-            g_fileWrite(data->source, "void __%s(void *args, void *result);\n", name);
+            g_fileWrite(data->source, "void __%s(corto_function f, void *args, void *result);\n", name);
             g_fileWrite(data->source, "corto_function(%s)->impl = (corto_word)__%s;\n", varId, name);
         }
     }
