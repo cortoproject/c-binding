@@ -505,16 +505,14 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
     data = userData;
 
     if (corto_class_instanceof(corto_type_o, o)) {
-        if ((corto_type(o)->kind != CORTO_VOID) && (corto_type(o)->kind != CORTO_ANY)) {
-            corto_id postfix;
-            if (c_specifierId(data->g, o, id, NULL, postfix)) {
-                goto error;
-            }
-
-            g_fileWrite(data->header,
-                "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
-                id, c_typeret(data->g, o, ptr), id);
+        corto_id postfix;
+        if (c_specifierId(data->g, o, id, NULL, postfix)) {
+            goto error;
         }
+
+        g_fileWrite(data->header,
+            "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
+            id, c_typeret(data->g, o, ptr), id);
     }
 
     return 1;

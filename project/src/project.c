@@ -34,8 +34,9 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_file file;
     corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
     corto_bool local = !strcmp(gen_getAttribute(g, "local"), "true");
+    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
 
-    sprintf(filename, "_load.c");
+    sprintf(filename, "_load.%s", cpp ? "cpp" : "c");
 
     file = g_hiddenFileOpen(g, filename);
     if(!file) {

@@ -842,9 +842,10 @@ static void c_interfaceHeaderFileClose(g_file file) {
 static g_file c_interfaceWrapperFileOpen(corto_generator g) {
     g_file result;
     corto_char fileName[512];
+    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
 
     corto_object o = g_getCurrent(g);
-    sprintf(fileName, "_wrapper.c");
+    sprintf(fileName, "_wrapper.%s", cpp ? "cpp" : "c");
 
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
         result = g_fileOpen(g, fileName);

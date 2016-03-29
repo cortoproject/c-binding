@@ -758,7 +758,13 @@ corto_int16 c_apiTypeFromStr(corto_type t, c_apiWalk_t *data) {
     return 0;
 }
 
-corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string func, corto_bool outParam) {
+corto_int16 c_apiTypeCopyIntern(
+    corto_type t,
+    c_apiWalk_t *data,
+    corto_string func,
+    corto_string returnType,
+    corto_bool outParam)
+{
     corto_id id, funcLower;
     corto_bool ptr = c_typeRequiresPtr(t);
     corto_bool outPtr = outParam && !t->reference;
@@ -768,7 +774,8 @@ corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string fu
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " corto_int16 %s%s%s(%s%s%s dst, %s%s src);\n",
+    g_fileWrite(data->header, " %s %s%s%s(%s%s%s dst, %s%s src);\n",
+        returnType,
         t->reference ? "_" : "",
         id, func, id,
         (ptr || outPtr) ? "*" : "",
@@ -777,7 +784,8 @@ corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string fu
         ptr ? "*" : "");
 
     /* Function implementation */
-    g_fileWrite(data->source, "corto_int16 %s%s%s(%s%s%s dst, %s%s src) {\n",
+    g_fileWrite(data->source, "%s %s%s%s(%s%s%s dst, %s%s src) {\n",
+        returnType,
         t->reference ? "_" : "",
         id, func, id,
         (ptr || outPtr) ? "*" : "",
@@ -816,11 +824,11 @@ corto_int16 c_apiTypeCopyIntern(corto_type t, c_apiWalk_t *data, corto_string fu
 }
 
 corto_int16 c_apiTypeCopy(corto_type t, c_apiWalk_t *data) {
-    return c_apiTypeCopyIntern(t, data, "Copy", TRUE);
+    return c_apiTypeCopyIntern(t, data, "Copy", "corto_int16", TRUE);
 }
 
 corto_int16 c_apiTypeCompare(corto_type t, c_apiWalk_t *data) {
-    return c_apiTypeCopyIntern(t, data, "Compare", FALSE);
+    return c_apiTypeCopyIntern(t, data, "Compare", "corto_equalityKind", FALSE);
 }
 
 corto_int16 c_apiDelegateInitCallbackAuto(

@@ -570,6 +570,11 @@ char* c_filename(
 {
     corto_id path;
     corto_object package = c_findPackage(g, o);
+    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
+
+    if (cpp && !strcmp(ext, "c")) {
+        ext = "cpp";
+    }
 
     if (o != package) {
         corto_path(path, package, o, "_");

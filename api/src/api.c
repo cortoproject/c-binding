@@ -205,9 +205,10 @@ static void c_apiHeaderClose(g_file file) {
 static g_file c_apiSourceOpen(corto_generator g) {
     g_file result;
     corto_id sourceFileName;
+    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
 
     /* Create file */
-    strcpy(sourceFileName, "_api.c");
+    sprintf(sourceFileName, "_api.%s", cpp ? "cpp" : "c");
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
         result = g_fileOpen(g, sourceFileName);
     } else {

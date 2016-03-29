@@ -329,9 +329,10 @@ static void c_loadHeaderFileClose(corto_generator g, g_file file) {
 static g_file c_loadSourceFileOpen(corto_generator g) {
     g_file result;
     corto_id fileName;
+    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
 
     /* Create file */
-    sprintf(fileName, "_meta.c");
+    sprintf(fileName, "_meta.%s", cpp ? "cpp" : "c");
     result = g_hiddenFileOpen(g, fileName);
 
     /* Print standard comments and includes */
