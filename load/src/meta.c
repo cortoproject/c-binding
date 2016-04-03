@@ -45,9 +45,9 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
 
         *ostr = '\0';
         data.compactNotation = TRUE;
-        data.buffer = id;
-        data.length = sizeof(ostr);
-        data.maxlength = 0;
+        data.buffer.str = id;
+        data.buffer.len = sizeof(ostr);
+        data.buffer.max = 0;
         data.prefixType = FALSE;
         data.enableColors = FALSE;
         if (corto_serialize(&stringSer, o, &data)) {
@@ -104,7 +104,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
     corto_value *ptr;
     corto_object o;
     corto_type thisType;
-    corto_bool objectIsArray, derefMemberOperator;
+    corto_bool objectDeref, derefMemberOperator;
 
     *out = '\0';
 
@@ -122,19 +122,17 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
     o = corto_valueObject(v);
 
     /* If object is a collection or primtive, dereference object pointer */
-    objectIsArray =
-        (corto_typeof(o)->kind == CORTO_PRIMITIVE) ||
-        (corto_typeof(o)->kind == CORTO_COLLECTION);
+    corto_type t = corto_typeof(o);
+    objectDeref =
+        (t->kind == CORTO_PRIMITIVE) ||
+        ((t->kind == CORTO_COLLECTION) &&
+         (corto_collection(t)->kind != CORTO_ARRAY));
 
-    /* Use '->' operator whenever possible */
-    if (!objectIsArray) {
-        derefMemberOperator = TRUE;
-    } else {
-        derefMemberOperator = FALSE;
-    }
+    derefMemberOperator = !(objectDeref || ((t->kind == CORTO_COLLECTION) &&
+                              (corto_collection(t)->kind == CORTO_ARRAY)));
 
     /* Start with a dereference */
-    if (objectIsArray) {
+    if (objectDeref) {
         strcpy(out, "(*");
     }
 
@@ -153,7 +151,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
     }
 
     /* End bracket used for dereferencing object */
-    if (objectIsArray) {
+    if (objectDeref) {
         strcat(out, ")");
     }
 
@@ -243,7 +241,6 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
     corto_id specifier, postfix, objectId;
     corto_type t;
-    corto_bool prefix;
     corto_object parent;
 
     data = userData;
@@ -261,22 +258,15 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     }
 
     /* Get C typespecifier */
-    if (c_specifierId(data->g, t, specifier, &prefix, postfix)) {
-        goto error;
-    }
+    c_typeret(data->g, t, specifier);
 
     c_varId(data->g, o, objectId);
 
     c_writeExport(data->g, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
-    if (!prefix) {
-        g_fileWrite(data->header, " extern %s %s%s;\n", specifier, objectId, postfix);
-        g_fileWrite(data->source, "%s %s%s;\n", specifier, objectId, postfix);
-    } else {
-        g_fileWrite(data->header, " extern %s ___ (*%s)%s;\n", specifier, objectId, postfix);
-        g_fileWrite(data->source, "%s ___ (*%s)%s;\n", specifier, objectId, postfix);
-    }
+    g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);
+    g_fileWrite(data->source, "%s %s;\n", specifier, objectId);
 
     return 1;
 error:
@@ -542,7 +532,7 @@ static corto_int16 c_initElement(corto_serializer s, corto_value* v, void* userD
         corto_id parentId, elementId;
         g_fileWrite(data->source, "corto_llAppend(%s, %s%s);\n",
                 c_loadMemberId(data, v->parent, parentId, FALSE),
-                requiresAlloc ? "" : "(void*)", c_loadElementId(v, elementId, 0));
+                requiresAlloc ? "" : "(void*)(intptr_t)", c_loadElementId(v, elementId, 0));
         break;
     }
     case CORTO_MAP: /*{
@@ -711,12 +701,12 @@ static struct corto_serializer_s c_initSerializer(void) {
 /* Declare object */
 static int c_loadDeclare(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id varId, parentId, typeId, escapedName, typeCast;
+    corto_id varId, parentId, typeId, escapedName, typeCast, postfix;
 
     data = userData;
 
     c_varId(data->g, o, varId);
-    g_fullOid(data->g, corto_typeof(o), typeCast);
+    c_specifierId(data->g, corto_typeof(o), typeCast, NULL, postfix);
 
     if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         if (!g_mustParse(data->g, o)) {

@@ -515,7 +515,7 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
             id, c_typeret(data->g, o, ptr), id);
     }
 
-    return 1;
+    return 0;
 error:
     return -1;
 }
@@ -691,8 +691,8 @@ corto_int16 corto_genMain(corto_generator g) {
 
     /* Walk classes, print cast-macro's */
     g_fileWrite(walkData.header, "\n");
-    g_fileWrite(walkData.header, "/* Casting macro's for classes */\n");
-    if (!g_walkRecursive(g, c_typeClassCastWalk, &walkData)) {
+    g_fileWrite(walkData.header, "/* Casting macro's */\n");
+    if (corto_genTypeDepWalk(g, NULL, c_typeClassCastWalk, &walkData)) {
         goto error;
     }
 

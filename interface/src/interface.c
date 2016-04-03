@@ -819,6 +819,31 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
 
     g_fileWrite(result, "\n");
 
+    if (o == topLevelObject) {
+        /* Add header files for dependent packages */
+        corto_ll packages = corto_loadGetPackages();
+        if (packages) {
+            corto_iter iter = corto_llIter(packages);
+            while (corto_iterHasNext(&iter)) {
+                corto_string str = corto_iterNext(&iter);
+                corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
+                if (!package) {
+                    corto_seterr("package.txt contains unresolved package '%s'", str);
+                    goto error;
+                } else {
+                    corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
+                    g_fileWrite(
+                      data->mainHeader, "#include \"%s/%s.h\"\n", package, name);
+                    corto_dealloc(name);
+                    corto_dealloc(package);
+                }
+            }
+            corto_loadFreePackages(packages);
+        }
+    }
+
+    g_fileWrite(result, "\n");
+
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
     g_fileWrite(result, "#endif\n\n");
@@ -1086,7 +1111,6 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
 /* Entry point for generator */
 int corto_genMain(corto_generator g) {
     c_typeWalk_t walkData;
-    corto_ll packages = NULL;
 
     /* Create source and include directories */
     corto_mkdir("src");
@@ -1114,33 +1138,12 @@ int corto_genMain(corto_generator g) {
         goto error;
     }
 
-    /* Add header files for dependent packages */
-    packages = corto_loadGetPackages();
-    if (packages) {
-        corto_iter iter = corto_llIter(packages);
-        while (corto_iterHasNext(&iter)) {
-            corto_string str = corto_iterNext(&iter);
-            corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
-            if (!package) {
-                corto_seterr("package.txt contains unresolved package '%s'", str);
-                goto error;
-            } else {
-                corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
-                g_fileWrite(
-                  walkData.mainHeader, "#include \"%s/%s.h\"\n", package, name);
-                corto_dealloc(name);
-                corto_dealloc(package);
-            }
-        }
-        corto_loadFreePackages(packages);
-    }
-
-    c_interfaceMarkUnusedFiles(&walkData);
-
-    /* Close main header */
     if (walkData.mainHeader) {
         c_interfaceHeaderFileClose(walkData.mainHeader);
     }
+
+
+    c_interfaceMarkUnusedFiles(&walkData);
 
     return 0;
 error:

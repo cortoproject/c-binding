@@ -328,10 +328,13 @@ corto_int16 c_specifierId(corto_generator g, corto_type t, corto_char* specifier
     /* If type is not a reference, objects that are defined with it need to add a prefix. This
      * won't be used for members or nested type-specifiers. */
     if (prefix) {
-        if (t->reference) {
-            *prefix = FALSE;
-        } else {
+        if (!t->reference &&
+            !(t->kind == CORTO_COLLECTION &&
+            (corto_collection(t)->kind == CORTO_ARRAY)))
+        {
             *prefix = TRUE;
+        } else {
+            *prefix = FALSE;
         }
     }
 
@@ -470,7 +473,8 @@ corto_bool c_typeRequiresPtr(corto_type t) {
 }
 
 corto_string c_typeptr(corto_generator g, corto_type t, corto_id id) {
-    g_fullOid(g, t, id);
+    corto_id postfix;
+    c_specifierId(g, t, id, NULL, postfix);
     if (!t->reference &&
         !(t->kind == CORTO_COLLECTION &&
         (corto_collection(t)->kind == CORTO_ARRAY)))
@@ -487,7 +491,8 @@ corto_string c_typeret(corto_generator g, corto_type t, corto_id id) {
         g_fullOid(g, corto_collection(t)->elementType, id);
         strcat(id, "*");
     } else {
-        g_fullOid(g, t, id);
+        corto_id postfix;
+        c_specifierId(g, t, id, NULL, postfix);
         if (!t->reference) {
             strcat(id, "*");
         }
@@ -497,7 +502,8 @@ corto_string c_typeret(corto_generator g, corto_type t, corto_id id) {
 }
 
 corto_string c_typeval(corto_generator g, corto_type t, corto_id id) {
-    g_fullOid(g, t, id);
+    corto_id postfix;
+    c_specifierId(g, t, id, NULL, postfix);
     if (!t->reference && (t->kind == CORTO_COMPOSITE)) {
         strcat(id, "*");
     }
