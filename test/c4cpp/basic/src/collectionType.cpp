@@ -1,6 +1,6 @@
 /* $CORTO_GENERATED
  *
- * collectionType.c
+ * collectionType.cpp
  *
  * Only code written between the begin and end tags will be preserved
  * when the file is regenerated.

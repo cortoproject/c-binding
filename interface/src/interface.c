@@ -839,10 +839,9 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
                 }
             }
             corto_loadFreePackages(packages);
+            g_fileWrite(result, "\n");
         }
     }
-
-    g_fileWrite(result, "\n");
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");

@@ -12,6 +12,8 @@
 #include "_meta.h"
 #include "_interface.h"
 
+#include "corto/test/test.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,7 +29,6 @@ extern "C" {
 #include "primitiveType.h"
 #include "voidApi.h"
 #include "voidReferenceApi.h"
-#include "corto/test/test.h"
 
 #ifdef __cplusplus
 }

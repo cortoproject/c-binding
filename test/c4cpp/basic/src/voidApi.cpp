@@ -1,6 +1,6 @@
 /* $CORTO_GENERATED
  *
- * voidApi.c
+ * voidApi.cpp
  *
  * Only code written between the begin and end tags will be preserved
  * when the file is regenerated.

@@ -239,7 +239,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 /* Walk types */
 static int c_loadDeclareWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id specifier, postfix, objectId;
+    corto_id specifier, objectId;
     corto_type t;
     corto_object parent;
 
@@ -247,6 +247,10 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     t = corto_typeof(o);
 
     if (!g_mustParse(data->g, o)) {
+        return 1;
+    }
+
+    if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) && !corto_instanceof(corto_type_o, o)) {
         return 1;
     }
 
@@ -269,8 +273,6 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     g_fileWrite(data->source, "%s %s;\n", specifier, objectId);
 
     return 1;
-error:
-    return 0;
 }
 
 /* Open generator headerfile */
@@ -705,6 +707,10 @@ static int c_loadDeclare(corto_object o, void* userData) {
 
     data = userData;
 
+    if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) && !corto_instanceof(corto_type_o, o)) {
+        return 1;
+    }
+
     c_varId(data->g, o, varId);
     c_specifierId(data->g, corto_typeof(o), typeCast, NULL, postfix);
 
@@ -753,6 +759,10 @@ static int c_loadDefine(corto_object o, void* userData) {
     c_typeWalk_t* data = userData;
 
     if (!g_mustParse(data->g, o)) {
+        return 1;
+    }
+
+    if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) && !corto_instanceof(corto_type_o, o)) {
         return 1;
     }
 
