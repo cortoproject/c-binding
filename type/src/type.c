@@ -64,7 +64,7 @@ static corto_int16 c_typeMember(corto_serializer s, corto_value* v, void* userDa
         }
 
         if (m->id != (corto_uint32)-1) {
-            g_fileWrite(data->header, "%s %s%s;\n", specifier, g_id(data->g, corto_nameof(m), memberId), postfix);
+            g_fileWrite(data->header, "%s %s%s;\n", specifier, g_id(data->g, corto_idof(m), memberId), postfix);
         } else {
             g_fileWrite(data->header, "%s _parent%s;\n", specifier, postfix);
         }
@@ -467,7 +467,7 @@ static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userDa
         result = c_typeIterator(s, v, userData);
         break;
     default:
-        corto_error("c_typeObject: typeKind '%s' not handled by code-generator.", corto_nameof(corto_enum_constant(corto_typeKind_o, t->kind)));
+        corto_error("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant(corto_typeKind_o, t->kind)));
         goto error;
         break;
     }

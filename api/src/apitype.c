@@ -174,7 +174,7 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
 
         corto_genMemberName(data->g, data->memberCache, m, memberIdTmp);
         g_id(data->g, memberIdTmp, memberParamId);
-        g_id(data->g, corto_nameof(m), memberId);
+        g_id(data->g, corto_idof(m), memberId);
         g_fullOid(data->g, corto_parentof(m), type);
 
         sprintf(lvalue,

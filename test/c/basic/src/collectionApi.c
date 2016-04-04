@@ -81,7 +81,7 @@ corto_void _test_collectionApi_tc_createChild(
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
     test_assert(!corto_delete(o));
@@ -100,7 +100,7 @@ corto_void _test_collectionApi_tc_createChildAuto(
     test_assert(corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
     test_assert(!corto_delete(o));
@@ -151,7 +151,7 @@ corto_void _test_collectionApi_tc_declareChild(
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
     test_assert(!corto_delete(o));
@@ -170,7 +170,7 @@ corto_void _test_collectionApi_tc_declareChildAuto(
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
     test_assert(!corto_delete(o));
@@ -190,7 +190,7 @@ corto_void _test_collectionApi_tc_define(
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
 

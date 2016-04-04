@@ -288,13 +288,13 @@ corto_bool c_typeHasCaps(corto_string str) {
 corto_char* c_constantId(corto_generator g, corto_constant* c, corto_char* buffer) {
     corto_string prefixOrig;
     corto_enum e = corto_parentof(c);
-    corto_string name = corto_nameof(e->constants.buffer[0]);
+    corto_string name = corto_idof(e->constants.buffer[0]);
     corto_id prefix;
     corto_char ch;
 
     prefixOrig = g_getPrefix(g, c);
     if (!prefixOrig) {
-        prefixOrig = corto_nameof(g_getCurrent(g));
+        prefixOrig = corto_idof(g_getCurrent(g));
     }
 
     strcpy(prefix, prefixOrig);
@@ -313,7 +313,7 @@ corto_char* c_constantId(corto_generator g, corto_constant* c, corto_char* buffe
         }
     }
 
-    sprintf(buffer, "%s_%s", prefix, corto_nameof(c));
+    sprintf(buffer, "%s_%s", prefix, corto_idof(c));
 
     return buffer;
 }
@@ -402,7 +402,7 @@ corto_int16 c_specifierId(corto_generator g, corto_type t, corto_char* specifier
             break;
         }
         default:
-            corto_seterr("anonymous type of kind '%s' not allowed.", corto_nameof(corto_enum_constant(corto_typeKind_o, corto_type(t)->kind)));
+            corto_seterr("anonymous type of kind '%s' not allowed.", corto_idof(corto_enum_constant(corto_typeKind_o, corto_type(t)->kind)));
             goto error;
             break;
         }
@@ -586,7 +586,7 @@ char* c_filename(
         corto_path(path, package, o, "_");
         sprintf(fileName, "%s.%s", path, ext);
     } else {
-        sprintf(fileName, "%s.%s", corto_nameof(package), ext);
+        sprintf(fileName, "%s.%s", corto_idof(package), ext);
     }
 
     return fileName;

@@ -96,7 +96,7 @@ corto_void _test_anyApi_tc_createChild(
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->owner = TRUE);
     test_assert(!corto_delete(o));
 
@@ -119,7 +119,7 @@ corto_void _test_anyApi_tc_createChildAuto(
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->owner = TRUE);
     test_assert(!corto_delete(o));
 
@@ -171,7 +171,7 @@ corto_void _test_anyApi_tc_declareChild(
     test_assert(o->value == NULL);
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->owner = TRUE);
     test_assert(!corto_delete(o));
 
@@ -190,7 +190,7 @@ corto_void _test_anyApi_tc_declareChildAuto(
     test_assert(o->value == NULL);
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->owner = TRUE);
     test_assert(!corto_delete(o));
 
@@ -210,7 +210,7 @@ corto_void _test_anyApi_tc_define(
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
-    test_assert(!strcmp(corto_nameof(o), "o"));
+    test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(o->owner = TRUE);

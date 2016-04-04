@@ -300,7 +300,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->header, ");\n");
 
     /* Obtain string for function name */
-    c_escapeString(corto_nameof(o), nameString);
+    c_escapeString(corto_idof(o), nameString);
 
     /* Write casting macro to header */
     c_interfaceCastMacro(corto_function(o), g_fullOid(data->g, o, id), data);
@@ -332,14 +332,14 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
     if (!cpp) {
-        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(this), _methodId);\n\n", nameString);
+        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(this), _methodId);\n\n", nameString);
         if (returnsValue) {
             g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, this");
         } else {
             g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, this");
         }
     } else {
-        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_nameof(_this), _methodId);\n\n", nameString);
+        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(_this), _methodId);\n\n", nameString);
         if (returnsValue) {
             g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, _this");
         } else {
@@ -778,7 +778,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
             if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
                 c_filename(g, headerFileName, o, "h");
             } else {
-                sprintf(headerFileName, "_%s.h", corto_nameof(o));
+                sprintf(headerFileName, "_%s.h", corto_idof(o));
             }
 
             data->mainHeader = g_fileOpen(g, mainHeader);
@@ -980,7 +980,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         /* If top level file, generate main function */
         if (isTopLevelObject && !isBootstrap) {
             g_fileWrite(data->source, "\n");
-            g_fileWrite(data->source, "int %sMain(int argc, char* argv[]) {\n", corto_nameof(o));
+            g_fileWrite(data->source, "int %sMain(int argc, char* argv[]) {\n", corto_idof(o));
             g_fileWrite(data->source, "/* $begin(main)");
             g_fileIndent(data->source);
             if ((snippet = g_fileLookupSnippet(data->source, "main"))) {

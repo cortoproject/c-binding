@@ -176,7 +176,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 
             /* Reference member using it's name. */
             corto_id memberId;
-            strcat(out, g_id(data->g, corto_nameof(stack[count]->is.member.t), memberId));
+            strcat(out, g_id(data->g, corto_idof(stack[count]->is.member.t), memberId));
             break;
 
         /* Element */
@@ -723,7 +723,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
         }
         g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
     } else {
-        c_escapeString(corto_nameof(o), escapedName);
+        c_escapeString(corto_idof(o), escapedName);
         g_fileWrite(data->source, "%s = %s(corto_declareChild(%s, \"%s\", ",
             varId,
             typeCast,
