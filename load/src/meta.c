@@ -141,8 +141,11 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
     thisType = corto_valueType(ptr);
     if (corto_type(thisType) != corto_typeof(o)) {
         corto_id id, parentId, objectId;
-        sprintf(id, "%s(%s)",
+        /* Use standard C-style cast to prevent assertType macro, and more
+         * importantly, accidentally using symbols from nested dependencies */
+        sprintf(id, "((%s%s)%s)",
                 g_fullOid(data->g, thisType, parentId),
+                thisType->reference ? "" : "*",
                 c_varId(data->g, corto_valueObject(v), objectId));
         strcat(out, id);
     } else {
