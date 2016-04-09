@@ -107,7 +107,7 @@ error:
 static int c_apiWalk(corto_object o, void* userData) {
     c_apiWalk_t* data = userData;
 
-    if (corto_class_instanceof(corto_type_o, o)) {
+    if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
         g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, o));
 
         data->current = o;

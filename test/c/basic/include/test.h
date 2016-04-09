@@ -6,6 +6,10 @@
 #ifndef TEST_H
 #define TEST_H
 
+/* $header() */
+typedef void* myNativeType;
+/* $end */
+
 #include "corto/corto.h"
 #include "_type.h"
 #include "_api.h"
@@ -25,6 +29,7 @@ extern "C" {
 #include "compositeReferenceApi.h"
 #include "compositeReferenceType.h"
 #include "compositeType.h"
+#include "Foo.h"
 #include "primitiveApi.h"
 #include "primitiveType.h"
 #include "voidApi.h"

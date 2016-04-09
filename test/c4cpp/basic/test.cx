@@ -30,6 +30,11 @@ class compositeReferenceType::
 array collectionType: int32, 2 ::
     int16 init() method
 
+// native type
+native/type nativeType: "myNativeType*"
+
+class Foo::
+    m: nativeType, local
 
 test/Suite voidApi::
     void tc_create()

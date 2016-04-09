@@ -848,6 +848,7 @@ int corto_genMain(corto_generator g) {
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
     gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;

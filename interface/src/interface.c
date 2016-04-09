@@ -803,6 +803,16 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n\n", path);
 
+    /* If a header exists, write it */
+    if (topLevelObject) {
+        corto_string snippet;
+        if ((snippet = g_fileLookupHeader(result, ""))) {
+            g_fileWrite(result, "/* $header()");
+            g_fileWrite(result, "%s", snippet);
+            g_fileWrite(result, "$end */\n\n");
+        }
+    }
+
     /* Include corto, if not generating corto */
     if (o != corto_o) {
         c_includeFrom(g, result, corto_o, "corto.h");
@@ -840,6 +850,16 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
             }
             corto_loadFreePackages(packages);
             g_fileWrite(result, "\n");
+        }
+    }
+
+    if (topLevelObject) {
+        corto_string snippet;
+        if ((snippet = g_fileLookupSnippet(result, ""))) {
+            g_fileWrite(result, "\n");
+            g_fileWrite(result, "/* $body()");
+            g_fileWrite(result, "%s", snippet);
+            g_fileWrite(result, "$end */\n\n");
         }
     }
 
@@ -948,14 +968,6 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
             if (!data->wrapper) {
                 goto error;
             }
-        }
-
-        /* If a header exists, write it */
-        if ((snippet = g_fileLookupHeader(data->header, ""))) {
-            g_fileWrite(data->header, "\n");
-            g_fileWrite(data->header, "/* $header()");
-            g_fileWrite(data->header, "%s", snippet);
-            g_fileWrite(data->header, "$end */\n");
         }
 
         /* Open sourcefile */
@@ -1123,6 +1135,7 @@ int corto_genMain(corto_generator g) {
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
     gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;

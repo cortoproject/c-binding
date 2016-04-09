@@ -443,6 +443,11 @@ static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userDa
     data = userData;
     t = corto_type(corto_valueType(v));
 
+    /* No type needs to be generated if type is a native type */
+    if (corto_instanceof(corto_native_type_o, t)) {
+        return 0;
+    }
+
     /* Reset prefixComma */
     data->prefixComma = FALSE;
 
@@ -504,7 +509,7 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
 
     data = userData;
 
-    if (corto_class_instanceof(corto_type_o, o)) {
+    if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
         corto_id postfix;
         if (c_specifierId(data->g, o, id, NULL, postfix)) {
             goto error;
@@ -694,6 +699,7 @@ corto_int16 corto_genMain(corto_generator g) {
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
     gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
 
     /* Walk classes, print cast-macro's */
     g_fileWrite(walkData.header, "\n");

@@ -319,8 +319,13 @@ corto_char* c_constantId(corto_generator g, corto_constant* c, corto_char* buffe
 }
 
 /* Parse type into C-specifier */
-corto_int16 c_specifierId(corto_generator g, corto_type t, corto_char* specifier, corto_bool* prefix, corto_char* postfix) {
-
+corto_int16 c_specifierId(
+    corto_generator g,
+    corto_type t,
+    corto_char* specifier,
+    corto_bool* prefix,
+    corto_char* postfix)
+{
     if (postfix) {
         *postfix = '\0';
     }
@@ -336,6 +341,11 @@ corto_int16 c_specifierId(corto_generator g, corto_type t, corto_char* specifier
         } else {
             *prefix = FALSE;
         }
+    }
+
+    if (corto_instanceof(corto_native_type_o, t)) {
+        strcpy(specifier, corto_native_type(t)->name);
+        return 0;
     }
 
     /* Check if object is scoped */
@@ -708,7 +718,11 @@ corto_char* c_varId(corto_generator g, corto_object o, corto_char* out) {
             corto_path(out, root_o, o, "_");
         } else {
             corto_id postfix;
-            c_specifierId(g, o, out, NULL, postfix);
+            if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+                c_specifierId(g, o, out, NULL, postfix);
+            } else {
+                g_fullOid(g, o, out);
+            }
         }
         strcat(out, "_o");
     } else {

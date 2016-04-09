@@ -321,22 +321,37 @@ corto_int16 corto_genMain(corto_generator g) {
     corto_mkdir("src");
     corto_mkdir(".corto");
 
-    if(c_projectGenerateMainFile(g)) {
+    if (c_projectGenerateMainFile(g)) {
+        if (!corto_lasterr()) {
+            corto_seterr("failed to create main sourcefile");
+        }
         goto error;
     }
 
     if (g->objects) {
         if (c_genInterfaceHeader(g)) {
+            if (!corto_lasterr()) {
+                corto_seterr("failed to create interface header");
+            }
             goto error;
         }
         if(c_projectGenerateDepMakefile(g)) {
+            if (!corto_lasterr()) {
+                corto_seterr("failed to create dependency rakefile");
+            }
             goto error;
         }
         if(c_projectGeneratePackageFile(g)) {
+            if (!corto_lasterr()) {
+                corto_seterr("failed to create packages.txt");
+            }
             goto error;
         }
     } else {
         if(c_projectGenerateMainHeaderFile(g)) {
+            if (!corto_lasterr()) {
+                corto_seterr("failed to create main header");
+            }
             goto error;
         }
     }
