@@ -45,16 +45,16 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
 
         *ostr = '\0';
         data.compactNotation = TRUE;
-        data.buffer.str = id;
-        data.buffer.len = sizeof(ostr);
-        data.buffer.max = 0;
+        data.buffer = CORTO_BUFFER_INIT;
+        data.buffer.buf = id;
+        data.buffer.max = sizeof(id);
         data.prefixType = FALSE;
         data.enableColors = FALSE;
         if (corto_serialize(&stringSer, o, &data)) {
             goto error;
         }
-        c_escapeString(id, escapedOstr);
 
+        c_escapeString(id, escapedOstr);
         corto_fullpath(id, corto_typeof(o));
         c_escapeString(id, escapedId);
 
