@@ -6,6 +6,7 @@
 typedef struct c_arg {
     corto_string name;
     corto_type type;
+    corto_bool move;
 } c_arg;
 
 static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type type) {
@@ -13,6 +14,17 @@ static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type ty
         c_arg *arg = corto_alloc(sizeof(c_arg));
         arg->name = corto_strdup(name);
         arg->type = type;
+        arg->move = FALSE;
+        corto_llAppend(args, arg);
+    }
+}
+
+static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_type type) {
+    if (args) {
+        c_arg *arg = corto_alloc(sizeof(c_arg));
+        arg->name = corto_strdup(name);
+        arg->type = type;
+        arg->move = TRUE;
         corto_llAppend(args, arg);
     }
 }
@@ -86,6 +98,7 @@ static corto_int16 c_apiCastAuto(corto_type t, corto_bool scoped, corto_string f
 
 static corto_int16 c_apiCastMacro(corto_string id, corto_string name, c_apiWalk_t *data) {
     corto_uint32 count = 0;
+    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
 
     g_fileWrite(data->header, "#define %s%s(", id, name);
     corto_iter iter = corto_llIter(data->args);
@@ -106,12 +119,18 @@ static corto_int16 c_apiCastMacro(corto_string id, corto_string name, c_apiWalk_
         if (count) {
             g_fileWrite(data->header, ", ");
         }
+        if (arg->move && cpp) {
+            g_fileWrite(data->header, "std::move(");
+        }
         if (arg->type && arg->type->reference && (arg->type->kind != CORTO_VOID)) {
             corto_id id;
             g_fullOid(data->g, arg->type, id);
             g_fileWrite(data->header, "%s(%s)", id, arg->name);
         } else {
             g_fileWrite(data->header, "%s", arg->name);
+        }
+        if (arg->move && cpp) {
+            g_fileWrite(data->header, ")");
         }
         count++;
     }
@@ -321,7 +340,7 @@ corto_int16 c_apiTypeInitCollection(corto_type t, c_apiWalk_t *data) {
     g_fileWrite(data->header, "corto_uint32 length, %s* elements", elementId);
     g_fileWrite(data->source, "corto_uint32 length, %s* elements", elementId);
     c_apiCastMacroAddArg(data->args, "length", NULL);
-    c_apiCastMacroAddArg(data->args, "elements", NULL);
+    c_apiCastMacroAddArgMove(data->args, "elements", NULL);
 
     return 0;
 }
