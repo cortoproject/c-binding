@@ -618,12 +618,12 @@ void c_includeFrom(
 
     if (strcmp(gen_getAttribute(g, "local"), "true") || (g_getCurrent(g) != o))
     {
-        g_fileWrite(file, "#include \"%s/%s\"\n",
+        g_fileWrite(file, "#include <%s/%s>\n",
           corto_path(path, root_o, o, "/"),
           filebuff);
     } else
     {
-        g_fileWrite(file, "#include \"%s\"\n",
+        g_fileWrite(file, "#include <%s>\n",
           filebuff);
     }
 }

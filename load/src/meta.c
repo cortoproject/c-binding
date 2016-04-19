@@ -718,11 +718,12 @@ static int c_loadDeclare(corto_object o, void* userData) {
     c_specifierId(data->g, corto_typeof(o), typeCast, NULL, postfix);
 
     if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+        g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
+    } else {
         if (!g_mustParse(data->g, o)) {
             return 1;
         }
-        g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
-    } else {
+        
         c_escapeString(corto_idof(o), escapedName);
         g_fileWrite(data->source, "%s = %s(corto_declareChild(%s, \"%s\", ",
             varId,

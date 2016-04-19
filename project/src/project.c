@@ -78,7 +78,7 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
             sprintf(header, "%s.h", g_getName(g));
         }
         c_includeFrom(g, file, corto_o, "corto.h");
-        g_fileWrite(file, "#include \"%s\"\n", header);
+        g_fileWrite(file, "#include <%s>\n", header);
         g_fileWrite(file, "\n");
         g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
         g_fileIndent(file);
@@ -133,7 +133,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
 
     c_includeFrom(g, file, corto_o, "corto.h");
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "#include \"_interface.h\"\n");
+        g_fileWrite(file, "#include <_interface.h>\n");
     }
     g_fileWrite(file, "\n");
 
@@ -150,7 +150,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
                 error = TRUE;
             } else {
                 corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
-                g_fileWrite(file, "#include \"%s/%s.h\"\n", package, name);
+                g_fileWrite(file, "#include <%s/%s.h>\n", package, name);
                 corto_dealloc(name);
                 corto_dealloc(package);
             }

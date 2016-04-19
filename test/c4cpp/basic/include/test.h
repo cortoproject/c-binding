@@ -14,11 +14,11 @@ public:
 };
 /* $end */
 
-#include "corto/corto.h"
-#include "_type.h"
-#include "_api.h"
-#include "_meta.h"
-#include "_interface.h"
+#include <corto/corto.h>
+#include <_type.h>
+#include <_api.h>
+#include <_meta.h>
+#include <_interface.h>
 
 #include "corto/test/test.h"
 
@@ -26,18 +26,18 @@ public:
 extern "C" {
 #endif
 
-#include "anyApi.h"
-#include "collectionApi.h"
-#include "collectionType.h"
-#include "compositeApi.h"
-#include "compositeReferenceApi.h"
-#include "compositeReferenceType.h"
-#include "compositeType.h"
-#include "Foo.h"
-#include "primitiveApi.h"
-#include "primitiveType.h"
-#include "voidApi.h"
-#include "voidReferenceApi.h"
+#include <anyApi.h>
+#include <collectionApi.h>
+#include <collectionType.h>
+#include <compositeApi.h>
+#include <compositeReferenceApi.h>
+#include <compositeReferenceType.h>
+#include <compositeType.h>
+#include <Foo.h>
+#include <primitiveApi.h>
+#include <primitiveType.h>
+#include <voidApi.h>
+#include <voidReferenceApi.h>
 
 #ifdef __cplusplus
 }

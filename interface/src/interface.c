@@ -822,7 +822,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
 
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-        g_fileWrite(result, "#include \"%s/_interface.h\"\n", g_getName(g));
+        g_fileWrite(result, "#include <%s/_interface.h>\n", g_getName(g));
     } else {
         c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
     }
@@ -843,7 +843,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
                 } else {
                     corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
                     g_fileWrite(
-                      data->mainHeader, "#include \"%s/%s.h\"\n", package, name);
+                      data->mainHeader, "#include <%s/%s.h>\n", package, name);
                     corto_dealloc(name);
                     corto_dealloc(package);
                 }
