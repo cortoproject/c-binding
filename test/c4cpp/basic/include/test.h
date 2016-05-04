@@ -20,7 +20,7 @@ public:
 #include <_meta.h>
 #include <_interface.h>
 
-#include "corto/test/test.h"
+#include <corto/test/test.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -803,6 +803,11 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n\n", path);
 
+    /* Include corto, if not generating corto */
+    if (o != corto_o) {
+        c_includeFrom(g, result, corto_o, "corto.h");
+    }
+
     /* If a header exists, write it */
     if (topLevelObject) {
         corto_string snippet;
@@ -813,10 +818,6 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
         }
     }
 
-    /* Include corto, if not generating corto */
-    if (o != corto_o) {
-        c_includeFrom(g, result, corto_o, "corto.h");
-    }
     c_includeFrom(g, result, g_getCurrent(g), "_type.h");
     c_includeFrom(g, result, g_getCurrent(g), "_api.h");
     c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
