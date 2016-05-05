@@ -389,7 +389,7 @@ void c_procedureAddToSizeExpr(corto_type t, corto_bool isReference, c_typeWalk_t
 
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     if (isReference || ((t->kind == CORTO_COMPOSITE) && !t->reference)) {
-        strcpy(id, "void*");
+        strcat(id, "*");
     }
 
     if(data->firstComma) {
