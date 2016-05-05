@@ -119,7 +119,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
     stack[count] = ptr;
 
     /* Print object */
-    o = corto_valueObject(v);
+    o = corto_value_getObject(v);
 
     /* If object is a collection or primtive, dereference object pointer */
     corto_type t = corto_typeof(o);
@@ -138,7 +138,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 
     /* If the first found object-value in the value-stack is not of the type of the object,
      * cast it. This happens when using inheritance. */
-    thisType = corto_valueType(ptr);
+    thisType = corto_value_getType(ptr);
     if (corto_type(thisType) != corto_typeof(o)) {
         corto_id id, parentId, objectId;
         /* Use standard C-style cast to prevent assertType macro, and more
@@ -146,11 +146,11 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
         sprintf(id, "((%s%s)%s)",
                 g_fullOid(data->g, thisType, parentId),
                 thisType->reference ? "" : "*",
-                c_varId(data->g, corto_valueObject(v), objectId));
+                c_varId(data->g, corto_value_getObject(v), objectId));
         strcat(out, id);
     } else {
         corto_id objectId;
-        strcat(out, c_varId(data->g, corto_valueObject(v), objectId));
+        strcat(out, c_varId(data->g, corto_value_getObject(v), objectId));
     }
 
     /* End bracket used for dereferencing object */
@@ -184,7 +184,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
             corto_collection t;
             corto_char arrayIndex[24];
 
-            t = corto_collection(corto_valueType(stack[count+1]));
+            t = corto_collection(corto_value_getType(stack[count+1]));
 
             switch (t->kind) {
 
@@ -209,7 +209,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
             default: {
                 corto_char elementId[9]; /* One-million nested collections should be adequate in most cases. */
 
-                if ((corto_valueType(stack[count])->kind == CORTO_COLLECTION) && (corto_collection(corto_valueType(stack[count]))->kind == CORTO_ARRAY)) {
+                if ((corto_value_getType(stack[count])->kind == CORTO_COLLECTION) && (corto_collection(corto_value_getType(stack[count]))->kind == CORTO_ARRAY)) {
                     sprintf(out, "(*%s)", c_loadElementId(stack[count], elementId, 0));
                 } else {
                     sprintf(out, "%s", c_loadElementId(stack[count], elementId, 0));
@@ -384,7 +384,7 @@ static void c_varPrintStart(corto_value* v, c_typeWalk_t* data) {
     corto_id memberId;
     corto_type t;
 
-    t = corto_valueType(v);
+    t = corto_value_getType(v);
 
     /* Only write an identifier if the object is a primitive type, or a reference. */
     if ((t->kind == CORTO_PRIMITIVE) || (t->reference && !(v->kind == CORTO_OBJECT))) {
@@ -399,7 +399,7 @@ static void c_varPrintEnd(corto_value* v, c_typeWalk_t* data) {
     corto_type t;
 
     /* Get member object */
-    t = corto_valueType(v);
+    t = corto_value_getType(v);
     if ((t->kind == CORTO_PRIMITIVE) || (t->reference && !(v->kind == CORTO_OBJECT))) {
         /* Print end of member-assignment */
         g_fileWrite(data->source, ";\n");
@@ -414,8 +414,8 @@ static corto_int16 c_initPrimitive(corto_serializer s, corto_value* v, void* use
     c_typeWalk_t* data;
     CORTO_UNUSED(s);
 
-    ptr = corto_valueValue(v);
-    t = corto_valueType(v);
+    ptr = corto_value_getPtr(v);
+    t = corto_value_getType(v);
     data = userData;
     str = NULL;
 
@@ -482,14 +482,14 @@ static corto_int16 c_initReference(corto_serializer s, corto_value* v, void* use
     CORTO_UNUSED(s);
 
     data = userData;
-    optr = corto_valueValue(v);
+    optr = corto_value_getPtr(v);
 
     c_varPrintStart(v, userData);
 
     if ((o = *optr)) {
         corto_id id, src, context, typeId, postfix;
-        c_varId(data->g, corto_valueObject(v), src);
-        c_specifierId(data->g, corto_valueType(v), typeId, NULL, postfix);
+        c_varId(data->g, corto_value_getObject(v), src);
+        c_specifierId(data->g, corto_value_getType(v), typeId, NULL, postfix);
         corto_strving(v, context, 256);
         g_fileWrite(data->source, "%s(%s)",
           typeId,
@@ -506,7 +506,7 @@ static corto_int16 c_initReference(corto_serializer s, corto_value* v, void* use
 /* c_initElement */
 static corto_int16 c_initElement(corto_serializer s, corto_value* v, void* userData) {
     c_typeWalk_t* data = userData;
-    corto_collection t = corto_collection(corto_valueType(v->parent));
+    corto_collection t = corto_collection(corto_value_getType(v->parent));
     corto_bool requiresAlloc = corto_collection_requiresAlloc(t->elementType);
 
     /* Allocate space for element */
@@ -565,9 +565,9 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
     void* ptr;
     corto_uint32 size = 0;
 
-    ptr = corto_valueValue(v);
+    ptr = corto_value_getPtr(v);
 
-    t = corto_collection(corto_valueType(v));
+    t = corto_collection(corto_value_getType(v));
     data = userData;
 
     switch (t->kind) {

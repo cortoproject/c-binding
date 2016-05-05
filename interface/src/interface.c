@@ -808,6 +808,12 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
         c_includeFrom(g, result, corto_o, "corto.h");
     }
 
+    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+        g_fileWrite(result, "#include <%s/_interface.h>\n", g_getName(g));
+    } else {
+        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
+    }
+
     /* If a header exists, write it */
     if (topLevelObject) {
         corto_string snippet;
@@ -821,12 +827,6 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     c_includeFrom(g, result, g_getCurrent(g), "_type.h");
     c_includeFrom(g, result, g_getCurrent(g), "_api.h");
     c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
-
-    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-        g_fileWrite(result, "#include <%s/_interface.h>\n", g_getName(g));
-    } else {
-        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
-    }
 
     g_fileWrite(result, "\n");
 

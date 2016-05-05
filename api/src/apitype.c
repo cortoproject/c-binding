@@ -679,7 +679,7 @@ corto_int16 c_apiTypeStr(corto_type t, c_apiWalk_t *data) {
 
     g_fileWrite(data->source, "corto_value v;\n", id);
     if (t->reference) {
-        g_fileWrite(data->source, "corto_valueObjectInit(&v, value, corto_type(%s_o));\n", id);
+        g_fileWrite(data->source, "v = corto_value_object(value, corto_type(%s_o));\n", id);
     } else {
         corto_bool isPtr =
           ptr ||
@@ -688,7 +688,7 @@ corto_int16 c_apiTypeStr(corto_type t, c_apiWalk_t *data) {
 
         g_fileWrite(
             data->source,
-            "corto_valueValueInit(&v, NULL, corto_type(%s_o), %svalue);\n",
+            "v = corto_value_value(corto_type(%s_o), %svalue);\n",
             id,
             isPtr ? "" : "&");
     }
@@ -733,7 +733,7 @@ static corto_int16 c_apiTypeInitIntern(corto_type t, c_apiWalk_t *data, corto_st
         g_fileWrite(data->source, "result = corto_%s(value, 0);\n", funcLower);
     } else {
         g_fileWrite(data->source, "corto_value v;\n", id);
-        g_fileWrite(data->source, "corto_valueValueInit(&v, NULL, corto_type(%s_o), value);\n", id);
+        g_fileWrite(data->source, "v = corto_value_value(corto_type(%s_o), value);\n", id);
         g_fileWrite(data->source, "result = corto_%sv(&v);\n", funcLower);
     }
 

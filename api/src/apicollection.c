@@ -12,14 +12,12 @@ static corto_bool c_apiElementRequiresInit(corto_type elementType) {
     return result;
 }
 
-void corto_valueValueInit(corto_value* val, corto_object o, corto_type t, corto_void* v);
-
 /* Initialize or deinitialize element */
 static corto_int16 c_apiElementInit(corto_string elementType, corto_string element, corto_bool isInit, c_apiWalk_t* data) {
     g_fileWrite(data->source, "{\n");
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_value v;\n");
-    g_fileWrite(data->source, "corto_valueValueInit(&v, NULL, corto_type(%s_o), %s);\n", elementType, element);
+    g_fileWrite(data->source, "v = corto_value_value(corto_type(%s_o), %s);\n", elementType, element);
     if (isInit) {
         g_fileWrite(data->source, "corto_initv(&v);\n");
     } else {

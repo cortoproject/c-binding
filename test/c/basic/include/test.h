@@ -6,15 +6,15 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include <corto/corto.h>
+#include <_interface.h>
 /* $header() */
 typedef void* myNativeType;
 /* $end */
 
-#include <corto/corto.h>
 #include <_type.h>
 #include <_api.h>
 #include <_meta.h>
-#include <_interface.h>
 
 #include <corto/test/test.h>
 
