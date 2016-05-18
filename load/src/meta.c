@@ -723,7 +723,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
         if (!g_mustParse(data->g, o)) {
             return 1;
         }
-        
+
         c_escapeString(corto_idof(o), escapedName);
         g_fileWrite(data->source, "%s = %s(corto_declareChild(%s, \"%s\", ",
             varId,
@@ -789,8 +789,9 @@ static int c_loadDefine(corto_object o, void* userData) {
         if (!corto_function(o)->impl) {
             g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
             c_loadCFunction(o, data, name);
-            g_fileWrite(data->source, "void __%s(corto_function f, void *args, void *result);\n", name);
-            g_fileWrite(data->source, "corto_function(%s)->impl = (corto_word)__%s;\n", varId, name);
+            c_decl(data->g, data->source, corto_function(o), FALSE, TRUE);
+            g_fileWrite(data->source, ";\n");
+            g_fileWrite(data->source, "corto_function(%s)->fptr = (corto_word)_%s;\n", varId, name);
         }
     }
 

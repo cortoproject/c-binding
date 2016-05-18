@@ -731,3 +731,177 @@ corto_char* c_varId(corto_generator g, corto_object o, corto_char* out) {
 
     return out;
 }
+
+char* c_functionName(corto_generator g, corto_function o, corto_id id) {
+    g_fullOid(g, o, id);
+    if (corto_instanceof(corto_type(corto_method_o), o)) {
+        if (corto_method(o)->_virtual) {
+            strcat(id, "_v");
+        }
+    }
+    return id;
+}
+
+typedef struct c_paramWalk_t {
+    corto_generator g;
+    corto_bool firstComma;
+    g_file file;
+} c_paramWalk_t;
+
+/* Generate parameters for method */
+static int c_param(corto_parameter *o, void *userData) {
+    c_paramWalk_t* data;
+    corto_id specifier, postfix, name;
+
+    data = userData;
+
+    /* Write comma */
+    if (data->firstComma) {
+        g_fileWrite(data->file, ",\n    ");
+    } else {
+        g_fileWrite(data->file, "\n    ");
+    }
+
+    if (c_specifierId(data->g, o->type, specifier, NULL, postfix)) {
+        goto error;
+    }
+
+    g_fileWrite(data->file, "%s ", specifier);
+
+    if (c_paramRequiresPtr(o)) {
+        g_fileWrite(data->file, "*");
+    }
+
+    /* Write to source */
+    g_fileWrite(data->file, "%s%s", c_paramName(o->name, name), postfix);
+
+    data->firstComma++;
+
+    return 1;
+error:
+    return 0;
+}
+
+/* Add this to parameter-list */
+void c_paramThis(
+    corto_generator g,
+    g_file file,
+    corto_bool cpp,
+    corto_type parentType)
+{
+    corto_id classId;
+
+    g_fullOid(g, parentType, classId);
+
+    /* If 'cpp' is enabled, the code will be compiled with a C++ compiler.
+     * Therefore, avoid using the 'this' keyword */
+    if (!cpp) {
+        g_fileWrite(file,
+            "\n    %s this",
+            c_typeptr(g, parentType, classId));
+    } else {
+        g_fileWrite(file,
+            "\n    %s _this",
+            c_typeptr(g, parentType, classId));
+    }
+}
+
+/* Walk parameters of function */
+int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *userData) {
+    corto_uint32 i;
+    corto_parameterseq *params = NULL;
+
+    if (corto_instanceof(corto_function_o, f)) {
+        params = &corto_function(f)->parameters;
+    } else if (corto_instanceof(corto_delegate_o, f)) {
+        params = &corto_delegate(f)->parameters;
+    }
+
+    for (i = 0; i < params->length; i++) {
+        if (!action(&(params->buffer[i]), userData)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+corto_int16 c_decl(
+    corto_generator g,
+    g_file file,
+    corto_function o,
+    corto_bool isWrapper,
+    corto_bool cpp)
+{
+    corto_id fullname, functionName, signatureName, returnSpec, returnPostfix;
+    corto_procedureKind kind;
+    corto_type returnType;
+    c_paramWalk_t walkData;
+
+    walkData.g = g;
+    walkData.firstComma = 0;
+    walkData.file = file;
+
+    kind = corto_procedure(corto_typeof(o))->kind;
+
+    /* Generate function-return type string */
+    returnType = ((corto_function)o)->returnType;
+    if (returnType) {
+        c_specifierId(g, returnType, returnSpec, NULL, returnPostfix);
+    } else {
+        strcpy(returnSpec, "void");
+        *returnPostfix = '\0';
+    }
+
+    corto_fullpath(fullname, o);
+
+    /* If the function is not a wrapper, append _v if the function is virtual */
+    if (isWrapper) {
+        g_fullOid(g, o, functionName);
+    } else {
+        c_functionName(g, o, functionName);
+    }
+    
+    if (corto_function(o)->overloaded) {
+        strcpy(signatureName, fullname + 1); /* Skip scope */
+    } else {
+        corto_signatureName(fullname + 1, signatureName);
+    }
+
+    /* Start of function */
+    c_writeExport(g, file);
+    g_fileWrite(file, " %s%s _%s(", returnSpec, returnPostfix, functionName);
+
+    /* Add 'this' parameter to methods */
+    if (c_procedureHasThis(o)) {
+        if (corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
+            c_paramThis(g, file, cpp, corto_parentof(o));
+        } else {
+            if (!cpp) {
+                g_fileWrite(file, "corto_any this");
+            } else {
+                g_fileWrite(file, "corto_any _this");
+            }
+        }
+        walkData.firstComma = 1;
+    } else {
+        walkData.firstComma = 0;
+    }
+
+    /* Walk parameters */
+    if (!c_paramWalk(o, c_param, &walkData)) {
+        goto error;
+    }
+
+    /* Append void if the argumentlist was empty */
+    if (!walkData.firstComma) {
+        g_fileWrite(file, "void");
+    }
+
+    /* Begin of function */
+    g_fileWrite(file, ")");
+
+    return 0;
+error:
+    return -1;
+}
