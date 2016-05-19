@@ -223,6 +223,13 @@ static g_file c_apiSourceOpen(corto_generator g) {
     g_fileWrite(result, " */\n\n");
     c_include(g, result, g_getCurrent(g));
 
+    /* Include libffi */
+    g_fileWrite(result, "#ifdef __MACH__\n");
+    g_fileWrite(result, "#include \"ffi/ffi.h\"\n");
+    g_fileWrite(result, "#else\n");
+    g_fileWrite(result, "#include \"ffi.h\"\n");
+    g_fileWrite(result, "#endif\n\n");
+
     return result;
 }
 

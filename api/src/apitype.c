@@ -944,8 +944,7 @@ corto_int16 c_apiDelegateInitCallback(
         g_fileWrite(data->source, "corto_claim(instance);\n");
     }
     g_fileWrite(data->source, "d->_parent.procedure = corto_functionDeclare();\n");
-    g_fileWrite(data->source, "void __%s(corto_function f, void *result, void *args);\n", id);
-    g_fileWrite(data->source, "d->_parent.procedure->impl = (corto_word)__%s;\n", id);
+    g_fileWrite(data->source, "d->_parent.procedure->impl = (corto_word)ffi_call;\n", id);
     g_fileWrite(
         data->source, "corto_function_parseParamString(d->_parent.procedure, \"(");
 
@@ -966,7 +965,7 @@ corto_int16 c_apiDelegateInitCallback(
 
     g_fileWrite(data->source, ")\");\n");
     g_fileWrite(
-        data->source, "d->_parent.procedure->implData = (corto_word)callback;\n");
+        data->source, "d->_parent.procedure->fptr = (corto_word)callback;\n");
 
     g_fileWrite(data->source, "corto_define(d->_parent.procedure);\n");
     g_fileWrite(data->source, "return 0;\n");
