@@ -861,7 +861,7 @@ corto_int16 c_decl(
     } else {
         c_functionName(g, o, functionName);
     }
-    
+
     if (corto_function(o)->overloaded) {
         strcpy(signatureName, fullname + 1); /* Skip scope */
     } else {
@@ -869,8 +869,7 @@ corto_int16 c_decl(
     }
 
     /* Start of function */
-    c_writeExport(g, file);
-    g_fileWrite(file, " %s%s _%s(", returnSpec, returnPostfix, functionName);
+    g_fileWrite(file, "%s%s _%s(", returnSpec, returnPostfix, functionName);
 
     /* Add 'this' parameter to methods */
     if (c_procedureHasThis(o)) {

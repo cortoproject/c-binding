@@ -168,6 +168,8 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
      * This file will be restored at the end of the function */
     data->source = data->wrapper;
 
+    c_writeExport(data->g, data->header);
+    g_fileWrite(data->header, " ");
     if (c_decl(data->g, data->header, corto_function(o), TRUE, FALSE)) {
         goto error;
     }
@@ -320,6 +322,8 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->header, "\n");
 
         /* Start of function */
+        c_writeExport(data->g, data->header);
+        g_fileWrite(data->header, " ");
         if (c_decl(data->g, data->header, corto_function(o), FALSE, FALSE)) {
             goto error;
         }
@@ -341,7 +345,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         }
 
         /* Begin of function */
-        g_fileWrite(data->source, "{\n");
+        g_fileWrite(data->source, "\n{\n");
         g_fileWrite(data->source, "/* $begin(%s)", signatureName);
         g_fileIndent(data->source);
 
