@@ -158,11 +158,6 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
         corto_loadFreePackages(packages);
     }
 
-    g_fileWrite(file, "#ifdef __cplusplus\n");
-    g_fileWrite(file, "extern \"C\" {\n");
-    g_fileWrite(file, "#endif\n");
-
-    g_fileWrite(file, "\n");
     g_fileWrite(file, "/* $header()");
 
     /* Lookup the header snippet */
@@ -175,6 +170,12 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
         g_fileWrite(file, "/* ");
     }
     g_fileWrite(file, "$end */\n");
+
+    g_fileWrite(file, "\n");
+
+    g_fileWrite(file, "#ifdef __cplusplus\n");
+    g_fileWrite(file, "extern \"C\" {\n");
+    g_fileWrite(file, "#endif\n");
 
     g_fileWrite(file, "\n");
 
