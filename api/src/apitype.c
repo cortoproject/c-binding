@@ -7,6 +7,7 @@ typedef struct c_arg {
     corto_string name;
     corto_type type;
     corto_bool move;
+    corto_string nativeCast;
 } c_arg;
 
 static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type type) {
@@ -15,6 +16,18 @@ static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type ty
         arg->name = corto_strdup(name);
         arg->type = type;
         arg->move = FALSE;
+        arg->nativeCast = NULL;
+        corto_llAppend(args, arg);
+    }
+}
+
+static void c_apiCastMacroAddArgNativeCast(corto_ll args, corto_string name, corto_string type) {
+    if (args) {
+        c_arg *arg = corto_alloc(sizeof(c_arg));
+        arg->name = corto_strdup(name);
+        arg->type = NULL;
+        arg->move = FALSE;
+        arg->nativeCast = corto_strdup(type);
         corto_llAppend(args, arg);
     }
 }
@@ -25,6 +38,7 @@ static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_typ
         arg->name = corto_strdup(name);
         arg->type = type;
         arg->move = TRUE;
+        arg->nativeCast = NULL;
         corto_llAppend(args, arg);
     }
 }
@@ -127,6 +141,9 @@ static corto_int16 c_apiCastMacro(corto_string id, corto_string name, c_apiWalk_
             g_fullOid(data->g, arg->type, id);
             g_fileWrite(data->header, "%s(%s)", id, arg->name);
         } else {
+            if (arg->nativeCast) {
+                g_fileWrite(data->header, "(%s)", arg->nativeCast);
+            }
             g_fileWrite(data->header, "%s", arg->name);
         }
         if (arg->move && cpp) {
@@ -317,9 +334,10 @@ corto_int16 c_apiTypeInitComposite(corto_type t, c_apiWalk_t *data) {
             g_fileWrite(data->source, ", ");
             g_fileWrite(data->header, ", ");
         }
-        g_fileWrite(data->header, "void(*_impl)(corto_function f, void *result, void *args)");
-        g_fileWrite(data->source, "void(*_impl)(corto_function f, void *result, void *args)");
-        c_apiCastMacroAddArg(data->args, "_impl", NULL);
+
+        g_fileWrite(data->header, "void(*_impl)(void)");
+        g_fileWrite(data->source, "void(*_impl)(void)");
+        c_apiCastMacroAddArgNativeCast(data->args, "_impl", "void(*)(void)");
         data->parameterCount++;
     }
 
@@ -397,8 +415,10 @@ corto_int16 c_apiTypeAssignComposite(corto_type t, c_apiWalk_t *data) {
     corto_metaWalk(&s, corto_type(t), data);
 
     if (corto_instanceof(corto_procedure_o, t)) {
-        g_fileWrite(data->source, "corto_function(_this)->impl = (corto_word)_impl;\n");
+        g_fileWrite(data->source, "corto_function(_this)->kind = CORTO_PROCEDURE_CDECL;\n");
+        g_fileWrite(data->source, "corto_function(_this)->fptr = (corto_word)_impl;\n");
     }
+
     return 0;
 }
 
