@@ -12,11 +12,11 @@
 typedef void* myNativeType;
 /* $end */
 
+#include <corto/test/test.h>
+
 #include <_type.h>
 #include <_api.h>
 #include <_meta.h>
-
-#include <corto/test/test.h>
 
 #ifdef __cplusplus
 extern "C" {

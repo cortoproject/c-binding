@@ -506,12 +506,6 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
         }
     }
 
-    c_includeFrom(g, result, g_getCurrent(g), "_type.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_api.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
-
-    g_fileWrite(result, "\n");
-
     if (o == topLevelObject) {
         /* Add header files for dependent packages */
         corto_ll packages = corto_loadGetPackages();
@@ -535,6 +529,12 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
             g_fileWrite(result, "\n");
         }
     }
+
+    c_includeFrom(g, result, g_getCurrent(g), "_type.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
+
+    g_fileWrite(result, "\n");
 
     if (topLevelObject) {
         corto_string snippet;
@@ -675,6 +675,12 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         /* If top level file, generate main function */
         if (isTopLevelObject && !isBootstrap) {
             g_fileWrite(data->source, "\n");
+            if ((snippet = g_fileLookupHeader(data->source, "main"))) {
+                g_fileWrite(data->source, "\n");
+                g_fileWrite(data->source, "/* $header(main)");
+                g_fileWrite(data->source, "%s", snippet);
+                g_fileWrite(data->source, "$end */\n");
+            }
             g_fileWrite(data->source, "int %sMain(int argc, char* argv[]) {\n", corto_idof(o));
             g_fileWrite(data->source, "/* $begin(main)");
             g_fileIndent(data->source);
