@@ -186,10 +186,18 @@ static corto_int16 c_apiAssign (
             );
 
         c_specifierId(data->g, t, id, NULL, postfix);
+        if (noAmpersand) {
+            g_fileWrite(data->source, "if (%s) {\n", rvalue);
+            g_fileIndent(data->source);
+        }
         g_fileWrite(data->source, "corto_copyp(&%s, %s_o, %s%s);\n",
             lvalue, id,
             noAmpersand ? "" : "&",
             rvalue);
+        if (noAmpersand) {
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "}\n");
+        }
     }
 
     return 0;
