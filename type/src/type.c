@@ -245,6 +245,43 @@ error:
     return -1;
 }
 
+/* Union object */
+static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userData) {
+    c_typeWalk_t* data;
+    corto_id id;
+    corto_type t;
+
+    data = userData;
+    t = corto_value_getType(v);
+
+    /* Open struct */
+    g_fileWrite(data->header, "struct %s {\n", g_fullOid(data->g, t, id));
+    g_fileIndent(data->header);
+
+    /* Write discriminator */
+    g_fileWrite(data->header, "%s d;\n", g_fullOid(data->g, corto_union(t)->discriminator, id));
+
+    /* Open union */
+    g_fileWrite(data->header, "union {\n");
+    g_fileIndent(data->header);
+
+    if (corto_serializeCases(s, v, userData)) {
+        goto error;
+    }
+
+    /* Close union */
+    g_fileDedent(data->header);
+    g_fileWrite(data->header, "} is;\n");
+
+    /* Close struct */
+    g_fileDedent(data->header);
+    g_fileWrite(data->header, "};\n");
+
+    return 0;
+error:
+    return -1;
+}
+
 /* Abstract object */
 static corto_int16 c_typeAbstract(corto_serializer s, corto_value* v, void* userData) {
     CORTO_UNUSED(s);
@@ -295,6 +332,11 @@ static corto_int16 c_typeComposite(corto_serializer s, corto_value* v, void* use
     case CORTO_DELEGATE:
     case CORTO_STRUCT:
         if (c_typeStruct(s, v, userData)) {
+            goto error;
+        }
+        break;
+    case CORTO_UNION:
+        if (c_typeUnion(s, v, userData)) {
             goto error;
         }
         break;
@@ -636,6 +678,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
             switch(corto_interface(t)->kind) {
             case CORTO_DELEGATE:
             case CORTO_STRUCT:
+            case CORTO_UNION:
                 g_fileWrite(data->header, "typedef struct %s %s;\n\n", g_fullOid(data->g, t, id), g_fullOid(data->g, t, id));
                 break;
             case CORTO_CLASS:

@@ -26,6 +26,13 @@ class compositeReferenceType::
     x, y: int32
     int16 init()
 
+// COMPOSITE union type
+union compositeUnionType: int32::
+    num: {0}, int64
+    flt: {1}, float64
+    str: {2, 3}, string
+    default other: word
+
 // COLLECTION type
 array collectionType: int32, 2 ::
     int16 init() method

@@ -29,6 +29,7 @@ extern "C" {
 #include <compositeReferenceApi.h>
 #include <compositeReferenceType.h>
 #include <compositeType.h>
+#include <compositeUnionType.h>
 #include <Foo.h>
 #include <primitiveApi.h>
 #include <primitiveType.h>
