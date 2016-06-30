@@ -89,10 +89,12 @@ static corto_int16 c_apiCastAuto(
 
     g_fileWrite(
         data->header,
-        ") %s _name = %s%s(%s",
+        ") %s _name = %s%s%s%s(%s",
         c_typeret(data->g, t, ret),
         id,
         func,
+        m ? "_" : "",
+        m ? corto_idof(m) : "",
         scoped ? "_parent, #_name" : "");
 
     iter = corto_llIter(data->args);
@@ -143,7 +145,12 @@ static corto_int16 c_apiCastMacro(
         count++;
     }
 
-    g_fileWrite(data->header, ") _%s%s(", id, name);
+    g_fileWrite(data->header, ") _%s%s%s%s(",
+      id,
+      name,
+      m ? "_" : "",
+      m ? corto_idof(m) : "");
+
     iter = corto_llIter(data->args);
     count = 0;
     while (corto_iterHasNext(&iter)) {
@@ -427,6 +434,16 @@ corto_int16 c_apiTypeInitArgs(corto_type t, corto_member m, c_apiWalk_t *data) {
         if (!m) {
             result = c_apiTypeInitComposite(t, data);
         } else {
+            corto_id dId;
+            g_fullOid(data->g, corto_union(t)->discriminator, dId);
+            if (data->parameterCount) {
+                g_fileWrite(data->header, ", ");
+                g_fileWrite(data->source, ", ");
+            }
+            g_fileWrite(data->header, "%s _d", dId);
+            g_fileWrite(data->source, "%s _d", dId);
+            c_apiCastMacroAddArg(data->args, "_d", corto_union(t)->discriminator);
+            data->parameterCount ++;
             result = c_apiTypeInitCompositeMember(m, data);
         }
         break;
@@ -484,22 +501,56 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, c_apiWalk_t *data) {
 
     /* Assign single member for unions */
     g_fileWrite(data->source, "switch(_d) {\n");
-    for(i = 0; i < corto_case(m)->discriminator.length; i++) {
-        g_fileWrite(data->source, "case %d:\n", corto_case(m)->discriminator.buffer[i]);
+    if (corto_case(m)->discriminator.length) {
+        for(i = 0; i < corto_case(m)->discriminator.length; i++) {
+            g_fileWrite(data->source, "case %d:\n", corto_case(m)->discriminator.buffer[i]);
+        }
+
+        g_fileIndent(data->source);
+        g_fileWrite(data->source, "_this->d = _d;\n");
+        s.metaprogram[CORTO_MEMBER](&s, &info, data);
+        g_fileWrite(data->source, "break;\n");
+        g_fileDedent(data->source);
+
+        g_fileWrite(data->source, "default:\n");
+        g_fileIndent(data->source);
+        g_fileWrite(data->source,
+          "corto_critical(\"invalid discriminator %%d for field %s\", _d);\n",
+          corto_idof(m));
+        g_fileWrite(data->source, "break;\n");
+        g_fileDedent(data->source);
+    } else {
+        corto_uint32 caseCount = 0;
+
+        /* If this is for assigning default member, ensure that the
+         * discriminator is not set to one of the other cases */
+        corto_union u = corto_union(corto_parentof(m));
+        corto_uint32 memberId, caseId;
+        for (memberId = 0; memberId < corto_interface(u)->members.length; memberId++) {
+            corto_case c = corto_case(corto_interface(u)->members.buffer[memberId]);
+            for (caseId = 0; caseId < c->discriminator.length; caseId ++) {
+                g_fileWrite(data->source, "case %d:\n", c->discriminator.buffer[caseId]);
+                caseCount ++;
+            }
+        }
+
+        if (caseCount) {
+            g_fileIndent(data->source);
+            g_fileWrite(data->source,
+              "corto_critical(\"invalid discriminator %%d for field %s\", _d);\n",
+              corto_idof(m));
+            g_fileWrite(data->source, "break;\n");
+            g_fileDedent(data->source);
+        }
+
+        g_fileWrite(data->source, "default:\n");
+        g_fileIndent(data->source);
+        g_fileWrite(data->source, "_this->d = _d;\n");
+        s.metaprogram[CORTO_MEMBER](&s, &info, data);
+        g_fileWrite(data->source, "break;\n");
+        g_fileDedent(data->source);
     }
 
-    g_fileIndent(data->source);
-    s.metaprogram[CORTO_MEMBER](&s, &info, data);
-    g_fileWrite(data->source, "break;\n");
-    g_fileDedent(data->source);
-
-    g_fileWrite(data->source, "default:\n");
-    g_fileIndent(data->source);
-    g_fileWrite(data->source,
-      "corto_critical(\"invalid discriminator %%d for field %s\", _d);\n",
-      corto_idof(m));
-    g_fileWrite(data->source, "break;\n");
-    g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");
 
     return 0;
@@ -593,7 +644,10 @@ corto_int16 c_apiTypeCreateIntern(
     corto_generator g = data->g;
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
-    corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
+
+    /* AND with define, because if function doesn't define the object the code
+     * doesn't take into account individual members */
+    corto_bool isUnion = corto_class_instanceof(corto_union_o, t) && define;
 
     g_fullOid(data->g, t, id);
     c_typeret(g, t, ret);
@@ -623,19 +677,6 @@ corto_int16 c_apiTypeCreateIntern(
             c_apiCastMacroAddArg(data->args, "_parent", corto_object_o);
             c_apiCastMacroAddArg(data->args, "_name", corto_type(corto_string_o));
             data->parameterCount = 2;
-        }
-
-        if (isUnion) {
-            corto_id dId;
-            g_fullOid(data->g, corto_union(t)->discriminator, dId);
-            if (data->parameterCount) {
-                g_fileWrite(data->header, ", ");
-                g_fileWrite(data->source, ", ");
-            }
-            g_fileWrite(data->header, "%s _d", dId);
-            g_fileWrite(data->source, "%s _d", dId);
-            c_apiCastMacroAddArg(data->args, "_d", corto_union(t)->discriminator);
-            data->parameterCount ++;
         }
 
         if (define) {
@@ -718,66 +759,78 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     corto_id id, ptr;
     corto_string func = isUpdate ? doUpdate ? "Update" : "Set" : "Define";
     corto_generator g = data->g;
+    corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
+    corto_member member = NULL;
+    corto_uint32 memberCount = 0;
 
-    data->args = corto_llNew();
-    data->parameterCount = 1;
-    g_fullOid(data->g, t, id);
-
-    c_writeExport(data->g, data->header);
-
-    if (isUpdate && !doUpdate) {
-      g_fileWrite(data->header, " void ");
-      g_fileWrite(data->source, "void ");
-    } else {
-      g_fileWrite(data->header, " corto_int16 ");
-      g_fileWrite(data->source, "corto_int16 ");
-    }
-
-    g_fileWrite(data->header, "_%s%s(%s _this", id, func, c_typeptr(g, t, ptr));
-    g_fileWrite(data->source, "_%s%s(%s _this", id, func, c_typeptr(g, t, ptr));
-    c_apiCastMacroAddArg(data->args, "_this", t);
-
-    c_apiTypeInitArgs(t, NULL, data);
-
-    /* Write closing brackets for argumentlist in source and header */
-    g_fileWrite(data->header, ");\n");
-    g_fileWrite(data->source, ") {\n");
-    g_fileIndent(data->source);
-    g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
-
-    /* Write cast macro */
-    c_apiCastMacro(id, func, NULL, data);
-    c_apiCastMacroFreeArgs(data->args);
-    data->args = NULL;
-
-    if (isUpdate && doUpdate && (t->kind != CORTO_VOID)) {
-      g_fileWrite(data->source, "if (!corto_updateBegin(_this)) {\n");
-        g_fileIndent(data->source);
-    }
-
-    /* Member assignments */
-    c_apiTypeInitAssign(t, NULL, data);
-
-    /* Define object */
-    if (isUpdate && doUpdate) {
-        if (t->kind != CORTO_VOID) {
-            g_fileWrite(data->source, "corto_updateEnd(_this);\n");
-            g_fileDedent(data->source);
-            g_fileWrite(data->source, "} else {\n");
-            g_fileIndent(data->source);
-            g_fileWrite(data->source, "return -1;\n");
-            g_fileDedent(data->source);
-            g_fileWrite(data->source, "}\n");
-            g_fileWrite(data->source, "return 0;\n");
-        } else {
-            g_fileWrite(data->source, "return corto_update(_this);\n");
+    do {
+        if (isUnion) {
+            member = corto_interface(t)->members.buffer[memberCount];
+            memberCount ++;
         }
-    } else if (!isUpdate) {
-        g_fileWrite(data->source, "return corto_define(_this);\n");
-    }
 
-    g_fileDedent(data->source);
-    g_fileWrite(data->source, "}\n\n");
+        data->args = corto_llNew();
+        data->parameterCount = 1;
+        g_fullOid(data->g, t, id);
+
+        c_writeExport(data->g, data->header);
+
+        if (isUpdate && !doUpdate) {
+          g_fileWrite(data->header, " void ");
+          g_fileWrite(data->source, "void ");
+        } else {
+          g_fileWrite(data->header, " corto_int16 ");
+          g_fileWrite(data->source, "corto_int16 ");
+        }
+
+        g_fileWrite(data->header, "_%s%s%s%s(%s _this",
+            id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
+        g_fileWrite(data->source, "_%s%s%s%s(%s _this",
+            id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
+        c_apiCastMacroAddArg(data->args, "_this", t);
+
+        c_apiTypeInitArgs(t, member, data);
+
+        /* Write closing brackets for argumentlist in source and header */
+        g_fileWrite(data->header, ");\n");
+        g_fileWrite(data->source, ") {\n");
+        g_fileIndent(data->source);
+        g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
+
+        /* Write cast macro */
+        c_apiCastMacro(id, func, member, data);
+        c_apiCastMacroFreeArgs(data->args);
+        data->args = NULL;
+
+        if (isUpdate && doUpdate && (t->kind != CORTO_VOID)) {
+          g_fileWrite(data->source, "if (!corto_updateBegin(_this)) {\n");
+            g_fileIndent(data->source);
+        }
+
+        /* Member assignments */
+        c_apiTypeInitAssign(t, member, data);
+
+        /* Define object */
+        if (isUpdate && doUpdate) {
+            if (t->kind != CORTO_VOID) {
+                g_fileWrite(data->source, "corto_updateEnd(_this);\n");
+                g_fileDedent(data->source);
+                g_fileWrite(data->source, "} else {\n");
+                g_fileIndent(data->source);
+                g_fileWrite(data->source, "return -1;\n");
+                g_fileDedent(data->source);
+                g_fileWrite(data->source, "}\n");
+                g_fileWrite(data->source, "return 0;\n");
+            } else {
+                g_fileWrite(data->source, "return corto_update(_this);\n");
+            }
+        } else if (!isUpdate) {
+            g_fileWrite(data->source, "return corto_define(_this);\n");
+        }
+
+        g_fileDedent(data->source);
+        g_fileWrite(data->source, "}\n\n");
+    } while (isUnion && (memberCount < corto_interface(t)->members.length));
 
     return 0;
 }
