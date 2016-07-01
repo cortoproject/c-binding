@@ -140,6 +140,8 @@ test/Suite compositeUnionApi::
     void tc_fromStr()
     void tc_fromStrDefault()
     void tc_compare()
+    void tc_compareDiscriminator()
+    void tc_compareDefault()
     void onUpdate(object observable) observer
     updated: bool
 
