@@ -224,7 +224,7 @@ corto_void _test_collectionApi_tc_set(
 /* $begin(test/collectionApi/tc_set) */
     test_collectionType o = {10, 20};
 
-    test_collectionTypeSet(o, 2, ((corto_int32[]){20, 30}));
+    test_collectionTypeAssign(o, 2, ((corto_int32[]){20, 30}));
     test_assert(o[0] == 20);
     test_assert(o[1] == 30);
 

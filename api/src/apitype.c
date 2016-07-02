@@ -8,15 +8,17 @@ typedef struct c_arg {
     corto_type type;
     corto_bool move;
     corto_string nativeCast;
+    corto_bool optional;
 } c_arg;
 
-static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type type) {
+static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type type, corto_bool optional) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
         arg->name = corto_strdup(name);
         arg->type = type;
         arg->move = FALSE;
         arg->nativeCast = NULL;
+        arg->optional = optional;
         corto_llAppend(args, arg);
     }
 }
@@ -28,17 +30,19 @@ static void c_apiCastMacroAddArgNativeCast(corto_ll args, corto_string name, cor
         arg->type = NULL;
         arg->move = FALSE;
         arg->nativeCast = corto_strdup(type);
+        arg->optional = FALSE;
         corto_llAppend(args, arg);
     }
 }
 
-static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_type type) {
+static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_type type, corto_bool optional) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
         arg->name = corto_strdup(name);
         arg->type = type;
         arg->move = TRUE;
         arg->nativeCast = NULL;
+        arg->optional = optional;
         corto_llAppend(args, arg);
     }
 }
@@ -120,6 +124,58 @@ static corto_int16 c_apiCastAuto(
     return 0;
 }
 
+static corto_int16 c_apiCastMacroCall(
+  corto_string id,
+  corto_string name,
+  corto_member m,
+  c_apiWalk_t *data)
+{
+    g_fileWrite(data->header, " _%s%s%s%s(",
+      id,
+      name,
+      m ? "_" : "",
+      m ? corto_idof(m) : "");
+
+    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
+    corto_iter iter = corto_llIter(data->args);
+    corto_uint32 count = 0;
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        corto_id argName;
+        if (arg->type && arg->optional) {
+            corto_id typeId, postfix;
+            c_specifierId(data->g, arg->type, typeId, NULL, postfix);
+            sprintf(argName, "%s__optional_##%s", typeId, arg->name);
+        } else {
+            strcpy(argName, arg->name);
+        }
+        if (count) {
+            g_fileWrite(data->header, ", ");
+        }
+        if (arg->move && cpp) {
+            g_fileWrite(data->header, "std::move(");
+        }
+        if (arg->type && arg->type->reference && (arg->type->kind != CORTO_VOID)) {
+            corto_id id;
+            g_fullOid(data->g, arg->type, id);
+            g_fileWrite(data->header, "%s(%s)", id, argName);
+        } else {
+            if (arg->nativeCast) {
+                g_fileWrite(data->header, "(%s)", arg->nativeCast);
+            }
+            g_fileWrite(data->header, "%s", argName);
+        }
+        if (arg->move && cpp) {
+            g_fileWrite(data->header, ")");
+        }
+        count++;
+    }
+
+    g_fileWrite(data->header, ")\n");
+
+    return 0;
+}
+
 static corto_int16 c_apiCastMacro(
     corto_string id,
     corto_string name,
@@ -127,7 +183,6 @@ static corto_int16 c_apiCastMacro(
     c_apiWalk_t *data)
 {
     corto_uint32 count = 0;
-    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
 
     g_fileWrite(data->header, "#define %s%s%s%s(",
       id,
@@ -145,11 +200,67 @@ static corto_int16 c_apiCastMacro(
         count++;
     }
 
-    g_fileWrite(data->header, ") _%s%s%s%s(",
+    g_fileWrite(data->header, ")");
+
+    c_apiCastMacroCall(id, name, m, data);
+
+    return 0;
+}
+
+static corto_int16 c_apiCastMacroSet(
+    corto_string id,
+    corto_type t,
+    c_apiWalk_t *data)
+{
+    corto_uint32 count = 0;
+
+    corto_id typeId;
+    c_varId(data->g, t, typeId);
+
+    g_fileWrite(
+      data->header,
+      "#define %s__optional_NotSet NULL\n",
+      id);
+
+    g_fileWrite(
+      data->header,
+      "#define %s__optional_Set(",
+      id);
+
+    corto_iter iter = corto_llIter(data->args);
+    count = 0;
+    corto_iterNext(&iter); /* Skip first argument */
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        if (count) {
+            g_fileWrite(data->header, ", ");
+        }
+        g_fileWrite(data->header, "%s", arg->name);
+        count++;
+    }
+
+    g_fileWrite(data->header, ") %sAssign(corto_alloc(sizeof(%s))", id, id);
+    iter = corto_llIter(data->args);
+    count = 1;
+    corto_iterNext(&iter); /* Skip first argument */
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        if (count) {
+            g_fileWrite(data->header, ", ");
+        }
+        g_fileWrite(data->header, "%s", arg->name);
+        count++;
+    }
+    g_fileWrite(data->header, ")\n");
+
+    g_fileWrite(
+      data->header,
+      "#define %sUnset(_this) _this ? corto_deinitp(_this, %s) : 0; corto_dealloc(_this); _this = NULL;\n",
       id,
-      name,
-      m ? "_" : "",
-      m ? corto_idof(m) : "");
+      typeId);
+
+
+    g_fileWrite(data->header, "#define %sAssign(", id);
 
     iter = corto_llIter(data->args);
     count = 0;
@@ -158,43 +269,47 @@ static corto_int16 c_apiCastMacro(
         if (count) {
             g_fileWrite(data->header, ", ");
         }
-        if (arg->move && cpp) {
-            g_fileWrite(data->header, "std::move(");
+        g_fileWrite(data->header, "%s", arg->name);
+        count++;
+    }
+    g_fileWrite(data->header, ")");
+
+    c_apiCastMacroCall(id, "Assign", NULL, data);
+
+    g_fileWrite(data->header, "#define %sSet(", id);
+
+    iter = corto_llIter(data->args);
+    count = 0;
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        if (count) {
+            g_fileWrite(data->header, ", ");
         }
-        if (arg->type && arg->type->reference && (arg->type->kind != CORTO_VOID)) {
-            corto_id id;
-            g_fullOid(data->g, arg->type, id);
-            g_fileWrite(data->header, "%s(%s)", id, arg->name);
-        } else {
-            if (arg->nativeCast) {
-                g_fileWrite(data->header, "(%s)", arg->nativeCast);
-            }
-            g_fileWrite(data->header, "%s", arg->name);
-        }
-        if (arg->move && cpp) {
-            g_fileWrite(data->header, ")");
-        }
+        g_fileWrite(data->header, "%s", arg->name);
         count++;
     }
 
-    g_fileWrite(data->header, ")\n");
+    g_fileWrite(data->header, ") _this = _this ? _this : corto_alloc(sizeof(%s));", typeId);
+    c_apiCastMacroCall(id, "Assign", NULL, data);
 
     return 0;
 }
 
+
 /* Assign primitive value */
-static corto_int16 c_apiAssign (
+static corto_int16 c_apiAssign(
     corto_type t,
     corto_bool ptr,
+    corto_bool optional,
     corto_string lvalue,
     corto_string rvalue,
     c_apiWalk_t *data)
 {
-    if (t->reference) {
+    if (!optional && t->reference) {
         g_fileWrite(data->source, "corto_setref(%s%s, %s);\n",
                 ptr ? "" : "&", lvalue, rvalue);
     } else if (t->kind == CORTO_PRIMITIVE) {
-        if (corto_primitive(t)->kind == CORTO_TEXT) {
+        if (!optional && (corto_primitive(t)->kind == CORTO_TEXT)) {
             g_fileWrite(data->source, "corto_setstr(%s%s, %s);\n",
                 ptr ? "" : "&", lvalue, rvalue);
         } else {
@@ -254,7 +369,7 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
             isUnionCase ? "is." : "",
             memberId);
 
-        c_apiAssign(m->type, FALSE, lvalue, memberParamId, data);
+        c_apiAssign(m->type, FALSE, m->modifiers & CORTO_OPTIONAL, lvalue, memberParamId, data);
         data->parameterCount++;
     }
 
@@ -272,6 +387,8 @@ static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* us
     if (v->kind == CORTO_MEMBER) {
         m = v->is.member.t;
         data = userData;
+        corto_bool isOptional = m->modifiers & CORTO_OPTIONAL;
+        corto_bool requiresPtr = c_typeRequiresPtr(m->type) || isOptional;
 
         if (data->parameterCount) {
             g_fileWrite(data->header, ", ");
@@ -283,19 +400,23 @@ static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* us
         corto_genMemberName(data->g, data->memberCache, m, memberIdTmp);
 
         if (data->args) {
-            c_apiCastMacroAddArg(data->args, g_id(data->g, memberIdTmp, memberId), m->type);
+            c_apiCastMacroAddArg(
+              data->args,
+              g_id(data->g, memberIdTmp, memberId),
+              m->type,
+              isOptional);
         }
 
         g_fileWrite(data->header, "%s%s%s %s",
                typeSpec,
                typePostfix,
-               c_typeRequiresPtr(m->type) ? "*" : "",
+               requiresPtr ? "*" : "",
                g_id(data->g, memberIdTmp, memberId));
 
         g_fileWrite(data->source, "%s%s%s %s",
                 typeSpec,
                 typePostfix,
-                c_typeRequiresPtr(m->type) ? "*" : "",
+                requiresPtr ? "*" : "",
                 g_id(data->g, memberIdTmp, memberId));
 
         data->parameterCount++;
@@ -312,6 +433,7 @@ static struct corto_serializer_s c_apiParamSerializer(void) {
     s.metaprogram[CORTO_MEMBER] = c_apiParamMember;
     s.access = CORTO_LOCAL|CORTO_READONLY|CORTO_PRIVATE|CORTO_HIDDEN;
     s.accessKind = CORTO_NOT;
+    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
 
     return s;
 }
@@ -324,6 +446,7 @@ static struct corto_serializer_s c_apiAssignSerializer(void) {
     s.metaprogram[CORTO_MEMBER] = c_apiAssignMember;
     s.access = CORTO_LOCAL|CORTO_READONLY|CORTO_PRIVATE|CORTO_HIDDEN;
     s.accessKind = CORTO_NOT;
+    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
 
     return s;
 }
@@ -339,8 +462,8 @@ corto_int16 c_apiTypeInitAny(corto_type t, c_apiWalk_t *data) {
     }
     g_fileWrite(data->header, "corto_type type, void *value");
     g_fileWrite(data->source, "corto_type type, void *value");
-    c_apiCastMacroAddArg(data->args, "type", corto_type(corto_type_o));
-    c_apiCastMacroAddArg(data->args, "value", NULL);
+    c_apiCastMacroAddArg(data->args, "type", corto_type(corto_type_o), FALSE);
+    c_apiCastMacroAddArg(data->args, "value", NULL, FALSE);
     return 0;
 }
 
@@ -357,7 +480,7 @@ corto_int16 c_apiTypeInitPrimitive(corto_type t, c_apiWalk_t *data) {
 
     g_fileWrite(data->header, "%s value", id);
     g_fileWrite(data->source, "%s value", id);
-    c_apiCastMacroAddArg(data->args, "value", NULL);
+    c_apiCastMacroAddArg(data->args, "value", NULL, FALSE);
     return 0;
 }
 
@@ -410,8 +533,8 @@ corto_int16 c_apiTypeInitCollection(corto_type t, c_apiWalk_t *data) {
     g_fullOid(data->g, corto_collection(t)->elementType, elementId);
     g_fileWrite(data->header, "corto_uint32 length, %s* elements", elementId);
     g_fileWrite(data->source, "corto_uint32 length, %s* elements", elementId);
-    c_apiCastMacroAddArg(data->args, "length", NULL);
-    c_apiCastMacroAddArgMove(data->args, "elements", NULL);
+    c_apiCastMacroAddArg(data->args, "length", NULL, FALSE);
+    c_apiCastMacroAddArgMove(data->args, "elements", NULL, FALSE);
 
     return 0;
 }
@@ -442,7 +565,7 @@ corto_int16 c_apiTypeInitArgs(corto_type t, corto_member m, c_apiWalk_t *data) {
             }
             g_fileWrite(data->header, "%s _d", dId);
             g_fileWrite(data->source, "%s _d", dId);
-            c_apiCastMacroAddArg(data->args, "_d", corto_union(t)->discriminator);
+            c_apiCastMacroAddArg(data->args, "_d", corto_union(t)->discriminator, FALSE);
             data->parameterCount ++;
             result = c_apiTypeInitCompositeMember(m, data);
         }
@@ -468,7 +591,7 @@ corto_int16 c_apiTypeAssignAny(corto_type t, c_apiWalk_t *data) {
 
 /* Assign primitve */
 corto_int16 c_apiTypeAssignPrimitive(corto_type t, c_apiWalk_t *data) {
-    c_apiAssign(t, TRUE, "_this", "value", data);
+    c_apiAssign(t, TRUE, FALSE, "_this", "value", data);
     return 0;
 }
 
@@ -576,10 +699,10 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
         sprintf(lvalue, "%s[i]", cVar);
         if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
             c_apiAssign(
-              corto_collection(t)->elementType, FALSE, lvalue, "elements[i]", data);
+              corto_collection(t)->elementType, FALSE, FALSE, lvalue, "elements[i]", data);
         } else {
             c_apiAssign(
-              corto_collection(t)->elementType, FALSE, lvalue, "&elements[i]", data);
+              corto_collection(t)->elementType, FALSE, FALSE, lvalue, "&elements[i]", data);
         }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
@@ -674,8 +797,8 @@ corto_int16 c_apiTypeCreateIntern(
         if (scoped) {
             g_fileWrite(data->header, "corto_object _parent, corto_string _name");
             g_fileWrite(data->source, "corto_object _parent, corto_string _name");
-            c_apiCastMacroAddArg(data->args, "_parent", corto_object_o);
-            c_apiCastMacroAddArg(data->args, "_name", corto_type(corto_string_o));
+            c_apiCastMacroAddArg(data->args, "_parent", corto_object_o, FALSE);
+            c_apiCastMacroAddArg(data->args, "_name", corto_type(corto_string_o), FALSE);
             data->parameterCount = 2;
         }
 
@@ -757,7 +880,8 @@ corto_int16 c_apiTypeDeclareChild(corto_type t, c_apiWalk_t *data) {
 
 corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool isUpdate, corto_bool doUpdate) {
     corto_id id, ptr;
-    corto_string func = isUpdate ? doUpdate ? "Update" : "Set" : "Define";
+    corto_string func = isUpdate ? doUpdate ? "Update" : "Assign" : "Define";
+    corto_bool isSet = isUpdate ? doUpdate ? FALSE : TRUE : FALSE;
     corto_generator g = data->g;
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
     corto_member member = NULL;
@@ -776,18 +900,18 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         c_writeExport(data->g, data->header);
 
         if (isUpdate && !doUpdate) {
-          g_fileWrite(data->header, " void ");
-          g_fileWrite(data->source, "void ");
+            g_fileWrite(data->header, " %s ", c_typeret(g, t, ptr));
+            g_fileWrite(data->source, "%s ", c_typeret(g, t, ptr));
         } else {
-          g_fileWrite(data->header, " corto_int16 ");
-          g_fileWrite(data->source, "corto_int16 ");
+            g_fileWrite(data->header, " corto_int16 ");
+            g_fileWrite(data->source, "corto_int16 ");
         }
 
         g_fileWrite(data->header, "_%s%s%s%s(%s _this",
             id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
         g_fileWrite(data->source, "_%s%s%s%s(%s _this",
             id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
-        c_apiCastMacroAddArg(data->args, "_this", t);
+        c_apiCastMacroAddArg(data->args, "_this", t, FALSE);
 
         c_apiTypeInitArgs(t, member, data);
 
@@ -798,7 +922,11 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
 
         /* Write cast macro */
-        c_apiCastMacro(id, func, member, data);
+        if (!isSet || isUnion) {
+            c_apiCastMacro(id, func, member, data);
+        } else {
+            c_apiCastMacroSet(id, t, data);
+        }
         c_apiCastMacroFreeArgs(data->args);
         data->args = NULL;
 
@@ -826,6 +954,8 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             }
         } else if (!isUpdate) {
             g_fileWrite(data->source, "return corto_define(_this);\n");
+        } else if (isUpdate && !doUpdate) {
+            g_fileWrite(data->source, "return _this;\n");
         }
 
         g_fileDedent(data->source);
@@ -861,7 +991,7 @@ corto_int16 c_apiTypeStr(corto_type t, c_apiWalk_t *data) {
     /* Function implementation */
     g_fileWrite(data->source, "corto_string _%sStr(%s%s value) {\n", id, id, ptr ? "*" : "");
 
-    c_apiCastMacroAddArg(data->args, "value", t);
+    c_apiCastMacroAddArg(data->args, "value", t, FALSE);
     c_apiCastMacro(id, "Str", NULL, data);
     c_apiCastMacroFreeArgs(data->args);
     data->args = NULL;
@@ -906,7 +1036,7 @@ static corto_int16 c_apiTypeInitIntern(corto_type t, c_apiWalk_t *data, corto_st
     /* Function implementation */
     g_fileWrite(data->source, "corto_int16 _%s%s(%s%s value) {\n", id, func, id, t->reference ? "" : "*");
 
-    c_apiCastMacroAddArg(data->args, "value", t);
+    c_apiCastMacroAddArg(data->args, "value", t, FALSE);
     c_apiCastMacro(id, func, NULL, data);
     c_apiCastMacroFreeArgs(data->args);
     data->args = NULL;
@@ -1006,11 +1136,11 @@ corto_int16 c_apiTypeCopyIntern(
 
     if (t->reference) {
         if (outParam) {
-            c_apiCastMacroAddArg(data->args, "dst", NULL);
+            c_apiCastMacroAddArg(data->args, "dst", NULL, FALSE);
         } else {
-            c_apiCastMacroAddArg(data->args, "dst", t);
+            c_apiCastMacroAddArg(data->args, "dst", t, FALSE);
         }
-        c_apiCastMacroAddArg(data->args, "src", t);
+        c_apiCastMacroAddArg(data->args, "src", t, FALSE);
         c_apiCastMacro(id, func, NULL, data);
         c_apiCastMacroFreeArgs(data->args);
         data->args = NULL;

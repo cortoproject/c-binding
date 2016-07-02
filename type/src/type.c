@@ -64,7 +64,11 @@ static corto_int16 c_typeMember(corto_serializer s, corto_value* v, void* userDa
         }
 
         if (m->id != (corto_uint32)-1) {
-            g_fileWrite(data->header, "%s %s%s;\n", specifier, g_id(data->g, corto_idof(m), memberId), postfix);
+            g_fileWrite(data->header, "%s %s%s%s;\n",
+              specifier,
+              (m->modifiers & CORTO_OPTIONAL) ? "*" : "",
+              g_id(data->g, corto_idof(m), memberId),
+              postfix);
         } else {
             g_fileWrite(data->header, "%s _parent%s;\n", specifier, postfix);
         }
@@ -539,6 +543,7 @@ struct corto_serializer_s c_typeSerializer(void) {
     s.access = CORTO_GLOBAL;
     s.accessKind = CORTO_XOR;
     s.aliasAction = CORTO_SERIALIZER_ALIAS_IGNORE;
+    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
     s.traceKind = CORTO_SERIALIZER_TRACE_ON_FAIL;
 
     return s;

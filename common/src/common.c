@@ -834,15 +834,12 @@ corto_int16 c_decl(
     corto_bool cpp)
 {
     corto_id fullname, functionName, signatureName, returnSpec, returnPostfix;
-    corto_procedureKind kind;
     corto_type returnType;
     c_paramWalk_t walkData;
 
     walkData.g = g;
     walkData.firstComma = 0;
     walkData.file = file;
-
-    kind = corto_procedure(corto_typeof(o))->kind;
 
     /* Generate function-return type string */
     returnType = ((corto_function)o)->returnType;

@@ -694,6 +694,7 @@ static struct corto_serializer_s c_initSerializer(void) {
     s.access = CORTO_LOCAL;
     s.accessKind = CORTO_NOT;
     s.aliasAction = CORTO_SERIALIZER_ALIAS_IGNORE;
+    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
     s.traceKind = CORTO_SERIALIZER_TRACE_ON_FAIL;
     s.program[CORTO_PRIMITIVE] = c_initPrimitive;
     s.program[CORTO_COLLECTION] = c_initCollection;

@@ -213,7 +213,7 @@ corto_void _test_primitiveApi_tc_set(
 
     test_primitiveType *o = test_primitiveTypeCreate(10);
     test_assert(o != NULL);
-    test_primitiveTypeSet(o, 20);
+    test_primitiveTypeAssign(o, 20);
     test_assert(*o == 20);
     test_assert(!corto_delete(o));
 

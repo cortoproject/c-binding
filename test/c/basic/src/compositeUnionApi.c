@@ -392,7 +392,7 @@ corto_void _test_compositeUnionApi_tc_set(
 /* $begin(test/compositeUnionApi/tc_set) */
     test_compositeUnionType o = {0, {.num = 10}};
 
-    test_compositeUnionTypeSet_flt(&o, 1, 10.5);
+    test_compositeUnionTypeAssign_flt(&o, 1, 10.5);
     test_assert(o.d == 1);
     test_assert(o.is.flt == 10.5);
 
@@ -405,7 +405,7 @@ corto_void _test_compositeUnionApi_tc_setDefault(
 /* $begin(test/compositeUnionApi/tc_setDefault) */
     test_compositeUnionType o = {0, {.num = 10}};
 
-    test_compositeUnionTypeSet_other(&o, 4, 20);
+    test_compositeUnionTypeAssign_other(&o, 4, 20);
     test_assert(o.d == 4);
     test_assert(o.is.other == 20);
 

@@ -228,7 +228,7 @@ corto_void _test_compositeReferenceApi_tc_set(
 /* $begin(test/compositeReferenceApi/tc_set) */
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
 
-    test_compositeReferenceTypeSet(o, 20, 30);
+    test_compositeReferenceTypeAssign(o, 20, 30);
     test_assert(o->x == 20);
     test_assert(o->y == 30);
 

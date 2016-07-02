@@ -251,7 +251,7 @@ corto_void _test_anyApi_tc_set(
     corto_string v2 = "Foo";
     test_anyType o = {corto_type(corto_int32_o), &v1, FALSE};
 
-    test_anyTypeSet(&o, corto_string_o, &v2);
+    test_anyTypeAssign(&o, corto_string_o, &v2);
     test_assert(o.type == corto_type(corto_string_o));
     test_assert(!strcmp(*(corto_string*)o.value, "Foo"));
     v2 = "Bar";

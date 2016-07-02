@@ -222,7 +222,7 @@ corto_void _test_compositeApi_tc_set(
 /* $begin(test/compositeApi/tc_set) */
     test_compositeType o = {10, 20};
 
-    test_compositeTypeSet(&o, 20, 30);
+    test_compositeTypeAssign(&o, 20, 30);
     test_assert(o.x == 20);
     test_assert(o.y == 30);
 
