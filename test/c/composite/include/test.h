@@ -30,6 +30,7 @@ extern "C" {
 #include <OptionalApi.h>
 #include <OptionalArray.h>
 #include <OptionalComposite.h>
+#include <OptionalCompositeApi.h>
 #include <OptionalSequence.h>
 #include <OptionalString.h>
 #include <OptionalStringApi.h>

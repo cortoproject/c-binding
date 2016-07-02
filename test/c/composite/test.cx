@@ -94,3 +94,19 @@ test/Suite OptionalStringApi::
   void tc_unset()
   void onUpdate(object observable) observer
   updated: bool
+
+test/Suite OptionalCompositeApi::
+  void tc_create()
+  void tc_createNotSet()
+  void tc_createChild()
+  void tc_createChildNotSet()
+  void tc_declare()
+  void tc_declareChild()
+  void tc_define()
+  void tc_defineNotSet()
+  void tc_update()
+  void tc_updateNotSet()
+  void tc_set()
+  void tc_unset()
+  void onUpdate(object observable) observer
+  updated: bool

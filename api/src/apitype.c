@@ -305,38 +305,44 @@ static corto_int16 c_apiAssign(
     corto_string rvalue,
     c_apiWalk_t *data)
 {
-    if (!optional && t->reference) {
-        g_fileWrite(data->source, "corto_setref(%s%s, %s);\n",
-                ptr ? "" : "&", lvalue, rvalue);
-    } else if (t->kind == CORTO_PRIMITIVE) {
-        if (!optional && (corto_primitive(t)->kind == CORTO_TEXT)) {
-            g_fileWrite(data->source, "corto_setstr(%s%s, %s);\n",
-                ptr ? "" : "&", lvalue, rvalue);
-        } else {
-            g_fileWrite(data->source, "%s%s = %s;\n",
-                (!c_typeRequiresPtr(t) && ptr) ? "*" : "",
-                lvalue, rvalue);
-        }
+    if (optional) {
+        g_fileWrite(data->source, "%s%s = %s;\n",
+            (!c_typeRequiresPtr(t) && ptr) ? "*" : "",
+            lvalue, rvalue);
     } else {
-        corto_id id, postfix;
-        corto_bool noAmpersand =
-            c_typeRequiresPtr(t) ||
-            ((t->kind == CORTO_COLLECTION) &&
-              (corto_collection(t)->kind == CORTO_ARRAY)
-            );
+        if (t->reference) {
+            g_fileWrite(data->source, "corto_setref(%s%s, %s);\n",
+                    ptr ? "" : "&", lvalue, rvalue);
+        } else if (t->kind == CORTO_PRIMITIVE) {
+            if (corto_primitive(t)->kind == CORTO_TEXT) {
+                g_fileWrite(data->source, "corto_setstr(%s%s, %s);\n",
+                    ptr ? "" : "&", lvalue, rvalue);
+            } else {
+                g_fileWrite(data->source, "%s%s = %s;\n",
+                    (!c_typeRequiresPtr(t) && ptr) ? "*" : "",
+                    lvalue, rvalue);
+            }
+        } else {
+            corto_id id, postfix;
+            corto_bool noAmpersand =
+                c_typeRequiresPtr(t) ||
+                ((t->kind == CORTO_COLLECTION) &&
+                  (corto_collection(t)->kind == CORTO_ARRAY)
+                );
 
-        c_specifierId(data->g, t, id, NULL, postfix);
-        if (noAmpersand) {
-            g_fileWrite(data->source, "if (%s) {\n", rvalue);
-            g_fileIndent(data->source);
-        }
-        g_fileWrite(data->source, "corto_copyp(&%s, %s_o, %s%s);\n",
-            lvalue, id,
-            noAmpersand ? "" : "&",
-            rvalue);
-        if (noAmpersand) {
-            g_fileDedent(data->source);
-            g_fileWrite(data->source, "}\n");
+            c_specifierId(data->g, t, id, NULL, postfix);
+            if (noAmpersand) {
+                g_fileWrite(data->source, "if (%s) {\n", rvalue);
+                g_fileIndent(data->source);
+            }
+            g_fileWrite(data->source, "corto_copyp(&%s, %s_o, %s%s);\n",
+                lvalue, id,
+                noAmpersand ? "" : "&",
+                rvalue);
+            if (noAmpersand) {
+                g_fileDedent(data->source);
+                g_fileWrite(data->source, "}\n");
+            }
         }
     }
 
