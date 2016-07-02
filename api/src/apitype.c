@@ -239,7 +239,7 @@ static corto_int16 c_apiCastMacroSet(
         count++;
     }
 
-    g_fileWrite(data->header, ") %sAssign(corto_alloc(sizeof(%s))", id, id);
+    g_fileWrite(data->header, ") %sAssign(corto_calloc(sizeof(%s))", id, id);
     iter = corto_llIter(data->args);
     count = 1;
     corto_iterNext(&iter); /* Skip first argument */
@@ -289,7 +289,7 @@ static corto_int16 c_apiCastMacroSet(
         count++;
     }
 
-    g_fileWrite(data->header, ") _this = _this ? _this : corto_alloc(sizeof(%s));", typeId);
+    g_fileWrite(data->header, ") _this = _this ? _this : corto_calloc(sizeof(%s));", typeId);
     c_apiCastMacroCall(id, "Assign", NULL, data);
 
     return 0;
