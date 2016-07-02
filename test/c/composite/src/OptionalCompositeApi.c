@@ -187,6 +187,32 @@ corto_void _test_OptionalCompositeApi_tc_set(
 /* $end */
 }
 
+corto_void _test_OptionalCompositeApi_tc_str(
+    test_OptionalCompositeApi this)
+{
+/* $begin(test/OptionalCompositeApi/tc_str) */
+    test_OptionalComposite *o = test_OptionalCompositeCreate(Set(10, 20), NULL);
+
+    corto_string str = test_OptionalCompositeStr(o);
+    test_assertstr(str, "{{10,20},{0,0}}");
+    corto_dealloc(str);
+
+/* $end */
+}
+
+corto_void _test_OptionalCompositeApi_tc_strNotSet(
+    test_OptionalCompositeApi this)
+{
+/* $begin(test/OptionalCompositeApi/tc_strNotSet) */
+    test_OptionalComposite *o = test_OptionalCompositeCreate(NotSet, NULL);
+
+    corto_string str = test_OptionalCompositeStr(o);
+    test_assertstr(str, "{{0,0}}");
+    corto_dealloc(str);
+
+/* $end */
+}
+
 corto_void _test_OptionalCompositeApi_tc_unset(
     test_OptionalCompositeApi this)
 {
