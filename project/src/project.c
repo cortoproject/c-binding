@@ -75,8 +75,18 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
     corto_bool error = FALSE;
     corto_id filename;
     sprintf(filename, "%s.h", g_getProjectName(g));
+    corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
+    corto_bool local = !strcmp(gen_getAttribute(g, "local"), "true");
 
-    strcpy(upperName, g_getName(g));
+    /* If a local package or application, prefix the macro. Otherwise there will
+     * be issues including a package from an app/local project with the same
+     * name. */
+    upperName[0] = '\0';
+    if (app || local) {
+        strcpy(upperName, "_");
+    }
+
+    strcat(upperName, g_getName(g));
     corto_strupper(upperName);
     char *ptr = upperName, ch;
     while ((ch = *ptr)) {
