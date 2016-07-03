@@ -34,43 +34,33 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_fileWrite(file, " * This file is generated. Do not modify.\n");
     g_fileWrite(file, " */\n\n");
 
+    corto_id header;
+    g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
+    g_fileWrite(file, "\n");
     if (g_getCurrent(g)) {
-        corto_id header;
-        g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
-        g_fileWrite(file, "\n");
         g_fileWrite(file, "int %s_load(void);\n", g_getProjectName(g));
-        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
-        g_fileWrite(file, "\n");
+    }
+    g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
+    g_fileWrite(file, "\n");
+    if (!app && g_getCurrent(g)) {
         g_fileWrite(file, "#ifdef __cplusplus\n");
         g_fileWrite(file, "extern \"C\"\n");
         g_fileWrite(file, "#endif\n");
         c_writeExport(g, file);
-        g_fileWrite(file, " int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
-        g_fileIndent(file);
-        if (app) g_fileWrite(file, "corto_start();\n");
-        c_projectLoadPackages(file);
-        g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));
-        g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getProjectName(g));
-        if (app) g_fileWrite(file, "corto_stop();\n");
-        g_fileWrite(file, "return 0;\n");
-        g_fileDedent(file);
-        g_fileWrite(file, "}\n\n");
-    } else {
-        corto_id header;
-        c_includeFrom(g, file, corto_o, "corto.h");
-        g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
-        g_fileWrite(file, "\n");
-        g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
-        g_fileIndent(file);
-        if (app) g_fileWrite(file, "corto_start();\n");
-        c_projectLoadPackages(file);
-        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
-        g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getProjectName(g));
-        if (app) g_fileWrite(file, "corto_stop();\n");
-        g_fileWrite(file, "return 0;\n");
-        g_fileDedent(file);
-        g_fileWrite(file, "}\n\n");
+        g_fileWrite(file, " ");
     }
+    g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
+    g_fileIndent(file);
+    if (app) g_fileWrite(file, "corto_start();\n");
+    c_projectLoadPackages(file);
+    if (g_getCurrent(g)) {
+        g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));
+    }
+    g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getProjectName(g));
+    if (app) g_fileWrite(file, "corto_stop();\n");
+    g_fileWrite(file, "return 0;\n");
+    g_fileDedent(file);
+    g_fileWrite(file, "}\n\n");
 
     return 0;
 error:
