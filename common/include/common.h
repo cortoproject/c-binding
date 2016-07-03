@@ -68,6 +68,9 @@ void c_includeFrom(corto_generator g, g_file file, corto_object o, corto_string 
 /* Create include statement for object */
 void c_include(corto_generator g, g_file file, corto_object o);
 
+/* Get filename of mainheader */
+char* c_mainheader(corto_generator g, corto_id buffer);
+
 /* Find all instances of a specified class */
 corto_ll c_findType(corto_generator g, corto_class type);
 

@@ -15,25 +15,11 @@ static void c_projectLoadPackages(g_file file) {
     }
 }
 
-/* Get name from package name */
-char* c_projectGetName(corto_string package) {
-    char *ptr = &package[strlen(package) - 1];
-    while ((ptr != package)) {
-        ptr --;
-        if (*ptr == '/') {
-            ptr ++;
-            break;
-        }
-    }
-    return ptr;
-}
-
 /* Generate file containing loader */
 static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     corto_id filename;
     g_file file;
     corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
-    corto_bool local = !strcmp(gen_getAttribute(g, "local"), "true");
     corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
 
     sprintf(filename, "_load.%s", cpp ? "cpp" : "c");
@@ -49,43 +35,37 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     g_fileWrite(file, " */\n\n");
 
     if (g_getCurrent(g)) {
-        c_include(g, file, g_getCurrent(g));
+        corto_id header;
+        g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
         g_fileWrite(file, "\n");
-        g_fileWrite(file, "int %s_load(void);\n", g_getName(g));
-        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getName(g));
+        g_fileWrite(file, "int %s_load(void);\n", g_getProjectName(g));
+        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
         g_fileWrite(file, "\n");
         g_fileWrite(file, "#ifdef __cplusplus\n");
         g_fileWrite(file, "extern \"C\"\n");
         g_fileWrite(file, "#endif\n");
         c_writeExport(g, file);
-        g_fileWrite(file, " int cortomain(int argc, char* argv[]) {\n");
+        g_fileWrite(file, " int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
         g_fileIndent(file);
+        if (app) g_fileWrite(file, "corto_start();\n");
         c_projectLoadPackages(file);
-        g_fileWrite(file, "if (%s_load()) return -1;\n", g_getName(g));
-        g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getName(g));
+        g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));
+        g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getProjectName(g));
+        if (app) g_fileWrite(file, "corto_stop();\n");
         g_fileWrite(file, "return 0;\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
     } else {
         corto_id header;
-        corto_string name = g_getName(g);
-
-        if (!app && !local) {
-            char *ptr = c_projectGetName(name);
-            sprintf(header, "%s/%s.h", g_getName(g), ptr);
-            name = ptr;
-        } else {
-            sprintf(header, "%s.h", g_getName(g));
-        }
         c_includeFrom(g, file, corto_o, "corto.h");
-        g_fileWrite(file, "#include <%s>\n", header);
+        g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
         g_fileWrite(file, "\n");
         g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
         g_fileIndent(file);
         if (app) g_fileWrite(file, "corto_start();\n");
         c_projectLoadPackages(file);
-        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", name);
-        g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", name);
+        g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
+        g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getProjectName(g));
         if (app) g_fileWrite(file, "corto_stop();\n");
         g_fileWrite(file, "return 0;\n");
         g_fileDedent(file);
@@ -99,12 +79,12 @@ error:
 
 /* Generate main header containing includes to dependencies */
 static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
-    corto_id filename;
     g_file file;
     corto_ll packages;
     corto_id upperName;
     corto_bool error = FALSE;
-    char *name = c_projectGetName(g_getName(g));
+    corto_id filename;
+    sprintf(filename, "%s.h", g_getProjectName(g));
 
     strcpy(upperName, g_getName(g));
     corto_strupper(upperName);
@@ -115,8 +95,6 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
         }
         ptr++;
     }
-
-    sprintf(filename, "%s.h", name);
 
     file = g_fileOpen(g, filename);
     if(!file) {

@@ -221,7 +221,9 @@ static g_file c_apiSourceOpen(corto_generator g) {
     g_fileWrite(result, " * API convenience functions for C-language.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    c_include(g, result, g_getCurrent(g));
+
+    corto_id header;
+    g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
 
     return result;
 }

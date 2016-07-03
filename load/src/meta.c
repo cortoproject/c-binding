@@ -336,7 +336,9 @@ static g_file c_loadSourceFileOpen(corto_generator g) {
     g_fileWrite(result, " * Loads objects in object store.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    c_include(g, result, g_getCurrent(g));
+
+    corto_id header;
+    g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
 
     return result;
 }
@@ -350,7 +352,7 @@ static void c_sourceWriteVarDefStart(g_file file) {
 static void c_sourceWriteLoadStart(corto_generator g, g_file file) {
     g_fileWrite(file, "\n");
     g_fileWrite(file, "/* Load objects in object store. */\n");
-    g_fileWrite(file, "int %s_load(void) {\n", g_getName(g));
+    g_fileWrite(file, "int %s_load(void) {\n", g_getProjectName(g));
     g_fileIndent(file);
     g_fileWrite(file, "corto_object _a_; /* Used for resolving anonymous objects */\n");
     g_fileWrite(file, "_a_ = NULL;\n\n");
@@ -747,7 +749,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
     g_fileIndent(data->source);
     c_escapeString(corto_fullpath(NULL, o), escapedName);
     g_fileWrite(data->source, "corto_error(\"%s_load: failed to declare '%s' (%%s)\", corto_lasterr());\n",
-            g_getName(data->g),
+            g_getProjectName(data->g),
             varId);
     g_fileWrite(data->source, "goto error;\n");
     data->errorCount++;
@@ -800,7 +802,7 @@ static int c_loadDefine(corto_object o, void* userData) {
     g_fileWrite(data->source, "if (corto_define(%s)) {\n", varId);
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_error(\"%s_load: failed to define '%s' (%%s)\", corto_lasterr());\n",
-            g_getName(data->g),
+            g_getProjectName(data->g),
             c_escapeString(varId, escapedId));
     g_fileWrite(data->source, "goto error;\n");
     data->errorCount++;
@@ -818,7 +820,7 @@ static int c_loadDefine(corto_object o, void* userData) {
             g_fileIndent(data->source);
             g_fileWrite(data->source,
                 "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
-                g_getName(data->g),
+                g_getProjectName(data->g),
                 varId,
                 varId,
                 typeId);
@@ -831,7 +833,7 @@ static int c_loadDefine(corto_object o, void* userData) {
             g_fileIndent(data->source);
             g_fileWrite(data->source,
                 "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n",
-                g_getName(data->g),
+                g_getProjectName(data->g),
                 varId,
                 varId,
                 typeId);

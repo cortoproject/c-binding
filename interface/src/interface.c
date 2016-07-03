@@ -438,44 +438,17 @@ static int c_interfaceCheckProcedures(void *o, void *udata) {
 }
 
 /* Open generator headerfile */
-static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typeWalk_t *data) {
-    g_file result;
-    corto_id headerFileName;
-    corto_object topLevelObject = g_getCurrent(g);
+static corto_int16 c_interfaceHeaderWrite(
+    corto_generator g,
+    g_file result,
+    corto_object o,
+    corto_string name,
+    corto_string headerFileName,
+    corto_bool mainHeader,
+    c_typeWalk_t *data)
+{
     corto_id path;
-
-    /* Create file */
-    c_filename(g, headerFileName, o, "h");
-
-    result = g_fileOpen(g, headerFileName);
-    if (!result) {
-        goto error;
-    }
-
-    if (!data->mainHeader) {
-        corto_id mainHeader;
-        if (o == topLevelObject) {
-            data->mainHeader = result;
-        } else {
-            if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-                c_filename(g, headerFileName, o, "h");
-            } else {
-                sprintf(headerFileName, "_%s.h", corto_idof(o));
-            }
-
-            data->mainHeader = g_fileOpen(g, mainHeader);
-            if (!data->mainHeader) {
-                goto error;
-            }
-        }
-    }
-
-    if (o != topLevelObject) {
-        c_include(data->g, data->mainHeader, o);
-    }
-
-    /* Print standard comments and includes */
-    corto_path(path, root_o, o, "_");
+    strcpy(path, name);
     corto_strupper(path);
 
     g_fileWrite(result, "/* %s\n", headerFileName);
@@ -497,7 +470,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     }
 
     /* If a header exists, write it */
-    if (topLevelObject) {
+    if (mainHeader) {
         corto_string snippet;
         if ((snippet = g_fileLookupHeader(result, ""))) {
             g_fileWrite(result, "/* $header()");
@@ -506,7 +479,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
         }
     }
 
-    if (o == topLevelObject) {
+    if (mainHeader) {
         /* Add header files for dependent packages */
         corto_ll packages = corto_loadGetPackages();
         if (packages) {
@@ -536,7 +509,7 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
 
     g_fileWrite(result, "\n");
 
-    if (topLevelObject) {
+    if (mainHeader) {
         corto_string snippet;
         if ((snippet = g_fileLookupSnippet(result, ""))) {
             g_fileWrite(result, "\n");
@@ -549,6 +522,54 @@ static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typ
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
     g_fileWrite(result, "#endif\n\n");
+
+    return 0;
+error:
+    return -1;
+}
+
+static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typeWalk_t *data) {
+    g_file result;
+    corto_id headerFileName;
+    corto_bool isTopLevelObject = (g_getCurrent(g) == o) && corto_instanceof(corto_package_o, o);
+    corto_id path;
+
+    /* Create file */
+    c_filename(g, headerFileName, o, "h");
+
+    result = g_fileOpen(g, headerFileName);
+    if (!result) {
+        goto error;
+    }
+
+    if (!data->mainHeader) {
+        corto_id mainHeader;
+        if (isTopLevelObject) {
+            data->mainHeader = result;
+        } else {
+            if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+                c_filename(g, headerFileName, o, "h");
+            } else {
+                sprintf(headerFileName, "_%s.h", corto_idof(o));
+            }
+
+            data->mainHeader = g_fileOpen(g, mainHeader);
+            if (!data->mainHeader) {
+                goto error;
+            }
+        }
+    }
+
+    if (!isTopLevelObject) {
+        c_include(data->g, data->mainHeader, o);
+    }
+
+    /* Print standard comments and includes */
+    corto_path(path, root_o, o, "_");
+
+    if (c_interfaceHeaderWrite(g, result, o, path, headerFileName, isTopLevelObject, data)) {
+        goto error;
+    }
 
     return result;
 error:
@@ -629,7 +650,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
 
     hasProcedures = !corto_scopeWalk(o, c_interfaceCheckProcedures, NULL);
     isInterface = corto_class_instanceof(corto_interface_o, o);
-    isTopLevelObject = o == g_getCurrent(data->g);
+    isTopLevelObject = (o == g_getCurrent(data->g)) && corto_instanceof(corto_package_o, o);
 
     /* Always generate header for interfaces */
     if (hasProcedures || isInterface || isTopLevelObject) {
@@ -816,10 +837,6 @@ int corto_genMain(corto_generator g) {
     corto_mkdir("src");
     corto_mkdir("include");
 
-    if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-        corto_mkdir(".corto");
-    }
-
     /* Default prefixes for corto namespaces */
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
@@ -834,6 +851,40 @@ int corto_genMain(corto_generator g) {
     walkData.mainHeader = NULL;
     walkData.generated = corto_llNew();
 
+    if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+        corto_mkdir(".corto");
+
+        corto_object topLevel = g_getCurrent(g);
+
+        /* If parsing an object and not a package, the mainheader should be
+         * the name of the project, not the object */
+        if (!corto_instanceof(corto_package_o, topLevel)) {
+            corto_id headerFileName;
+            sprintf(headerFileName, "%s.h", g_getName(g));
+
+            g_file mainHeader = g_fileOpen(g, headerFileName);
+            if (!mainHeader) {
+                corto_seterr("failed to open file '%s'", headerFileName);
+                goto error;
+            }
+
+            walkData.mainHeader = mainHeader;
+
+            /* Write header contents */
+            if (c_interfaceHeaderWrite(
+                g,
+                mainHeader,
+                NULL,
+                g_getName(g),
+                headerFileName,
+                TRUE,
+                &walkData))
+            {
+                goto error;
+            }
+        }
+    }
+
     /* Walk objects, generate procedures and class members */
     if (!g_walkNoScope(g, c_interfaceWalk, &walkData)) {
         goto error;
@@ -842,7 +893,6 @@ int corto_genMain(corto_generator g) {
     if (walkData.mainHeader) {
         c_interfaceHeaderFileClose(walkData.mainHeader);
     }
-
 
     c_interfaceMarkUnusedFiles(&walkData);
 

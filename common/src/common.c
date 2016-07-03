@@ -901,3 +901,27 @@ corto_int16 c_decl(
 error:
     return -1;
 }
+
+/* Get filename of mainheader */
+char* c_mainheader(corto_generator g, corto_id header) {
+    corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
+    corto_bool local = !strcmp(gen_getAttribute(g, "local"), "true");
+
+    if (!app && !local) {
+        corto_id name;
+        char *ptr, ch;
+        strcpy(name, g_getName(g));
+        for (ptr = name; (ch = *ptr); ptr++) {
+            if (ch == ':') {
+                *ptr = '/';
+                ptr++;
+                memmove(ptr, ptr + 1, strlen(ptr));
+            }
+        }
+        sprintf(header, "%s/%s.h", name, g_getProjectName(g));
+    } else {
+        sprintf(header, "%s.h", g_getName(g));
+    }
+
+    return header;
+}
