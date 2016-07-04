@@ -207,89 +207,74 @@ static corto_int16 c_apiCastMacro(
     return 0;
 }
 
+static void c_apiPrintArgs(corto_ll args, corto_uint32 count, corto_uint32 skip, g_file file) {
+    corto_iter iter = corto_llIter(args);
+    corto_uint32 i; for (i = 0; i < skip; i ++) {
+        corto_iterNext(&iter);
+    }
+    while (corto_iterHasNext(&iter)) {
+        c_arg *arg = corto_iterNext(&iter);
+        if (count) {
+            g_fileWrite(file, ", ");
+        }
+        g_fileWrite(file, "%s", arg->name);
+        count++;
+    }
+    g_fileWrite(file, ")");
+}
+
 static corto_int16 c_apiCastMacroSet(
     corto_string id,
     corto_type t,
     c_apiWalk_t *data)
 {
-    corto_uint32 count = 0;
-
     corto_id typeId;
     c_varId(data->g, t, typeId);
 
+    /* optional NotSet macro */
     g_fileWrite(
       data->header,
       "#define %s__optional_NotSet NULL\n",
       id);
 
+    /* optional Set macro */
     g_fileWrite(
       data->header,
       "#define %s__optional_Set(",
       id);
+    c_apiPrintArgs(data->args, 0, 1, data->header);
 
-    corto_iter iter = corto_llIter(data->args);
-    count = 0;
-    corto_iterNext(&iter); /* Skip first argument */
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
-        if (count) {
-            g_fileWrite(data->header, ", ");
-        }
-        g_fileWrite(data->header, "%s", arg->name);
-        count++;
-    }
+    g_fileWrite(data->header, " %sAssign(corto_calloc(sizeof(%s))", id, id);
+    c_apiPrintArgs(data->args, 1, 1, data->header);
+    g_fileWrite(data->header, "\n");
 
-    g_fileWrite(data->header, ") %sAssign(corto_calloc(sizeof(%s))", id, id);
-    iter = corto_llIter(data->args);
-    count = 1;
-    corto_iterNext(&iter); /* Skip first argument */
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
-        if (count) {
-            g_fileWrite(data->header, ", ");
-        }
-        g_fileWrite(data->header, "%s", arg->name);
-        count++;
-    }
-    g_fileWrite(data->header, ")\n");
+    /* optional SetCond macro */
+    g_fileWrite(
+      data->header,
+      "#define %s__optional_SetCond(cond",
+      id);
+    c_apiPrintArgs(data->args, 1, 1, data->header);
 
+    g_fileWrite(data->header, " cond ? %sAssign(corto_calloc(sizeof(%s))", id, id);
+    c_apiPrintArgs(data->args, 1, 1, data->header);
+    g_fileWrite(data->header, " : NULL\n");
+
+    /* Unset macro */
     g_fileWrite(
       data->header,
       "#define %sUnset(_this) _this ? corto_deinitp(_this, %s) : 0; corto_dealloc(_this); _this = NULL;\n",
       id,
       typeId);
 
-
+    /* Assign macro */
     g_fileWrite(data->header, "#define %sAssign(", id);
-
-    iter = corto_llIter(data->args);
-    count = 0;
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
-        if (count) {
-            g_fileWrite(data->header, ", ");
-        }
-        g_fileWrite(data->header, "%s", arg->name);
-        count++;
-    }
-    g_fileWrite(data->header, ")");
-
+    c_apiPrintArgs(data->args, 0, 0, data->header);
     c_apiCastMacroCall(id, "Assign", NULL, data);
 
+    /* Set macro */
     g_fileWrite(data->header, "#define %sSet(", id);
-
-    iter = corto_llIter(data->args);
-    count = 0;
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
-        if (count) {
-            g_fileWrite(data->header, ", ");
-        }
-        g_fileWrite(data->header, "%s", arg->name);
-        count++;
-    }
-
-    g_fileWrite(data->header, ") _this = _this ? _this : corto_calloc(sizeof(%s));", typeId);
+    c_apiPrintArgs(data->args, 0, 0, data->header);
+    g_fileWrite(data->header, " _this = _this ? _this : corto_calloc(sizeof(%s));", typeId);
     c_apiCastMacroCall(id, "Assign", NULL, data);
 
     return 0;
@@ -306,6 +291,13 @@ static corto_int16 c_apiAssign(
     c_apiWalk_t *data)
 {
     if (optional) {
+        corto_id varId;
+        g_fileWrite(data->source, "if (%s) {\n", lvalue);
+        g_fileIndent(data->source);
+        g_fileWrite(data->source, "corto_deinitp(%s, %s);\n", lvalue, c_varId(data->g, t, varId));
+        g_fileWrite(data->source, "corto_dealloc(%s);\n", lvalue);
+        g_fileDedent(data->source);
+        g_fileWrite(data->source, "}\n");
         g_fileWrite(data->source, "%s%s = %s;\n",
             (!c_typeRequiresPtr(t) && ptr) ? "*" : "",
             lvalue, rvalue);
