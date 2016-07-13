@@ -596,13 +596,13 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
             g_fileWrite(data->source, "%sbuffer = NULL;\n",
                     c_loadMemberId(data, v, memberId, TRUE));
         } else if (length == 1) {
-            g_fileWrite(data->source, "%sbuffer = corto_alloc(sizeof(%s%s));\n",
+            g_fileWrite(data->source, "%sbuffer = (%s*)corto_alloc(sizeof(%s%s));\n",
                     c_loadMemberId(data, v, memberId, TRUE),
-                    specifier, postfix);
+                    specifier, specifier, postfix);
         } else {
-            g_fileWrite(data->source, "%sbuffer = corto_alloc(sizeof(%s%s) * %d);\n",
+            g_fileWrite(data->source, "%sbuffer = (%s*)corto_alloc(sizeof(%s%s) * %d);\n",
                     c_loadMemberId(data, v, memberId, TRUE),
-                    specifier, postfix,
+                    specifier, specifier, postfix,
                     length);
         }
         break;

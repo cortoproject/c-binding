@@ -70,7 +70,7 @@ static corto_int16 c_apiSequenceTypeAppendAlloc(corto_sequence o, c_apiWalk_t* d
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_uint32 size;\n");
     g_fileWrite(data->source, "seq->length++;\n");
-    g_fileWrite(data->source, "seq->buffer = corto_realloc(seq->buffer, seq->length * (size=corto_type_sizeof(corto_type(%s_o))));\n", elementId);
+    g_fileWrite(data->source, "seq->buffer = (%s*)corto_realloc(seq->buffer, seq->length * (size=corto_type_sizeof(corto_type(%s_o))));\n", elementId, elementId);
     g_fileWrite(data->source, "memset(%sseq->buffer[seq->length-1], 0, size);\n", elementType->reference?"":"&");
     if (c_apiElementRequiresInit(elementType)) {
         if (!elementType->reference) {
@@ -103,7 +103,7 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_uint32 size;\n");
     g_fileWrite(data->source, "seq->length++;\n");
-    g_fileWrite(data->source, "seq->buffer = corto_realloc(seq->buffer, seq->length * (size=corto_type_sizeof(corto_type(%s_o))));\n", elementId);
+    g_fileWrite(data->source, "seq->buffer = (%s*)corto_realloc(seq->buffer, seq->length * (size=corto_type_sizeof(corto_type(%s_o))));\n", elementId, elementId);
     g_fileWrite(data->source, "memset(%sseq->buffer[seq->length-1], 0, size);\n", elementType->reference?"":"&");
     if (c_apiElementRequiresInit(elementType)) {
         if (!elementType->reference) {
@@ -156,7 +156,7 @@ static corto_int16 c_apiSequenceTypeSize(corto_sequence o, c_apiWalk_t* data) {
     }
 
     /* Resize buffer */
-    g_fileWrite(data->source, "seq->buffer = corto_realloc(seq->buffer, length * (size=corto_type_sizeof(corto_type(%s_o))));\n", elementId);
+    g_fileWrite(data->source, "seq->buffer = (%s*)corto_realloc(seq->buffer, length * (size=corto_type_sizeof(corto_type(%s_o))));\n", elementId, elementId);
 
     /* Initialize new elements */
     g_fileWrite(data->source, "if (length > seq->length) {\n");

@@ -244,7 +244,7 @@ static corto_int16 c_apiCastMacroSet(
       id);
     c_apiPrintArgs(data->args, 0, 1, data->header);
 
-    g_fileWrite(data->header, " %sAssign(corto_calloc(sizeof(%s))", id, id);
+    g_fileWrite(data->header, " %sAssign((%s*)corto_calloc(sizeof(%s))", id, id, id);
     c_apiPrintArgs(data->args, 1, 1, data->header);
     g_fileWrite(data->header, "\n");
 
@@ -255,7 +255,7 @@ static corto_int16 c_apiCastMacroSet(
       id);
     c_apiPrintArgs(data->args, 1, 1, data->header);
 
-    g_fileWrite(data->header, " cond ? %sAssign(corto_calloc(sizeof(%s))", id, id);
+    g_fileWrite(data->header, " cond ? %sAssign((%s*)corto_calloc(sizeof(%s))", id, id, id);
     c_apiPrintArgs(data->args, 1, 1, data->header);
     g_fileWrite(data->header, " : NULL\n");
 
@@ -274,7 +274,7 @@ static corto_int16 c_apiCastMacroSet(
     /* Set macro */
     g_fileWrite(data->header, "#define %sSet(", id);
     c_apiPrintArgs(data->args, 0, 0, data->header);
-    g_fileWrite(data->header, " _this = _this ? _this : corto_calloc(sizeof(%s));", typeId);
+    g_fileWrite(data->header, " _this = _this ? _this : (%s*)corto_calloc(sizeof(%s));", id, id);
     c_apiCastMacroCall(id, "Assign", NULL, data);
 
     return 0;
