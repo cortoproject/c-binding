@@ -24,7 +24,9 @@ corto_void _test_compositeUnionApi_tc_compare(
 {
 /* $begin(test/compositeUnionApi/tc_compare) */
     corto_equalityKind eq;
-    test_compositeUnionType a = {1, {.flt = 10.5}}, b = {1, {.flt = 10.7}};
+    test_compositeUnionType a, b;
+    a.d = 1; a.is.flt = 10.5;
+    b.d = 1; b.is.flt = 10.7;
 
     eq = test_compositeUnionTypeCompare(&a, &b);
     test_assert(eq == CORTO_LT);
@@ -43,7 +45,9 @@ corto_void _test_compositeUnionApi_tc_compareDefault(
 {
 /* $begin(test/compositeUnionApi/tc_compareDefault) */
     corto_equalityKind eq;
-    test_compositeUnionType a = {4, {.other = 10}}, b = {4, {.other = 20}};
+    test_compositeUnionType a, b;
+    a.d = 4; a.is.other = 10;
+    b.d = 4; b.is.other = 20;
 
     eq = test_compositeUnionTypeCompare(&a, &b);
     test_assert(eq == CORTO_LT);
@@ -54,8 +58,8 @@ corto_void _test_compositeUnionApi_tc_compareDefault(
     eq = test_compositeUnionTypeCompare(&a, &a);
     test_assert(eq == CORTO_EQ);
 
-    a = (test_compositeUnionType){4, {.other = 10}};
-    b = (test_compositeUnionType){5, {.other = 10}};
+    a.d = 4; a.is.other = 10;
+    b.d = 5; b.is.other = 10;
 
     eq = test_compositeUnionTypeCompare(&a, &b);
     test_assert(eq == CORTO_EQ);
@@ -68,7 +72,9 @@ corto_void _test_compositeUnionApi_tc_compareDiscriminator(
 {
 /* $begin(test/compositeUnionApi/tc_compareDiscriminator) */
     corto_equalityKind eq;
-    test_compositeUnionType a = {0, {.num = 10}}, b = {4, {.other = 10}};
+    test_compositeUnionType a, b;
+    a.d = 0; a.is.num = 10;
+    b.d = 4; b.is.other = 20;
 
     eq = test_compositeUnionTypeCompare(&a, &b);
     test_assert(eq == CORTO_NEQ);
@@ -364,7 +370,8 @@ corto_void _test_compositeUnionApi_tc_fromStr(
     test_compositeUnionApi _this)
 {
 /* $begin(test/compositeUnionApi/tc_fromStr) */
-    test_compositeUnionType o = {0, {.num = 10}};
+    test_compositeUnionType o;
+    o.d = 0; o.is.num = 10;
 
     test_compositeUnionTypeFromStr(&o, "{1, 10.5}");
     test_assert(o.d == 1);
@@ -377,7 +384,8 @@ corto_void _test_compositeUnionApi_tc_fromStrDefault(
     test_compositeUnionApi _this)
 {
 /* $begin(test/compositeUnionApi/tc_fromStrDefault) */
-    test_compositeUnionType o = {0, {.num = 10}};
+    test_compositeUnionType o;
+    o.d = 0; o.is.num = 10;
 
     test_compositeUnionTypeFromStr(&o, "{4, 0x14}");
     test_assert(o.d == 4);
@@ -390,7 +398,8 @@ corto_void _test_compositeUnionApi_tc_set(
     test_compositeUnionApi _this)
 {
 /* $begin(test/compositeUnionApi/tc_set) */
-    test_compositeUnionType o = {0, {.num = 10}};
+    test_compositeUnionType o;
+    o.d = 0; o.is.num = 10;
 
     test_compositeUnionTypeAssign_flt(&o, 1, 10.5);
     test_assert(o.d == 1);
@@ -403,7 +412,8 @@ corto_void _test_compositeUnionApi_tc_setDefault(
     test_compositeUnionApi _this)
 {
 /* $begin(test/compositeUnionApi/tc_setDefault) */
-    test_compositeUnionType o = {0, {.num = 10}};
+    test_compositeUnionType o;
+    o.d = 0; o.is.num = 10;
 
     test_compositeUnionTypeAssign_other(&o, 4, 20);
     test_assert(o.d == 4);
@@ -416,7 +426,8 @@ corto_void _test_compositeUnionApi_tc_str(
     test_compositeUnionApi _this)
 {
 /* $begin(test/compositeUnionApi/tc_str) */
-    test_compositeUnionType o = {0, {.num = 10}};
+    test_compositeUnionType o;
+    o.d = 0; o.is.num = 10;
 
     corto_string str = test_compositeUnionTypeStr(&o);
     test_assertstr(str, "{0,10}");
@@ -429,7 +440,8 @@ corto_void _test_compositeUnionApi_tc_strDefault(
     test_compositeUnionApi _this)
 {
 /* $begin(test/compositeUnionApi/tc_strDefault) */
-    test_compositeUnionType o = {4, {.other = 20}};
+    test_compositeUnionType o;
+    o.d = 4; o.is.num = 20;
 
     corto_string str = test_compositeUnionTypeStr(&o);
     test_assertstr(str, "{4,0x14}");
