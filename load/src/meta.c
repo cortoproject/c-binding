@@ -356,10 +356,12 @@ static void c_sourceWriteLoadStart(corto_generator g, g_file file) {
     g_fileIndent(file);
     g_fileWrite(file, "corto_object _a_; /* Used for resolving anonymous objects */\n");
     g_fileWrite(file, "_a_ = NULL;\n\n");
+    g_fileWrite(file, "corto_attr prevAttr = corto_setAttr(CORTO_ATTR_PERSISTENT);\n\n");
 }
 
 /* Write end of load-routine */
 static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
+    g_fileWrite(file, "corto_setAttr(prevAttr);\n\n");
     g_fileWrite(file, "if (_a_) {\n");
     g_fileIndent(file);
     g_fileWrite(file, "corto_release(_a_);\n");
