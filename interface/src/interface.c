@@ -158,7 +158,7 @@ error:
 
 /* Generate implementation for virtual methods */
 static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
-    corto_id id, returnTypeId, returnPostfix;
+    corto_id id, returnTypeId;
     corto_bool returnsValue;
     corto_id nameString;
     g_file originalSource = data->source;
@@ -185,7 +185,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
          corto_function(o)->returnType->reference))
     {
         returnsValue = TRUE;
-        c_specifierId(data->g, corto_function(o)->returnType, returnTypeId, NULL, returnPostfix);
+        c_typeret(data->g, corto_function(o)->returnType, C_ByValue, returnTypeId);
     } else {
         returnsValue = FALSE;
         strcpy(returnTypeId, "void");
@@ -268,7 +268,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
 
     /* Only generate code for procedures */
     if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-        corto_id fullname, functionName, signatureName, returnSpec, returnPostfix;
+        corto_id fullname, functionName, signatureName, returnSpec;
         corto_string snippet, header;
         corto_procedureKind kind;
         corto_type returnType;
@@ -305,10 +305,9 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         /* Generate function-return type string */
         returnType = ((corto_function)o)->returnType;
         if (returnType) {
-            c_specifierId(data->g, returnType, returnSpec, NULL, returnPostfix);
+            c_typeret(data->g, returnType, C_ByValue, returnSpec);
         } else {
             strcpy(returnSpec, "void");
-            *returnPostfix = '\0';
         }
 
         corto_fullpath(fullname, o);
@@ -375,7 +374,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
 
             if ((returnType->kind != CORTO_VOID) || (returnType->reference)) {
                 corto_id specifier;
-                g_fullOid(data->g, returnType, specifier);
+                c_typeret(data->g, returnType, C_ByValue, specifier);
                 g_fileWrite(data->source, "%s _result;\n", specifier);
             } else {
                 returnType = NULL;

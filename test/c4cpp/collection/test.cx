@@ -1,0 +1,40 @@
+#package /test
+
+struct Point::
+  x, y: int32
+
+array primitiveArray: int32, 3
+sequence primitiveSequence: int32
+list primitiveList: int32
+
+array complexArray: Point, 3
+sequence complexSequence: Point
+list complexList: Point
+
+primitiveArray arrayObject: 1, 2, 3
+primitiveSequence sequenceObject: 1, 2, 3
+primitiveList listObject: 1, 2, 3
+
+array{int32, 3} AnonymousArrayObject: 1, 2, 3
+sequence{int32} AnonymousSequenceObject: 1, 2, 3
+list{int32} AnonymousListObject: 1, 2, 3
+
+class AnonymousArray::
+  ints: array{int32, 3}
+  array{int32, 3} f(array{int32, 3} arg)
+
+class AnonymousSequence::
+  ints: sequence{int32}
+  sequence{int32} f(sequence{int32} arg)
+
+class AnonymousList::
+  ints: list{int32}
+  list{int32} f(list{int32} arg)
+
+class AnonymousBoundedSequence::
+  ints: sequence{int32, 3}
+  sequence{int32, 3} f(sequence{int32, 3} arg)
+
+class AnonymousBoundedList::
+  ints: list{int32, 3}
+  list{int32, 3} f(list{int32, 3} arg)

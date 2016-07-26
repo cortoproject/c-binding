@@ -565,11 +565,11 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
         if (corto_type(o)->kind != CORTO_VOID) {
             g_fileWrite(data->header,
                 "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
-                id, c_typeret(data->g, o, ptr), id);
+                id, c_typeret(data->g, o, C_ByReference, ptr), id);
         } else {
             g_fileWrite(data->header,
                 "#define %s(o) ((%s)o)\n",
-                id, c_typeret(data->g, o, ptr));
+                id, c_typeret(data->g, o, C_ByReference, ptr));
         }
     }
 

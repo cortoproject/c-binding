@@ -265,7 +265,7 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     }
 
     /* Get C typespecifier */
-    c_typeret(data->g, t, specifier);
+    c_typeret(data->g, t, C_ByReference, specifier);
 
     c_varId(data->g, o, objectId);
 

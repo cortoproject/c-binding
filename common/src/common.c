@@ -494,7 +494,7 @@ corto_string c_typeptr(corto_generator g, corto_type t, corto_id id) {
     return id;
 }
 
-corto_string c_typeret(corto_generator g, corto_type t, corto_id id) {
+corto_string c_typeret(corto_generator g, corto_type t, enum c_refKind ref, corto_id id) {
     if ((t->kind == CORTO_COLLECTION &&
         (corto_collection(t)->kind == CORTO_ARRAY)))
     {
@@ -503,7 +503,11 @@ corto_string c_typeret(corto_generator g, corto_type t, corto_id id) {
     } else {
         corto_id postfix;
         c_specifierId(g, t, id, NULL, postfix);
-        if (!t->reference) {
+        if (!t->reference &&
+            (((t->kind != CORTO_COLLECTION) &&
+             (t->kind != CORTO_VOID) &&
+             (t->kind != CORTO_PRIMITIVE)) || (ref == C_ByReference)))
+        {
             strcat(id, "*");
         }
     }
@@ -833,7 +837,7 @@ corto_int16 c_decl(
     corto_bool isWrapper,
     corto_bool cpp)
 {
-    corto_id fullname, functionName, signatureName, returnSpec, returnPostfix;
+    corto_id fullname, functionName, signatureName, returnSpec;
     corto_type returnType;
     c_paramWalk_t walkData;
 
@@ -844,10 +848,9 @@ corto_int16 c_decl(
     /* Generate function-return type string */
     returnType = ((corto_function)o)->returnType;
     if (returnType) {
-        c_specifierId(g, returnType, returnSpec, NULL, returnPostfix);
+        c_typeret(g, returnType, C_ByValue, returnSpec);
     } else {
         strcpy(returnSpec, "void");
-        *returnPostfix = '\0';
     }
 
     corto_fullpath(fullname, o);
@@ -866,7 +869,7 @@ corto_int16 c_decl(
     }
 
     /* Start of function */
-    g_fileWrite(file, "%s%s _%s(", returnSpec, returnPostfix, functionName);
+    g_fileWrite(file, "%s _%s(", returnSpec, functionName);
 
     /* Add 'this' parameter to methods */
     if (c_procedureHasThis(o)) {

@@ -290,7 +290,9 @@ static corto_int16 c_apiListTypeInsertAlloc(corto_list o, corto_string operation
 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "%s* result;\n", elementId);
-    g_fileWrite(data->source, "result = corto_calloc(corto_type_sizeof(corto_type(%s_o)));\n", elementId);
+    g_fileWrite(data->source, "result = (%s*)corto_calloc(corto_type_sizeof(corto_type(%s_o)));\n",
+        elementId,
+        elementId);
 
     /* Initialize element */
     c_apiElementInit(elementId, "result", TRUE, data);

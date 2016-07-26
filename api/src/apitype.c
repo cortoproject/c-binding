@@ -94,7 +94,7 @@ static corto_int16 c_apiCastAuto(
     g_fileWrite(
         data->header,
         ") %s _name = %s%s%s%s(%s",
-        c_typeret(data->g, t, ret),
+        c_typeret(data->g, t, C_ByReference, ret),
         id,
         func,
         m ? "_" : "",
@@ -771,7 +771,7 @@ corto_int16 c_apiTypeCreateIntern(
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t) && define;
 
     g_fullOid(data->g, t, id);
-    c_typeret(g, t, ret);
+    c_typeret(g, t, C_ByReference, ret);
 
     do {
         if (isUnion) {
@@ -898,8 +898,8 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         c_writeExport(data->g, data->header);
 
         if (isUpdate && !doUpdate) {
-            g_fileWrite(data->header, " %s ", c_typeret(g, t, ptr));
-            g_fileWrite(data->source, "%s ", c_typeret(g, t, ptr));
+            g_fileWrite(data->header, " %s ", c_typeret(g, t, C_ByReference, ptr));
+            g_fileWrite(data->source, "%s ", c_typeret(g, t, C_ByReference, ptr));
         } else {
             g_fileWrite(data->header, " corto_int16 ");
             g_fileWrite(data->source, "corto_int16 ");
@@ -1076,17 +1076,16 @@ corto_int16 c_apiTypeFromStr(corto_type t, c_apiWalk_t *data) {
     corto_id id, ptr, ret;
     corto_generator g = data->g;
 
-
     g_fullOid(data->g, t, id);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
     g_fileWrite(data->header, " %s %sFromStr(%s value, corto_string str);\n",
-      c_typeret(g, t, ret), id, c_typeptr(g, t, ptr));
+      c_typeret(g, t, C_ByReference, ret), id, c_typeptr(g, t, ptr));
 
     /* Function implementation */
     g_fileWrite(data->source, "%s %sFromStr(%s value, corto_string str) {\n",
-      c_typeret(g, t, ret), id, c_typeptr(g, t, ptr));
+      c_typeret(g, t, C_ByReference, ret), id, c_typeptr(g, t, ptr));
 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_fromStrp(&value, corto_type(%s_o), str);\n", id);

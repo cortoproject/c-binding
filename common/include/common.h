@@ -48,7 +48,11 @@ corto_string c_typeptr(corto_generator g, corto_type t, corto_id id);
 corto_string c_typeval(corto_generator g, corto_type t, corto_id id);
 
 /* Return string with typename[*] when type is used as returntype */
-corto_string c_typeret(corto_generator g, corto_type t, corto_id id);
+enum c_refKind {
+    C_ByValue,
+    C_ByReference
+};
+corto_string c_typeret(corto_generator g, corto_type t, enum c_refKind ref, corto_id id);
 
 /* Generate USING name */
 corto_char* c_usingName(corto_generator g, corto_object o, corto_id id);
