@@ -14,7 +14,7 @@ corto_int32List3 _test_AnonymousBoundedList_f(
 {
 /* $begin(test/AnonymousBoundedList/f) */
 
-    /* << Insert implementation >> */
+    return arg;
 
 /* $end */
 }

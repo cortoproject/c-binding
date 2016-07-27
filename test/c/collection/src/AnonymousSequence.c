@@ -1,6 +1,6 @@
 /* $CORTO_GENERATED
  *
- * AnonymousArray.cpp
+ * AnonymousSequence.c
  *
  * Only code written between the begin and end tags will be preserved
  * when the file is regenerated.
@@ -8,11 +8,11 @@
 
 #include <test.h>
 
-corto_int32* _test_AnonymousArray_f(
-    test_AnonymousArray _this,
-    corto_int32Array3 arg)
+corto_int32Seq _test_AnonymousSequence_f(
+    test_AnonymousSequence this,
+    corto_int32Seq arg)
 {
-/* $begin(test/AnonymousArray/f) */
+/* $begin(test/AnonymousSequence/f) */
 
     return arg;
 

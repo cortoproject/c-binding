@@ -18,6 +18,7 @@
 extern "C" {
 #endif
 
+#include <CompositeArg.h>
 #include <HiddenBase.h>
 #include <HiddenSub.h>
 #include <Line.h>

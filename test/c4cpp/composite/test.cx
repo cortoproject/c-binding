@@ -63,6 +63,10 @@ struct Private::
   a: int32, local
   b: int32
 
+// Composite arguments and returntypes
+struct CompositeArg::
+  Point f(Point arg)
+
 test/Suite OptionalApi::
   void tc_create()
   void tc_createNotSet()

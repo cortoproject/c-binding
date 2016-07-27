@@ -503,10 +503,7 @@ corto_string c_typeret(corto_generator g, corto_type t, enum c_refKind ref, cort
     } else {
         corto_id postfix;
         c_specifierId(g, t, id, NULL, postfix);
-        if (!t->reference &&
-            (((t->kind != CORTO_COLLECTION) &&
-             (t->kind != CORTO_VOID) &&
-             (t->kind != CORTO_PRIMITIVE)) || (ref == C_ByReference)))
+        if (!t->reference && (ref == C_ByReference))
         {
             strcat(id, "*");
         }

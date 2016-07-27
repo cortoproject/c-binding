@@ -14,7 +14,7 @@ corto_int32Seq _test_AnonymousSequence_f(
 {
 /* $begin(test/AnonymousSequence/f) */
 
-    /* << Insert implementation >> */
+    return arg;
 
 /* $end */
 }

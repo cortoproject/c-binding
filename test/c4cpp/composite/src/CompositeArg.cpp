@@ -1,6 +1,6 @@
 /* $CORTO_GENERATED
  *
- * AnonymousArray.cpp
+ * CompositeArg.cpp
  *
  * Only code written between the begin and end tags will be preserved
  * when the file is regenerated.
@@ -8,13 +8,13 @@
 
 #include <test.h>
 
-corto_int32* _test_AnonymousArray_f(
-    test_AnonymousArray _this,
-    corto_int32Array3 arg)
+test_Point _test_CompositeArg_f(
+    test_CompositeArg* _this,
+    test_Point *arg)
 {
-/* $begin(test/AnonymousArray/f) */
+/* $begin(test/CompositeArg/f) */
 
-    return arg;
+    return *arg;
 
 /* $end */
 }

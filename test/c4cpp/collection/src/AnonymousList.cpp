@@ -14,7 +14,7 @@ corto_int32List _test_AnonymousList_f(
 {
 /* $begin(test/AnonymousList/f) */
 
-    /* << Insert implementation >> */
+    return arg;
 
 /* $end */
 }
