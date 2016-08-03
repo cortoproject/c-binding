@@ -217,9 +217,10 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
     g_fileDedent(data->wrapper);
     g_fileWrite(data->wrapper, "}\n");
+    g_fileWrite(data->wrapper, "corto_string lastErr = corto_lasterr();\n");
     g_fileWrite(
       data->wrapper,
-      "corto_assert(_methodId, \"virtual '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr()?\": \":\"\", corto_lasterr());\n\n",
+      "corto_assert(_methodId, \"virtual '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), lastErr ? \": \" : \"\", lastErr ? lastErr : \"\");\n\n",
       nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
