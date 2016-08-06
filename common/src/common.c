@@ -920,7 +920,7 @@ char* c_mainheader(corto_generator g, corto_id header) {
         }
         sprintf(header, "%s/%s.h", name, g_getProjectName(g));
     } else {
-        sprintf(header, "%s.h", g_getName(g));
+        sprintf(header, "%s.h", g_getProjectName(g));
     }
 
     return header;

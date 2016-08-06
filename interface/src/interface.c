@@ -52,6 +52,19 @@ static int c_interfaceParamNameSource(corto_parameter *o, void *userData) {
     return 1;
 }
 
+static int c_interfaceParamTypeSource(corto_parameter *o, void *userData) {
+    c_typeWalk_t* data = userData;
+    corto_id type;
+    if (data->firstComma) {
+        g_fileWrite(data->source, ", ");
+    }
+    g_fileWrite(data->source, "%s%s",
+        g_fullOid(data->g, o->type, type),
+        c_paramRequiresPtr(o) ? "*" : "");
+    data->firstComma++;
+    return 1;
+}
+
 static int c_interfaceParamCastDef(corto_parameter *o, void *userData) {
     c_typeWalk_t* data = userData;
     if (*o->name != '$') {
@@ -163,6 +176,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     corto_id nameString;
     g_file originalSource = data->source;
     corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
+    corto_string _this = cpp ? "_this" : "this";
 
     /* Replace the source with the wrapper so that all nested functions use the correct outputfile.
      * This file will be restored at the end of the function */
@@ -224,27 +238,43 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
       nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
-    if (!cpp) {
-        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(this), _methodId);\n\n", nameString);
-        if (returnsValue) {
-            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, this");
-        } else {
-            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, this");
-        }
-    } else {
-        g_fileWrite(data->wrapper, "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(_this), _methodId);\n\n", nameString);
-        if (returnsValue) {
-            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, _this");
-        } else {
-            g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, _this");
-        }
+    g_fileWrite(data->wrapper,
+      "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(%s), _methodId);\n\n",
+      nameString, _this);
+      
+    g_fileWrite(data->wrapper, "if (corto_function(_method)->kind == CORTO_PROCEDURE_CDECL) {\n");
+    g_fileIndent(data->wrapper);
+    if (returnsValue) {
+        g_fileWrite(data->wrapper, "_result = ");
     }
+    data->firstComma = 1;
+    g_fileWrite(data->wrapper, "((%s ___ (*)(corto_object", returnTypeId, _this);
+    if (!c_paramWalk(o, c_interfaceParamTypeSource, data)) {
+        goto error;
+    }
+    g_fileWrite(data->wrapper, "))((corto_function)_method)->fptr)(%s", _this);
+    if (!c_paramWalk(o, c_interfaceParamNameSource, data)) {
+        goto error;
+    }
+    g_fileWrite(data->wrapper, ");\n");
+    g_fileDedent(data->wrapper);
+    g_fileWrite(data->wrapper, "} else {\n");
+    g_fileIndent(data->wrapper);
 
+    if (returnsValue) {
+        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, %s", _this);
+    } else {
+        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, %s", _this);
+    }
     data->firstComma = 3;
     if (!c_paramWalk(o, c_interfaceParamNameSource, data)) {
         goto error;
     }
     g_fileWrite(data->wrapper, ");\n");
+
+    g_fileDedent(data->wrapper);
+    g_fileWrite(data->wrapper, "}\n");
+
 
     if (returnsValue) {
         g_fileWrite(data->wrapper, "\n");
