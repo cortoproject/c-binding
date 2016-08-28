@@ -837,6 +837,9 @@ corto_int16 c_apiTypeCreateIntern(
         g_fileWrite(data->source, "}\n");
 
         if (define) {
+            g_fileWrite(data->source, "if (!corto_checkState(_this, CORTO_DEFINED)) {\n");
+            g_fileIndent(data->source);
+
             /* Assignments */
             c_apiTypeInitAssign(t, member, data);
 
@@ -849,6 +852,9 @@ corto_int16 c_apiTypeCreateIntern(
                 g_fileDedent(data->source);
                 g_fileWrite(data->source, "}\n");
             }
+
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "}\n");
         }
 
         g_fileWrite(data->source, "return _this;\n");
