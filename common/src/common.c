@@ -612,15 +612,16 @@ void c_includeFrom(
 {
     corto_id path, filebuff;
     va_list list;
+    corto_object package = c_findPackage(g, o);
 
     va_start(list, include);
     vsprintf(filebuff, include, list);
     va_end(list);
 
-    if (strcmp(gen_getAttribute(g, "local"), "true") || (g_getCurrent(g) != o))
+    if (strcmp(gen_getAttribute(g, "local"), "true") || (g_getCurrent(g) != package))
     {
         g_fileWrite(file, "#include <%s/%s>\n",
-          corto_path(path, root_o, o, "/"),
+          corto_path(path, root_o, package, "/"),
           filebuff);
     } else
     {
