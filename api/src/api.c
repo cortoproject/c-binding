@@ -236,6 +236,8 @@ corto_int16 corto_genMain(corto_generator g) {
     gen_parse(g, corto_o, FALSE, FALSE, "");
     gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
     gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
+    gen_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     walkData.g = g;
     walkData.header = c_apiHeaderOpen(g);
