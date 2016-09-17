@@ -21,7 +21,8 @@ corto_int16 c_apiIteratorForeach(corto_iterator o, c_apiWalk_t *data) {
             elementId,
             requiresAlloc ? "*" : "");
     } else {
-        g_fileWrite(data->header, "elem = corto_iterNext(&iter), TRUE");
+        g_fileWrite(
+          data->header, "elem = (%s)corto_iterNext(&iter), TRUE", elementId);
     }
     g_fileWrite(data->header, " : FALSE)\n");
     g_fileDedent(data->header);
