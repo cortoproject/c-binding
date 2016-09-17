@@ -257,9 +257,17 @@ static corto_int16 c_apiListTypeForeach(corto_list o, c_apiWalk_t* data) {
     g_fileWrite(data->header, "#define %sForeach(list, elem) \\\n", id);
     g_fileIndent(data->header);
     g_fileWrite(data->header, "corto_iter elem##_iter = corto_llIter(list);\\\n");
-    g_fileWrite(data->header, "%s %selem;\\\n", elementId, requiresAlloc?"*":"");
+    g_fileWrite(data->header, "%s elem;\\\n", elementId);
     g_fileWrite(data->header, "while(corto_iterHasNext(&elem##_iter) ? ");
-    g_fileWrite(data->header, "elem = (%s%s)(corto_word)corto_iterNext(&elem##_iter), TRUE", elementId, requiresAlloc?"*":"");
+    if (!elementType->reference) {
+        g_fileWrite(data->header,
+            "elem = %s(%s%s)(corto_word)corto_iterNext(&elem##_iter), TRUE",
+            requiresAlloc ? "*" : "",
+            elementId,
+            requiresAlloc ? "*" : "");
+    } else {
+        g_fileWrite(data->header, "elem = corto_iterNext(&elem##_iter), TRUE");
+    }
     g_fileWrite(data->header, " : FALSE)\n");
     g_fileDedent(data->header);
     g_fileWrite(data->header, "\n");
