@@ -23,6 +23,10 @@ corto_char* c_primitiveId(corto_primitive t, corto_char* buff);
 /* Parse type into C-specifier */
 corto_int16 c_specifierId(corto_generator g, corto_type t, corto_char* specifier, corto_bool* prefix, corto_char* postfix);
 
+/* Get simple type dd */
+#define c_typeId(g, t, specifier) _c_typeId(g, corto_type(t), specifier)
+corto_char* _c_typeId(corto_generator g, corto_type t, corto_char *specifier);
+
 /* Translate constant to C-language id */
 corto_char* c_constantId(corto_generator g, corto_constant* c, corto_char* buffer);
 

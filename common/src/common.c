@@ -411,16 +411,29 @@ corto_int16 c_specifierId(
             }
             break;
         }
-        default:
-            corto_seterr("anonymous type of kind '%s' not allowed.", corto_idof(corto_enum_constant(corto_typeKind_o, corto_type(t)->kind)));
-            goto error;
+        default: {
+            corto_object cur = g_getCurrent(g);
+            if (corto_instanceof(corto_package_o, cur)) {
+                corto_id packageId;
+                g_fullOid(g, cur, packageId);
+                sprintf(specifier, "anonymous_%s_%lx", packageId, (corto_uint64)t);
+            } else {
+                sprintf(specifier, "anonymous_%lx", (corto_uint64)t);
+            }
             break;
+        }
         }
     }
 
     return 0;
 error:
     return -1;
+}
+
+corto_char* _c_typeId(corto_generator g, corto_type t, corto_char *specifier) {
+    corto_id postfix;
+    c_specifierId(g, t, specifier, NULL, postfix);
+    return specifier;
 }
 
 corto_char* c_escapeString(corto_string str, corto_id id) {

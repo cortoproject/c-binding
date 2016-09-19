@@ -92,7 +92,7 @@ static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void*
     t = corto_enum(corto_value_getType(v));
 
     /* Write enumeration */
-    g_fileWrite(data->header, "typedef enum %s {\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "typedef enum %s {\n", c_typeId(data->g, t, id));
     g_fileIndent(data->header);
 
     /* Write enumeration constants */
@@ -102,7 +102,7 @@ static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void*
 
     g_fileDedent(data->header);
     g_fileWrite(data->header, "\n");
-    g_fileWrite(data->header, "} %s;\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "} %s;\n", c_typeId(data->g, t, id));
 
     return 0;
 error:
@@ -120,7 +120,7 @@ static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, vo
     data = userData;
     t = corto_enum(corto_value_getType(v));
 
-    g_fileWrite(data->header, "CORTO_BITMASK(%s);\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "CORTO_BITMASK(%s);\n", c_typeId(data->g, t, id));
 
     /* Write enumeration constants */
     g_fileIndent(data->header);
@@ -147,9 +147,9 @@ static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
     if (t->reference) {
-        g_fileWrite(data->header, "typedef void *%s;\n", g_fullOid(data->g, t, id));
+        g_fileWrite(data->header, "typedef void *%s;\n", c_typeId(data->g, t, id));
     } else {
-        g_fileWrite(data->header, "typedef void %s;\n", g_fullOid(data->g, t, id));
+        g_fileWrite(data->header, "typedef void %s;\n", c_typeId(data->g, t, id));
     }
 
     return 0;
@@ -167,7 +167,7 @@ static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData)
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-    g_fileWrite(data->header, "CORTO_ANY(%s);\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "CORTO_ANY(%s);\n", c_typeId(data->g, t, id));
 
     return 0;
 }
@@ -206,7 +206,7 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
         /* Write typedef */
         if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
             g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-            g_fileWrite(data->header, "typedef %s %s;\n", buff, g_fullOid(data->g, t, id));
+            g_fileWrite(data->header, "typedef %s %s;\n", buff, c_typeId(data->g, t, id));
         }
         break;
     }
@@ -226,14 +226,14 @@ static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userDa
     t = corto_value_getType(v);
 
     /* Open struct */
-    g_fileWrite(data->header, "struct %s {\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "struct %s {\n", c_typeId(data->g, t, id));
 
     /* Serialize members */
     g_fileIndent(data->header);
 
     /* Write base */
     if (corto_interface(t)->base && corto_type(corto_interface(t)->base)->alignment) {
-        g_fileWrite(data->header, "%s _parent;\n", g_fullOid(data->g, corto_interface(t)->base, id));
+        g_fileWrite(data->header, "%s _parent;\n", c_typeId(data->g, corto_interface(t)->base, id));
     }
 
     if (corto_serializeMembers(s, v, userData)) {
@@ -259,11 +259,11 @@ static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userDat
     t = corto_value_getType(v);
 
     /* Open struct */
-    g_fileWrite(data->header, "struct %s {\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "struct %s {\n", c_typeId(data->g, t, id));
     g_fileIndent(data->header);
 
     /* Write discriminator */
-    g_fileWrite(data->header, "%s d;\n", g_fullOid(data->g, corto_union(t)->discriminator, id));
+    g_fileWrite(data->header, "%s d;\n", c_typeId(data->g, corto_union(t)->discriminator, id));
 
     /* Open union */
     g_fileWrite(data->header, "union {\n");
@@ -305,12 +305,12 @@ static corto_int16 c_typeClass(corto_serializer s, corto_value* v, void* userDat
     t = corto_value_getType(v);
 
     /* Open class */
-    g_fileWrite(data->header, "CORTO_CLASS_DEF(%s) {\n", g_fullOid(data->g, t, id));
+    g_fileWrite(data->header, "CORTO_CLASS_DEF(%s) {\n", c_typeId(data->g, t, id));
     g_fileIndent(data->header);
 
     /* Write base */
     if (corto_interface(t)->base) {
-        g_fileWrite(data->header, "CORTO_EXTEND(%s);\n", g_fullOid(data->g, corto_interface(t)->base, id));
+        g_fileWrite(data->header, "CORTO_EXTEND(%s);\n", c_typeId(data->g, corto_interface(t)->base, id));
     }
 
     /* Serialize members */
@@ -668,40 +668,39 @@ static void c_typeHeaderFileClose(g_file file) {
 }
 
 static int c_typeDeclare(corto_object o, void* userData) {
-    corto_id id;
+    corto_id id, postfix;
     corto_type t;
     c_typeWalk_t* data;
 
     data = userData;
     t = o;
+    c_specifierId(data->g, t, id, NULL, postfix);
 
-    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
-        g_fileWrite(data->header, "/*  %s */\n", corto_fullpath(NULL, t));
+    g_fileWrite(data->header, "/*  %s */\n", corto_fullpath(NULL, t));
 
-        switch(t->kind) {
-        case CORTO_COMPOSITE:
-            switch(corto_interface(t)->kind) {
-            case CORTO_DELEGATE:
-            case CORTO_STRUCT:
-            case CORTO_UNION:
-                g_fileWrite(data->header, "typedef struct %s %s;\n\n", g_fullOid(data->g, t, id), g_fullOid(data->g, t, id));
-                break;
-            case CORTO_CLASS:
-                g_fileWrite(data->header, "CORTO_CLASS(%s);\n\n", g_fullOid(data->g, t, id));
-                break;
-            case CORTO_INTERFACE:
-                g_fileWrite(data->header, "CORTO_INTERFACE(%s);\n\n", g_fullOid(data->g, t, id));
-                break;
-            case CORTO_PROCEDURE:
-                g_fileWrite(data->header, "CORTO_CLASS(%s);\n\n", g_fullOid(data->g, t, id));
-                break;
-            }
+    switch(t->kind) {
+    case CORTO_COMPOSITE:
+        switch(corto_interface(t)->kind) {
+        case CORTO_DELEGATE:
+        case CORTO_STRUCT:
+        case CORTO_UNION:
+            g_fileWrite(data->header, "typedef struct %s %s;\n\n", id, id);
             break;
-        default:
-            corto_error("c_typeDeclare: only composite types can be forward declared.");
-            goto error;
+        case CORTO_CLASS:
+            g_fileWrite(data->header, "CORTO_CLASS(%s);\n\n", id);
+            break;
+        case CORTO_INTERFACE:
+            g_fileWrite(data->header, "CORTO_INTERFACE(%s);\n\n", id);
+            break;
+        case CORTO_PROCEDURE:
+            g_fileWrite(data->header, "CORTO_CLASS(%s);\n\n", id);
             break;
         }
+        break;
+    default:
+        corto_error("c_typeDeclare: only composite types can be forward declared.");
+        goto error;
+        break;
     }
 
     return 0;
