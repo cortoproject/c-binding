@@ -42,12 +42,14 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
     }
     g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
     g_fileWrite(file, "\n");
-    if (!app && g_getCurrent(g)) {
+    if (!app) {
         g_fileWrite(file, "#ifdef __cplusplus\n");
         g_fileWrite(file, "extern \"C\"\n");
         g_fileWrite(file, "#endif\n");
-        c_writeExport(g, file);
-        g_fileWrite(file, " ");
+        if (g_getCurrent(g)) {
+          c_writeExport(g, file);
+          g_fileWrite(file, " ");
+        }
     }
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
     g_fileIndent(file);
