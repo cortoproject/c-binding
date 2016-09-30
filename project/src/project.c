@@ -123,7 +123,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
             corto_string str = corto_iterNext(&iter);
             corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
             if (!package) {
-                corto_seterr("package.txt contains unresolved package '%s'", str);
+                corto_seterr("packages.txt contains unresolved package '%s'", str);
 
                 /* Don't break out of generation here, as this will mess up the
                  * file's code snippet */
