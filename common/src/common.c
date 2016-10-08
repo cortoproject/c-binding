@@ -631,14 +631,16 @@ void c_includeFrom(
     vsprintf(filebuff, include, list);
     va_end(list);
 
-    if (strcmp(gen_getAttribute(g, "local"), "true") || (g_getCurrent(g) != package))
+    /* If an app or local project and the object to include is from this project
+     * there is no need to prefix the header with a path */
+    if ((!strcmp(gen_getAttribute(g, "local"), "true") ||
+         !strcmp(gen_getAttribute(g, "app"), "true")) &&
+        (g_getCurrent(g) == package))
     {
+        g_fileWrite(file, "#include <%s>\n", filebuff);
+    } else {
         g_fileWrite(file, "#include <%s/%s>\n",
           corto_path(path, root_o, package, "/"),
-          filebuff);
-    } else
-    {
-        g_fileWrite(file, "#include <%s>\n",
           filebuff);
     }
 }
