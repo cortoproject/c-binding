@@ -740,7 +740,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
                 g_fileDedent(data->source);
             } else {
                 g_fileWrite(data->source, " */\n\n");
-                g_fileWrite(data->source, "/* Insert code that must be run when component is loaded */\n\n");
+                g_fileWrite(data->source, "/* Insert implementation */\n\n");
                 g_fileWrite(data->source, "return 0;\n");
                 g_fileDedent(data->source);
                 g_fileWrite(data->source, "/* $end */\n");
