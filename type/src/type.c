@@ -431,6 +431,24 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
     return 0;
 }
 
+/* Map object */
+static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData) {
+    corto_type t;
+    c_typeWalk_t* data;
+    corto_id id, postfix;
+
+    CORTO_UNUSED(s);
+    CORTO_UNUSED(v);
+
+    data = userData;
+    t = corto_value_getType(v);
+    c_specifierId(data->g, corto_type(t), id, NULL, postfix);
+    g_fileWrite(data->header, "CORTO_MAP(%s);\n",
+            id);
+
+    return 0;
+}
+
 /* Collection object */
 static corto_int16 c_typeCollection(corto_serializer s, corto_value* v, void* userData) {
     corto_type t;
@@ -453,6 +471,9 @@ static corto_int16 c_typeCollection(corto_serializer s, corto_value* v, void* us
         }
         break;
     case CORTO_MAP:
+        if (c_typeMap(s, v, userData)) {
+            goto error;
+        }
         break;
     }
 
