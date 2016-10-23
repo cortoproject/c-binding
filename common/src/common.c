@@ -457,14 +457,8 @@ corto_char* c_escapeString(corto_string str, corto_id id) {
 }
 
 corto_bool c_procedureHasThis(corto_function o) {
-    corto_bool result;
-    if (corto_typeof(o) != corto_type(corto_observer_o)) {
-        result = (corto_instanceof(corto_type(corto_method_o), o) ||
-                  corto_instanceof(corto_type(corto_metaprocedure_o), o));
-    } else {
-        result = corto_class_instanceof(corto_class_o, corto_parentof(o));
-    }
-    return result;
+    corto_procedure t = corto_procedure(corto_typeof(o));
+    return t->kind == CORTO_METHOD || t->kind == CORTO_OBSERVER || t->kind == CORTO_METAPROCEDURE;
 }
 
 corto_string c_paramName(corto_string name, corto_string buffer) {
