@@ -10,7 +10,9 @@
 
 corto_void _test_voidReferenceApi_onUpdate(
     test_voidReferenceApi _this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/voidReferenceApi/onUpdate) */
     _this->updated = TRUE;
@@ -88,14 +90,14 @@ corto_void _test_voidReferenceApi_tc_update(
     test_voidReferenceType o = test_voidReferenceTypeCreate();
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_voidReferenceApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_voidReferenceApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_voidReferenceTypeUpdate(o);
     test_assert(result == 0);
     test_assert(_this->updated == TRUE);
 
-    result = corto_silence(_this, test_voidReferenceApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_voidReferenceApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);

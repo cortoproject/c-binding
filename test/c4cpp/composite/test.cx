@@ -82,7 +82,7 @@ test/Suite OptionalApi::
   void tc_unset()
   void tc_str()
   void tc_strNotSet()
-  void onUpdate(object observable) observer
+  observer onUpdate: on_update
   updated: bool
 
 test/Suite OptionalStringApi::
@@ -100,7 +100,7 @@ test/Suite OptionalStringApi::
   void tc_unset()
   void tc_str()
   void tc_strNotSet()
-  void onUpdate(object observable) observer
+  observer onUpdate: on_update
   updated: bool
 
 test/Suite OptionalCompositeApi::
@@ -118,5 +118,5 @@ test/Suite OptionalCompositeApi::
   void tc_unset()
   void tc_str()
   void tc_strNotSet()
-  void onUpdate(object observable) observer
+  observer onUpdate: on_update
   updated: bool

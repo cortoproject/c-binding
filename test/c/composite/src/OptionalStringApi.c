@@ -10,7 +10,9 @@
 
 corto_void _test_OptionalStringApi_onUpdate(
     test_OptionalStringApi this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/OptionalStringApi/onUpdate) */
 
@@ -218,7 +220,7 @@ corto_void _test_OptionalStringApi_tc_update(
     test_OptionalString *o = test_OptionalStringCreate(NotSet, "Bar");
     test_assert(o != NULL);
 
-    result = corto_listen(this, test_OptionalStringApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_OptionalStringApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     result = test_OptionalStringUpdate(o, Set("Foo"), "Bar");
@@ -228,7 +230,7 @@ corto_void _test_OptionalStringApi_tc_update(
     test_assertstr(*o->a, "Foo");
     test_assertstr(o->b, "Bar");
 
-    result = corto_silence(this, test_OptionalStringApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_OptionalStringApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     corto_delete(o);
@@ -245,7 +247,7 @@ corto_void _test_OptionalStringApi_tc_updateNotSet(
     test_OptionalString *o = test_OptionalStringCreate(Set("Foo"), "Bar");
     test_assert(o != NULL);
 
-    result = corto_listen(this, test_OptionalStringApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_OptionalStringApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     result = test_OptionalStringUpdate(o, NotSet, "Bar");
@@ -254,7 +256,7 @@ corto_void _test_OptionalStringApi_tc_updateNotSet(
     test_assert(o->a == NULL);
     test_assertstr(o->b, "Bar");
 
-    result = corto_silence(this, test_OptionalStringApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_OptionalStringApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     corto_delete(o);

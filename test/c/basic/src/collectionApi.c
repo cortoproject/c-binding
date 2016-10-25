@@ -10,7 +10,9 @@
 
 corto_void _test_collectionApi_onUpdate(
     test_collectionApi this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/collectionApi/onUpdate) */
     this->updated = TRUE;
@@ -253,7 +255,7 @@ corto_void _test_collectionApi_tc_update(
         test_collectionTypeCreate(2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
 
-    result = corto_listen(this, test_collectionApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_collectionApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     result = test_collectionTypeUpdate(o, 2, ((corto_int32[]){20, 30}));
@@ -262,7 +264,7 @@ corto_void _test_collectionApi_tc_update(
     test_assert(o[0] == 20);
     test_assert(o[1] == 30);
 
-    result = corto_silence(this, test_collectionApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_collectionApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     corto_delete(o);

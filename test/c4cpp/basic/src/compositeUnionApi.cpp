@@ -10,7 +10,9 @@
 
 corto_void _test_compositeUnionApi_onUpdate(
     test_compositeUnionApi _this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/compositeUnionApi/onUpdate) */
 
@@ -459,7 +461,7 @@ corto_void _test_compositeUnionApi_tc_update(
     test_compositeUnionType *o = test_compositeUnionTypeCreate_num(0, 10);
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_compositeUnionApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_compositeUnionApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_compositeUnionTypeUpdate_flt(o, 1, 10.5);
@@ -468,7 +470,7 @@ corto_void _test_compositeUnionApi_tc_update(
     test_assert(o->d == 1);
     test_assert(o->is.flt == 10.5);
 
-    result = corto_silence(_this, test_compositeUnionApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_compositeUnionApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);
@@ -485,7 +487,7 @@ corto_void _test_compositeUnionApi_tc_updateDefault(
     test_compositeUnionType *o = test_compositeUnionTypeCreate_num(0, 10);
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_compositeUnionApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_compositeUnionApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_compositeUnionTypeUpdate_other(o, 4, 20);
@@ -494,7 +496,7 @@ corto_void _test_compositeUnionApi_tc_updateDefault(
     test_assert(o->d == 4);
     test_assert(o->is.other == 20);
 
-    result = corto_silence(_this, test_compositeUnionApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_compositeUnionApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);

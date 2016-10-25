@@ -10,7 +10,9 @@
 
 corto_void _test_anyApi_onUpdate(
     test_anyApi this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/anyApi/onUpdate) */
 
@@ -285,7 +287,7 @@ corto_void _test_anyApi_tc_update(
     test_anyType *o = test_anyTypeCreate(corto_string_o, &v);
     test_assert(o != NULL);
 
-    result = corto_listen(this, test_anyApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_anyApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     v = "Bar";
@@ -295,7 +297,7 @@ corto_void _test_anyApi_tc_update(
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(!strcmp(*(corto_string*)o->value, "Bar"));
 
-    result = corto_silence(this, test_anyApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_anyApi_onUpdate_o, this, o);
     test_assert(result == 0);
 
     corto_delete(o);

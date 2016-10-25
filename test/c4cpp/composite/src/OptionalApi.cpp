@@ -10,7 +10,9 @@
 
 corto_void _test_OptionalApi_onUpdate(
     test_OptionalApi _this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/OptionalApi/onUpdate) */
 
@@ -218,7 +220,7 @@ corto_void _test_OptionalApi_tc_update(
     test_Optional *o = test_OptionalCreate(NotSet, 20);
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_OptionalApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_OptionalApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_OptionalUpdate(o, Set(20), 30);
@@ -228,7 +230,7 @@ corto_void _test_OptionalApi_tc_update(
     test_assert(*o->a == 20);
     test_assert(o->b == 30);
 
-    result = corto_silence(_this, test_OptionalApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_OptionalApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);
@@ -245,7 +247,7 @@ corto_void _test_OptionalApi_tc_updateNotSet(
     test_Optional *o = test_OptionalCreate(Set(10), 20);
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_OptionalApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_OptionalApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_OptionalUpdate(o, NotSet, 30);
@@ -254,7 +256,7 @@ corto_void _test_OptionalApi_tc_updateNotSet(
     test_assert(o->a == NULL);
     test_assert(o->b == 30);
 
-    result = corto_silence(_this, test_OptionalApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_OptionalApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);

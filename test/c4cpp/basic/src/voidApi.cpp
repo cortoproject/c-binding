@@ -10,7 +10,9 @@
 
 corto_void _test_voidApi_onUpdate(
     test_voidApi _this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/voidApi/onUpdate) */
     _this->updated = TRUE;
@@ -88,14 +90,14 @@ corto_void _test_voidApi_tc_update(
     test_voidType *o = test_voidTypeCreate();
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_voidApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_voidApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_voidTypeUpdate(o);
     test_assert(result == 0);
     test_assert(_this->updated == TRUE);
 
-    result = corto_silence(_this, test_voidApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_voidApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);

@@ -50,7 +50,7 @@ test/Suite voidApi::
     void tc_createAuto()
     void tc_createChildAuto()
     void tc_update()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite voidReferenceApi::
@@ -59,7 +59,7 @@ test/Suite voidReferenceApi::
     void tc_createAuto()
     void tc_createChildAuto()
     void tc_update()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite anyApi::
@@ -77,7 +77,7 @@ test/Suite anyApi::
     void tc_str()
     void tc_fromStr()
     void tc_compare()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite primitiveApi::
@@ -95,7 +95,7 @@ test/Suite primitiveApi::
     void tc_str()
     void tc_fromStr()
     void tc_compare()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite compositeApi::
@@ -113,7 +113,7 @@ test/Suite compositeApi::
     void tc_str()
     void tc_fromStr()
     void tc_compare()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite compositeUnionApi::
@@ -142,7 +142,7 @@ test/Suite compositeUnionApi::
     void tc_compare()
     void tc_compareDiscriminator()
     void tc_compareDefault()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite compositeReferenceApi::
@@ -160,7 +160,7 @@ test/Suite compositeReferenceApi::
     void tc_str()
     void tc_fromStr()
     void tc_compare()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool
 
 test/Suite collectionApi::
@@ -178,5 +178,5 @@ test/Suite collectionApi::
     void tc_str()
     void tc_fromStr()
     void tc_compare()
-    void onUpdate(object observable) observer
+    observer onUpdate: on_update
     updated: bool

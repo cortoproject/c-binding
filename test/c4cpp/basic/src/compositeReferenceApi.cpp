@@ -10,7 +10,9 @@
 
 corto_void _test_compositeReferenceApi_onUpdate(
     test_compositeReferenceApi _this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/compositeReferenceApi/onUpdate) */
     _this->updated = TRUE;
@@ -260,8 +262,7 @@ corto_void _test_compositeReferenceApi_tc_update(
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
     test_assert(o != NULL);
 
-    result = corto_listen(
-        _this, test_compositeReferenceApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_compositeReferenceApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_compositeReferenceTypeUpdate(o, 20, 30);
@@ -270,8 +271,7 @@ corto_void _test_compositeReferenceApi_tc_update(
     test_assert(o->x == 20);
     test_assert(o->y == 30);
 
-    result = corto_silence(
-        _this, test_compositeReferenceApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_compositeReferenceApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);

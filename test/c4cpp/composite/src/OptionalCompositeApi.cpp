@@ -10,7 +10,9 @@
 
 corto_void _test_OptionalCompositeApi_onUpdate(
     test_OptionalCompositeApi _this,
-    corto_object observable)
+    corto_eventMask event,
+    corto_object object,
+    corto_observer observer)
 {
 /* $begin(test/OptionalCompositeApi/onUpdate) */
 
@@ -241,7 +243,7 @@ corto_void _test_OptionalCompositeApi_tc_update(
     test_OptionalComposite *o = test_OptionalCompositeCreate(NotSet, NULL);
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_OptionalCompositeApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_OptionalCompositeApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_OptionalCompositeUpdate(o, Set(10, 20), NULL);
@@ -253,7 +255,7 @@ corto_void _test_OptionalCompositeApi_tc_update(
     test_assert(o->b.x == 0);
     test_assert(o->b.y == 0);
 
-    result = corto_silence(_this, test_OptionalCompositeApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_OptionalCompositeApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);
@@ -270,7 +272,7 @@ corto_void _test_OptionalCompositeApi_tc_updateNotSet(
     test_OptionalComposite *o = test_OptionalCompositeCreate(Set(10, 20), NULL);
     test_assert(o != NULL);
 
-    result = corto_listen(_this, test_OptionalCompositeApi_onUpdate_o, CORTO_ON_UPDATE, o, NULL);
+    result = corto_observer_observe(test_OptionalCompositeApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     result = test_OptionalCompositeUpdate(o, NotSet, NULL);
@@ -280,7 +282,7 @@ corto_void _test_OptionalCompositeApi_tc_updateNotSet(
     test_assert(o->b.x == 0);
     test_assert(o->b.y == 0);
 
-    result = corto_silence(_this, test_OptionalCompositeApi_onUpdate_o, CORTO_ON_UPDATE, o);
+    result = corto_observer_unobserve(test_OptionalCompositeApi_onUpdate_o, _this, o);
     test_assert(result == 0);
 
     corto_delete(o);
