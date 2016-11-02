@@ -302,7 +302,7 @@ static corto_int16 corto_printCortoListAsRubyArray(g_file f, const char* rubyNam
     g_fileIndent(f);
     {
         corto_stringlistForeach(list, elem) {
-            g_fileWrite(f, "\"%s\"\n,", elem);
+            g_fileWrite(f, "\"%s\",\n", elem);
         }
     }
     g_fileDedent(f);
@@ -315,10 +315,24 @@ static corto_int16 corto_writeRakefile(corto_generator g, corto_package package)
     g_file rakefile = g_fileOpen(g, "rakefile");
     g_fileWrite(rakefile, "PACKAGE = '%s'\n", corto_fullpath(NULL, package));
 
-    corto_printCortoListAsRubyArray(rakefile, "LIB", package->lib);
-    corto_printCortoListAsRubyArray(rakefile, "LIBPATH", package->libpath);
-    corto_printCortoListAsRubyArray(rakefile, "INCLUDE", package->include);
-    corto_printCortoListAsRubyArray(rakefile, "LINK", package->link);
+    if (corto_llSize(package->lib)) {
+        corto_printCortoListAsRubyArray(rakefile, "LIB", package->lib);
+    }
+    if (corto_llSize(package->libpath)) {
+        corto_printCortoListAsRubyArray(rakefile, "LIBPATH", package->libpath);
+    }
+    if (corto_llSize(package->include)) {
+        corto_printCortoListAsRubyArray(rakefile, "INCLUDE", package->include);
+    }
+    if (corto_llSize(package->link)) {
+        corto_printCortoListAsRubyArray(rakefile, "LINK", package->link);
+    }
+    if (corto_llSize(package->dependencies)) {
+        corto_printCortoListAsRubyArray(rakefile, "USE_PACKAGE", package->dependencies);
+    }
+    if (corto_llSize(package->cflags)) {
+        corto_printCortoListAsRubyArray(rakefile, "CFLAGS", package->cflags);
+    }
 
     g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
     g_fileClose(rakefile);
