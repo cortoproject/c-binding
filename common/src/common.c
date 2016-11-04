@@ -741,7 +741,7 @@ corto_char* c_varId(corto_generator g, corto_object o, corto_char* out) {
             corto_path(out, root_o, o, "_");
         } else {
             corto_id postfix;
-            if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) || !corto_childof(root_o, o)) {
+            if (corto_instanceof(corto_type_o, o) && (!corto_checkAttr(o, CORTO_ATTR_SCOPED) || !corto_childof(root_o, o))) {
                 c_specifierId(g, o, out, NULL, postfix);
             } else {
                 g_fullOid(g, o, out);

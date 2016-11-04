@@ -9,6 +9,7 @@ typedef struct c_arg {
     corto_bool move;
     corto_string nativeCast;
     corto_bool optional;
+    corto_bool isobject;
 } c_arg;
 
 static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type type, corto_bool optional) {
@@ -19,6 +20,20 @@ static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type ty
         arg->move = FALSE;
         arg->nativeCast = NULL;
         arg->optional = optional;
+        arg->isobject = type && type->reference && (type->kind != CORTO_VOID);
+        corto_llAppend(args, arg);
+    }
+}
+
+static void c_apiCastMacroAddThis(corto_ll args, corto_string name, corto_type type, corto_bool optional, corto_bool isobject) {
+    if (args) {
+        c_arg *arg = corto_alloc(sizeof(c_arg));
+        arg->name = corto_strdup(name);
+        arg->type = type;
+        arg->move = FALSE;
+        arg->nativeCast = NULL;
+        arg->optional = optional;
+        arg->isobject = isobject;
         corto_llAppend(args, arg);
     }
 }
@@ -31,6 +46,7 @@ static void c_apiCastMacroAddArgNativeCast(corto_ll args, corto_string name, cor
         arg->move = FALSE;
         arg->nativeCast = corto_strdup(type);
         arg->optional = FALSE;
+        arg->isobject = FALSE;
         corto_llAppend(args, arg);
     }
 }
@@ -43,6 +59,7 @@ static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_typ
         arg->move = TRUE;
         arg->nativeCast = NULL;
         arg->optional = optional;
+        arg->isobject = type && type->reference && (type->kind != CORTO_VOID);
         corto_llAppend(args, arg);
     }
 }
@@ -155,7 +172,7 @@ static corto_int16 c_apiCastMacroCall(
         if (arg->move && cpp) {
             g_fileWrite(data->header, "std::move(");
         }
-        if ((arg->type && arg->type->reference && (arg->type->kind != CORTO_VOID)) || (!strcmp(argName, "_this"))) {
+        if (arg->isobject) {
             corto_id id;
             if (corto_typeof(arg->type) != (corto_type)corto_target_o) {
                 g_fullOid(data->g, arg->type, id);
@@ -949,7 +966,12 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
         g_fileWrite(data->source, "_%s%s%s%s(%s _this",
             id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
-        c_apiCastMacroAddArg(data->args, "_this", t, FALSE);
+
+        if (strcmp(func, "Assign")) {
+            c_apiCastMacroAddThis(data->args, "_this", t, FALSE, TRUE);
+        } else {
+            c_apiCastMacroAddThis(data->args, "_this", t, FALSE, FALSE);
+        }
 
         c_apiTypeInitArgs(t, member, data);
 
@@ -975,8 +997,8 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             g_fileWrite(data->source, "if ((corto_typeof(corto_typeof(_this)) == (corto_type)corto_target_o) && !corto_owned(_this)) {\n");
             g_fileIndent(data->source);
             corto_id thisVar;
-            sprintf(thisVar, "((%s%s)CORTO_OFFSET(_this, ((corto_type)%s_o)->size))",
-                id, t->reference ? "" : "*", id);
+            sprintf(thisVar, "((%s)CORTO_OFFSET(_this, ((corto_type)%s_o)->size))",
+                c_typeret(g, t, C_ByReference, ptr), id);
             data->owned = FALSE;
             c_apiTypeInitAssign(t, thisVar, member, data);
             g_fileDedent(data->source);

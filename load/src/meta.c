@@ -20,7 +20,7 @@ typedef struct c_typeWalk_t {
 
 /* Resolve object */
 static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* src, corto_char* context, c_typeWalk_t *data) {
-    if (g_mustParse(data->g, o)) {
+    if (g_mustParse(data->g, o) && corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
         corto_id varId;
         c_varId(data->g, o, varId);
         sprintf(out, "(corto_claim(%s), %s)", varId, varId);
@@ -458,13 +458,13 @@ static corto_int16 c_initPrimitive(corto_serializer s, corto_value* v, void* use
         }
     } else if (corto_primitive(t)->kind == CORTO_CHARACTER) {
         corto_char v = *(corto_char*)ptr;
-        char buff[3];
-        str = malloc(strlen(buff) + 1 + 2);
         if (v) {
+            char buff[3];
             chresc(buff, v, '\'')[0] = '\0';
+            str = malloc(strlen(buff) + 1 + 2);
             sprintf(str, "'%s'", buff);
         } else {
-            sprintf(str, "'\\0'");
+            str = corto_strdup("'\\0'");
         }
     } else {
         /* Convert primitive value to string using built-in conversion */
