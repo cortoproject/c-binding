@@ -19,8 +19,12 @@ typedef struct c_typeWalk_t {
 } c_typeWalk_t;
 
 /* Resolve object */
-static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* src, corto_char* context) {
-    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* src, corto_char* context, c_typeWalk_t *data) {
+    if (g_mustParse(data->g, o)) {
+        corto_id varId;
+        c_varId(data->g, o, varId);
+        sprintf(out, "(corto_claim(%s), %s)", varId, varId);
+    } else if (corto_checkAttr(o, CORTO_ATTR_SCOPED) && corto_childof(root_o, o)) {
         corto_id id, escaped;
         corto_fullpath(id, o);
 
@@ -497,7 +501,7 @@ static corto_int16 c_initReference(corto_serializer s, corto_value* v, void* use
         corto_strving(v, context, 256);
         g_fileWrite(data->source, "%s(%s)",
           typeId,
-          c_loadResolve(o, id, src, context));
+          c_loadResolve(o, id, src, context, data));
     } else {
         g_fileWrite(data->source, "NULL");
     }
@@ -722,7 +726,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
     c_varId(data->g, o, varId);
     c_specifierId(data->g, corto_typeof(o), typeCast, NULL, postfix);
 
-    if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+    if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) || !corto_childof(root_o, o)) {
         g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
     } else {
         if (!g_mustParse(data->g, o)) {

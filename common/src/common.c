@@ -349,14 +349,9 @@ corto_int16 c_specifierId(
     }
 
     /* Check if object is scoped */
-    if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
+    if (corto_checkAttr(t, CORTO_ATTR_SCOPED) && corto_childof(root_o, t)) {
         g_fullOid(g, t, specifier);
     } else {
-        if (t != corto_type(t)) {
-            corto_seterr("anonymous typedefs are not allowed.");
-            goto error;
-        }
-
         switch(corto_type(t)->kind) {
         case CORTO_PRIMITIVE:
             c_primitiveId(corto_primitive(t), specifier);
@@ -412,13 +407,30 @@ corto_int16 c_specifierId(
             break;
         }
         default: {
+            static corto_ll anonymousTypes = NULL;
+            corto_uint32 count = 0;
+            if (!anonymousTypes) {
+                anonymousTypes = corto_llNew();
+            }
+            corto_iter it = corto_llIter(anonymousTypes);
+            while (corto_iterHasNext(&it)) {
+                corto_object o = corto_iterNext(&it);
+                if (o == t) {
+                    break;
+                }
+                count ++;
+            }
+            if (count == corto_llSize(anonymousTypes)) {
+                corto_llAppend(anonymousTypes, t);
+            }
+
             corto_object cur = g_getCurrent(g);
             if (corto_instanceof(corto_package_o, cur)) {
                 corto_id packageId;
                 g_fullOid(g, cur, packageId);
-                sprintf(specifier, "anonymous_%s_%lx", packageId, (corto_uint64)t);
+                sprintf(specifier, "anonymous_%s_%u", packageId, count);
             } else {
-                sprintf(specifier, "anonymous_%lx", (corto_uint64)t);
+                sprintf(specifier, "anonymous_%u", count);
             }
             break;
         }
@@ -729,7 +741,7 @@ corto_char* c_varId(corto_generator g, corto_object o, corto_char* out) {
             corto_path(out, root_o, o, "_");
         } else {
             corto_id postfix;
-            if (!corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+            if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) || !corto_childof(root_o, o)) {
                 c_specifierId(g, o, out, NULL, postfix);
             } else {
                 g_fullOid(g, o, out);

@@ -16,6 +16,8 @@ typedef struct c_apiWalk_t {
     corto_generator g;
     g_file header;
     g_file source;
+    corto_string _this;
+    corto_bool owned;
     corto_object current;
     corto_uint32 parameterCount;
     corto_ll memberCache;

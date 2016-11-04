@@ -155,10 +155,14 @@ static corto_int16 c_apiCastMacroCall(
         if (arg->move && cpp) {
             g_fileWrite(data->header, "std::move(");
         }
-        if (arg->type && arg->type->reference && (arg->type->kind != CORTO_VOID)) {
+        if ((arg->type && arg->type->reference && (arg->type->kind != CORTO_VOID)) || (!strcmp(argName, "_this"))) {
             corto_id id;
-            g_fullOid(data->g, arg->type, id);
-            g_fileWrite(data->header, "%s(%s)", id, argName);
+            if (corto_typeof(arg->type) != (corto_type)corto_target_o) {
+                g_fullOid(data->g, arg->type, id);
+                g_fileWrite(data->header, "%s(%s)", id, argName);
+            } else {
+                g_fileWrite(data->header, "%s", argName);
+            }
         } else {
             if (arg->nativeCast) {
                 g_fileWrite(data->header, "(%s)", arg->nativeCast);
@@ -285,12 +289,20 @@ static corto_int16 c_apiCastMacroSet(
 static corto_int16 c_apiAssign(
     corto_type t,
     corto_bool ptr,
-    corto_bool optional,
+    corto_modifier modifiers,
     corto_string lvalue,
     corto_string rvalue,
     c_apiWalk_t *data)
 {
-    if (optional) {
+    if (corto_typeof(t) == (corto_type)corto_target_o) {
+        corto_id _this;
+        if (data->owned) {
+            sprintf(_this, "%s->actual", lvalue);
+        } else {
+            sprintf(_this, "%s->target", lvalue);
+        }
+        c_apiAssign(corto_target(t)->type, FALSE, 0, _this, rvalue, data);
+    } else if (modifiers & CORTO_OPTIONAL) {
         corto_id varId;
         g_fileWrite(data->source, "if (%s) {\n", lvalue);
         g_fileIndent(data->source);
@@ -374,12 +386,13 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
         g_fullOid(data->g, corto_parentof(m), type);
 
         sprintf(lvalue,
-            "((%s)_this)->%s%s",
+            "((%s)%s)->%s%s",
             c_typeptr(data->g, corto_parentof(m), ptr),
+            data->_this,
             isUnionCase ? "is." : "",
             memberId);
 
-        c_apiAssign(m->type, FALSE, m->modifiers & CORTO_OPTIONAL, lvalue, memberParamId, data);
+        c_apiAssign(m->type, m->modifiers & CORTO_OBSERVABLE, m->modifiers, lvalue, memberParamId, data);
         data->parameterCount++;
     }
 
@@ -398,7 +411,8 @@ static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* us
         m = v->is.member.t;
         data = userData;
         corto_bool isOptional = m->modifiers & CORTO_OPTIONAL;
-        corto_bool requiresPtr = c_typeRequiresPtr(m->type) || isOptional;
+        corto_bool requiresPtr =
+            c_typeRequiresPtr(m->type) || isOptional;
 
         if (data->parameterCount) {
             g_fileWrite(data->header, ", ");
@@ -406,7 +420,11 @@ static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* us
         }
 
         /* Get type-specifier */
-        c_specifierId(data->g, m->type, typeSpec, NULL, typePostfix);
+        if (corto_typeof(m->type) != corto_type(corto_target_o)) {
+            c_specifierId(data->g, m->type, typeSpec, NULL, typePostfix);
+        } else {
+            c_specifierId(data->g, corto_target(m->type)->type, typeSpec, NULL, typePostfix);
+        }
         corto_genMemberName(data->g, data->memberCache, m, memberIdTmp);
 
         if (data->args) {
@@ -589,41 +607,42 @@ corto_int16 c_apiTypeInitArgs(corto_type t, corto_member m, c_apiWalk_t *data) {
 }
 
 /* Assign any */
-corto_int16 c_apiTypeAssignAny(corto_type t, c_apiWalk_t *data) {
+corto_int16 c_apiTypeAssignAny(corto_type t, corto_string _this, c_apiWalk_t *data) {
     CORTO_UNUSED(t);
     g_fileWrite(data->source, "corto_any v;\n");
     g_fileWrite(data->source, "v.value = value;\n");
     g_fileWrite(data->source, "v.type = type;\n");
-    g_fileWrite(data->source, "_this->owner = TRUE;\n");
-    g_fileWrite(data->source, "corto_copyp(_this, corto_any_o, &v);\n");
+    g_fileWrite(data->source, "%s->owner = TRUE;\n", _this);
+    g_fileWrite(data->source, "corto_copyp(%s, corto_any_o, &v);\n", _this);
     return 0;
 }
 
 /* Assign primitve */
-corto_int16 c_apiTypeAssignPrimitive(corto_type t, c_apiWalk_t *data) {
-    c_apiAssign(t, TRUE, FALSE, "_this", "value", data);
+corto_int16 c_apiTypeAssignPrimitive(corto_type t, corto_string _this, c_apiWalk_t *data) {
+    c_apiAssign(t, TRUE, 0, _this, "value", data);
     return 0;
 }
 
 /* Assign composite */
-corto_int16 c_apiTypeAssignComposite(corto_type t, c_apiWalk_t *data) {
+corto_int16 c_apiTypeAssignComposite(corto_type t, corto_string _this, c_apiWalk_t *data) {
     struct corto_serializer_s s = c_apiAssignSerializer();
     corto_id id;
 
     g_fullOid(data->g, t, id);
 
+    data->_this = _this;
     corto_metaWalk(&s, corto_type(t), data);
 
     if (corto_instanceof(corto_procedure_o, t)) {
-        g_fileWrite(data->source, "corto_function(_this)->kind = CORTO_PROCEDURE_CDECL;\n");
-        g_fileWrite(data->source, "corto_function(_this)->fptr = (corto_word)_impl;\n");
+        g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", _this);
+        g_fileWrite(data->source, "corto_function(%s)->fptr = (corto_word)_impl;\n", _this);
     }
 
     return 0;
 }
 
 /* Assign composite */
-corto_int16 c_apiTypeAssignCompositeMember(corto_member m, c_apiWalk_t *data) {
+corto_int16 c_apiTypeAssignCompositeMember(corto_member m, corto_string _this, c_apiWalk_t *data) {
     struct corto_serializer_s s = c_apiAssignSerializer();
     corto_int32 i;
     corto_value info = corto_value_member(
@@ -631,6 +650,8 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, c_apiWalk_t *data) {
         m,
         NULL
     );
+
+    data->_this = _this;
 
     /* Assign single member for unions */
     g_fileWrite(data->source, "switch(_d) {\n");
@@ -640,7 +661,7 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, c_apiWalk_t *data) {
         }
 
         g_fileIndent(data->source);
-        g_fileWrite(data->source, "_this->d = _d;\n");
+        g_fileWrite(data->source, "%s->d = _d;\n", _this);
         s.metaprogram[CORTO_MEMBER](&s, &info, data);
         g_fileWrite(data->source, "break;\n");
         g_fileDedent(data->source);
@@ -678,7 +699,7 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, c_apiWalk_t *data) {
 
         g_fileWrite(data->source, "default:\n");
         g_fileIndent(data->source);
-        g_fileWrite(data->source, "_this->d = _d;\n");
+        g_fileWrite(data->source, "%s->d = _d;\n", _this);
         s.metaprogram[CORTO_MEMBER](&s, &info, data);
         g_fileWrite(data->source, "break;\n");
         g_fileDedent(data->source);
@@ -690,18 +711,18 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, c_apiWalk_t *data) {
 }
 
 /* Assign collection */
-corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
+corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWalk_t *data) {
     corto_id id, cVar, lvalue;
     corto_type elementType = corto_collection(t)->elementType;
 
     g_fullOid(data->g, t, id);
 
-    strcpy(cVar, "_this");
+    strcpy(cVar, _this);
 
     switch(corto_collection(t)->kind) {
     case CORTO_SEQUENCE:
-        strcpy(cVar, "_this->buffer");
-        g_fileWrite(data->source, "%sSize(_this, length);\n", id);
+        strcat(cVar, "->buffer");
+        g_fileWrite(data->source, "%sSize(%s, length);\n", id, _this);
     case CORTO_ARRAY:
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
@@ -709,10 +730,10 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
         sprintf(lvalue, "%s[i]", cVar);
         if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
             c_apiAssign(
-              corto_collection(t)->elementType, FALSE, FALSE, lvalue, "elements[i]", data);
+              corto_collection(t)->elementType, FALSE, 0, lvalue, "elements[i]", data);
         } else {
             c_apiAssign(
-              corto_collection(t)->elementType, FALSE, FALSE, lvalue, "&elements[i]", data);
+              corto_collection(t)->elementType, FALSE, 0, lvalue, "&elements[i]", data);
         }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
@@ -738,7 +759,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, c_apiWalk_t *data) {
 }
 
 /* Add initializer arguments to function declaration for type */
-corto_int16 c_apiTypeInitAssign(corto_type t, corto_member m, c_apiWalk_t *data) {
+corto_int16 c_apiTypeInitAssign(corto_type t, corto_string _this, corto_member m, c_apiWalk_t *data) {
     corto_int16 result = 0;
 
     switch(t->kind) {
@@ -746,20 +767,20 @@ corto_int16 c_apiTypeInitAssign(corto_type t, corto_member m, c_apiWalk_t *data)
     case CORTO_ITERATOR:
         break;
     case CORTO_ANY:
-        result = c_apiTypeAssignAny(t, data);
+        result = c_apiTypeAssignAny(t, _this, data);
         break;
     case CORTO_PRIMITIVE:
-        result = c_apiTypeAssignPrimitive(t, data);
+        result = c_apiTypeAssignPrimitive(t, _this, data);
         break;
     case CORTO_COMPOSITE:
         if (!m) {
-            result = c_apiTypeAssignComposite(t, data);
+            result = c_apiTypeAssignComposite(t, _this, data);
         } else {
-            result = c_apiTypeAssignCompositeMember(m, data);
+            result = c_apiTypeAssignCompositeMember(m, _this, data);
         }
         break;
     case CORTO_COLLECTION:
-        result = c_apiTypeAssignCollection(t, data);
+        result = c_apiTypeAssignCollection(t, _this, data);
         break;
     }
 
@@ -853,7 +874,8 @@ corto_int16 c_apiTypeCreateIntern(
             g_fileIndent(data->source);
 
             /* Assignments */
-            c_apiTypeInitAssign(t, member, data);
+            data->owned = TRUE;
+            c_apiTypeInitAssign(t, "_this", member, data);
 
             if (t->kind != CORTO_VOID) {
                 /* Define object */
@@ -947,12 +969,27 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         data->args = NULL;
 
         if (isUpdate && doUpdate && (t->kind != CORTO_VOID)) {
-          g_fileWrite(data->source, "if (!corto_updateBegin(_this)) {\n");
+            g_fileWrite(data->source, "if (!corto_updateBegin(_this)) {\n");
             g_fileIndent(data->source);
-        }
 
-        /* Member assignments */
-        c_apiTypeInitAssign(t, member, data);
+            g_fileWrite(data->source, "if ((corto_typeof(corto_typeof(_this)) == (corto_type)corto_target_o) && !corto_owned(_this)) {\n");
+            g_fileIndent(data->source);
+            corto_id thisVar;
+            sprintf(thisVar, "((%s%s)CORTO_OFFSET(_this, ((corto_type)%s_o)->size))",
+                id, t->reference ? "" : "*", id);
+            data->owned = FALSE;
+            c_apiTypeInitAssign(t, thisVar, member, data);
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "} else {\n");
+            g_fileIndent(data->source);
+            data->owned = TRUE;
+            c_apiTypeInitAssign(t, "_this", member, data);
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "}\n");
+        } else {
+            data->owned = TRUE;
+            c_apiTypeInitAssign(t, "_this", member, data);
+        }
 
         /* Define object */
         if (isUpdate && doUpdate) {
