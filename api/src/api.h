@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 typedef struct c_apiWalk_t {
-    corto_generator g;
+    g_generator g;
     g_file header;
     g_file source;
     corto_string _this;

@@ -14,7 +14,7 @@ typedef struct c_interfaceExisting {
 } c_interfaceExisting;
 
 typedef struct c_typeWalk_t {
-    corto_generator g;
+    g_generator g;
     g_file header;
     g_file source;
     g_file wrapper;
@@ -468,7 +468,7 @@ static int c_interfaceCheckProcedures(void *o, void *udata) {
 
 /* Open generator headerfile */
 static corto_int16 c_interfaceHeaderWrite(
-    corto_generator g,
+    g_generator g,
     g_file result,
     corto_object o,
     corto_string name,
@@ -557,7 +557,7 @@ error:
     return -1;
 }
 
-static g_file c_interfaceHeaderFileOpen(corto_generator g, corto_object o, c_typeWalk_t *data) {
+static g_file c_interfaceHeaderFileOpen(g_generator g, corto_object o, c_typeWalk_t *data) {
     g_file result;
     corto_id headerFileName;
     corto_bool isTopLevelObject = (g_getCurrent(g) == o) && corto_instanceof(corto_package_o, o);
@@ -616,7 +616,7 @@ static void c_interfaceHeaderFileClose(g_file file) {
     g_fileWrite(file, "#endif\n\n");
 }
 
-static g_file c_interfaceWrapperFileOpen(corto_generator g) {
+static g_file c_interfaceWrapperFileOpen(g_generator g) {
     g_file result;
     corto_char fileName[512];
     corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
@@ -859,7 +859,7 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
 }
 
 /* Entry point for generator */
-int corto_genMain(corto_generator g) {
+int corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
 
     /* Create source and include directories */

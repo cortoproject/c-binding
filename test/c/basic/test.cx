@@ -44,6 +44,9 @@ native/type nativeType: "myNativeType"
 class Foo::
     m: nativeType, local
 
+// target type
+target intTarget: uint32
+
 test/Suite voidApi::
     void tc_create()
     void tc_createChild()
@@ -180,3 +183,13 @@ test/Suite collectionApi::
     void tc_compare()
     observer onUpdate: on_update
     updated: bool
+
+test/Suite targetApi::
+    void tc_create()
+    void tc_createChild()
+    void tc_createAuto()
+    void tc_createChildAuto()
+    void tc_set()
+    void tc_str()
+    void tc_fromStr()
+    void tc_compare()

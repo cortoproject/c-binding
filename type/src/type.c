@@ -9,7 +9,7 @@
 #include "corto/gen/c/common/common.h"
 
 typedef struct c_typeWalk_t {
-    corto_generator g;
+    g_generator g;
     g_file header;
     corto_bool prefixComma; /* For printing members and constants */
 } c_typeWalk_t;
@@ -572,7 +572,7 @@ error:
 }
 
 /* Open headerfile, write standard header. */
-static g_file c_typeHeaderFileOpen(corto_generator g) {
+static g_file c_typeHeaderFileOpen(g_generator g) {
     g_file result;
     corto_id headerFileName, path;
     corto_iter importIter;
@@ -720,7 +720,7 @@ static int c_typeDefine(corto_object o, void* userData) {
 }
 
 /* Generator main */
-corto_int16 corto_genMain(corto_generator g) {
+corto_int16 corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
 
     /* Resolve imports so include files for external can be added. */
@@ -742,11 +742,13 @@ corto_int16 corto_genMain(corto_generator g) {
     gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     gen_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
-    /* Walk classes, print cast-macro's */
-    g_fileWrite(walkData.header, "\n");
-    g_fileWrite(walkData.header, "/* Casting macro's */\n");
-    if (corto_genTypeDepWalk(g, NULL, c_typeClassCastWalk, &walkData)) {
-        goto error;
+    /* Walk classes, print cast-macro's if not generating for cpp */
+    if (strcmp(gen_getAttribute(g, "lang"), "cpp")) {
+        g_fileWrite(walkData.header, "\n");
+        g_fileWrite(walkData.header, "/* Casting macro's */\n");
+        if (corto_genTypeDepWalk(g, NULL, c_typeClassCastWalk, &walkData)) {
+            goto error;
+        }
     }
 
     g_fileWrite(walkData.header, "\n");

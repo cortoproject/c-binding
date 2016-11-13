@@ -32,8 +32,10 @@ extern "C" {
 #include <compositeUnionApi.h>
 #include <compositeUnionType.h>
 #include <Foo.h>
+#include <intTarget.h>
 #include <primitiveApi.h>
 #include <primitiveType.h>
+#include <targetApi.h>
 #include <voidApi.h>
 #include <voidReferenceApi.h>
 

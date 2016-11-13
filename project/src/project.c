@@ -16,7 +16,7 @@ static void c_projectLoadPackages(g_file file) {
 }
 
 /* Generate file containing loader */
-static corto_int16 c_projectGenerateMainFile(corto_generator g) {
+static corto_int16 c_projectGenerateMainFile(g_generator g) {
     corto_id filename;
     g_file file;
     corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
@@ -36,6 +36,9 @@ static corto_int16 c_projectGenerateMainFile(corto_generator g) {
 
     corto_id header;
     g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
+    if (!app && g_getCurrent(g)) {
+        c_includeFrom(g, file, g_getCurrent(g), "_interface.h");
+    }
     g_fileWrite(file, "\n");
     if (g_getCurrent(g)) {
         g_fileWrite(file, "int %s_load(void);\n", g_getProjectName(g));
@@ -70,7 +73,7 @@ error:
 }
 
 /* Generate main header containing includes to dependencies */
-static corto_int16 c_projectGenerateMainHeaderFile(corto_generator g) {
+static corto_int16 c_projectGenerateMainHeaderFile(g_generator g) {
     g_file file;
     corto_ll packages;
     corto_id upperName;
@@ -172,7 +175,7 @@ error:
 }
 
 typedef struct c_projectCleanInclude_t {
-    corto_generator g;
+    g_generator g;
     g_file file;
 } c_projectCleanInclude_t;
 
@@ -192,7 +195,7 @@ static int c_projectCleanInclude(corto_object o, void *userData) {
 }
 
 /* Generate dependency makefile for project */
-static corto_int16 c_projectGenerateDepMakefile(corto_generator g) {
+static corto_int16 c_projectGenerateDepMakefile(g_generator g) {
     g_file file;
     c_projectCleanInclude_t walkData;
 
@@ -217,7 +220,7 @@ error:
 }
 
 /* Generate dependency makefile for project */
-static corto_int16 c_projectGeneratePackageFile(corto_generator g) {
+static corto_int16 c_projectGeneratePackageFile(g_generator g) {
     corto_file file = NULL;
 
     g_resolveImports(g);
@@ -241,7 +244,7 @@ static corto_int16 c_projectGeneratePackageFile(corto_generator g) {
 }
 
 /* Generate interface header with macro's for exporting */
-static corto_int16 c_genInterfaceHeader(corto_generator g) {
+static corto_int16 c_genInterfaceHeader(g_generator g) {
     corto_id interfaceHeaderName;
 
     if (g_getCurrent(g)) {
@@ -273,19 +276,21 @@ static corto_int16 c_genInterfaceHeader(corto_generator g) {
         g_fileWrite(interfaceHeader, " */\n\n");
 
         g_fileWrite(interfaceHeader, "#if BUILDING_%s && defined _MSC_VER\n", upperFullName);
-        g_fileWrite(interfaceHeader, "#define %s_DLL_EXPORTED __declspec(dllexport)\n", upperName);
+        g_fileWrite(interfaceHeader, "#define ");
+        c_writeExport(g, interfaceHeader);
+        g_fileWrite(interfaceHeader, " __declspec(dllexport)\n", upperFullName);
         g_fileWrite(interfaceHeader, "#elif BUILDING_%s\n", upperFullName);
         g_fileWrite(interfaceHeader, "#define ");
         c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, " __attribute__((__visibility__(\"default\")))\n", upperName);
+        g_fileWrite(interfaceHeader, " __attribute__((__visibility__(\"default\")))\n");
         g_fileWrite(interfaceHeader, "#elif defined _MSC_VER\n");
         g_fileWrite(interfaceHeader, "#define ");
         c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, " __declspec(dllimport)\n", upperName);
+        g_fileWrite(interfaceHeader, " __declspec(dllimport)\n");
         g_fileWrite(interfaceHeader, "#else\n");
         g_fileWrite(interfaceHeader, "#define ");
         c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, "\n", upperName);
+        g_fileWrite(interfaceHeader, "\n");
         g_fileWrite(interfaceHeader, "#endif\n\n");
     }
 
@@ -295,7 +300,7 @@ error:
 }
 
 /* Generator main */
-corto_int16 corto_genMain(corto_generator g) {
+corto_int16 corto_genMain(g_generator g) {
 
     /* Create source and include directories */
     corto_mkdir("include");

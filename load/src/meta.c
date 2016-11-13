@@ -9,7 +9,7 @@
 #include "corto/gen/c/common/common.h"
 
 typedef struct c_typeWalk_t {
-    corto_generator g;
+    g_generator g;
     g_file header;
     g_file source;
     corto_uint32 firstComma;
@@ -283,7 +283,7 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
 }
 
 /* Open generator headerfile */
-static g_file c_loadHeaderFileOpen(corto_generator g) {
+static g_file c_loadHeaderFileOpen(g_generator g) {
     g_file result;
     corto_id headerFileName, path;
 
@@ -313,7 +313,7 @@ static g_file c_loadHeaderFileOpen(corto_generator g) {
 }
 
 /* Close headerfile */
-static void c_loadHeaderFileClose(corto_generator g, g_file file) {
+static void c_loadHeaderFileClose(g_generator g, g_file file) {
     CORTO_UNUSED(g);
 
     /* Print standard comments and includes */
@@ -325,7 +325,7 @@ static void c_loadHeaderFileClose(corto_generator g, g_file file) {
 }
 
 /* Open generator sourcefile */
-static g_file c_loadSourceFileOpen(corto_generator g) {
+static g_file c_loadSourceFileOpen(g_generator g) {
     g_file result;
     corto_id fileName;
     corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
@@ -333,6 +333,9 @@ static g_file c_loadSourceFileOpen(corto_generator g) {
     /* Create file */
     sprintf(fileName, "_meta.%s", cpp ? "cpp" : "c");
     result = g_hiddenFileOpen(g, fileName);
+    if (!result) {
+        goto error;
+    }
 
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", fileName);
@@ -345,6 +348,8 @@ static g_file c_loadSourceFileOpen(corto_generator g) {
     g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
 
     return result;
+error:
+    return NULL;
 }
 
 /* Write starting comment of variable definitions */
@@ -353,7 +358,7 @@ static void c_sourceWriteVarDefStart(g_file file) {
 }
 
 /* Write start of load-routine */
-static void c_sourceWriteLoadStart(corto_generator g, g_file file) {
+static void c_sourceWriteLoadStart(g_generator g, g_file file) {
     g_fileWrite(file, "\n");
     g_fileWrite(file, "/* Load objects in object store. */\n");
     g_fileWrite(file, "int %s_load(void) {\n", g_getProjectName(g));
@@ -618,10 +623,10 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
         if (*(corto_ll*)ptr) {
             g_fileWrite(data->source, "%s = corto_llNew();\n",
                     c_loadMemberId(data, v, memberId, FALSE));
+            size = corto_llSize(*(corto_ll*)ptr);
         } else {
             g_fileWrite(data->source, "%s = NULL;\n", c_loadMemberId(data, v, memberId, FALSE));
         }
-        size = corto_llSize(*(corto_ll*)ptr);
         break;
     case CORTO_MAP: {
         corto_id keyId;
@@ -766,6 +771,22 @@ static int c_loadDeclare(corto_object o, void* userData) {
     return 1;
 }
 
+/* Forward declare procedures */
+static corto_int16 c_loadFwdDeclProcedure(corto_function f, c_typeWalk_t* data) {
+    g_fileWrite(data->source, "\n#ifdef __cplusplus\n");
+    g_fileWrite(data->source, "extern \"C\"\n");
+    g_fileWrite(data->source, "#endif\n");
+    c_decl(data->g, data->source, f, FALSE, TRUE);
+    g_fileWrite(data->source, ";\n");
+    return 0;
+}
+static int c_walkProcedures(corto_object o, void *userData) {
+    if (corto_instanceof(corto_function_o, o)) {
+        c_loadFwdDeclProcedure(o, userData);
+    }
+    return 1;
+}
+
 /* Define object */
 static int c_loadDefine(corto_object o, void* userData) {
     struct corto_serializer_s s;
@@ -798,8 +819,6 @@ static int c_loadDefine(corto_object o, void* userData) {
         if (!corto_function(o)->impl) {
             g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
             c_loadCFunction(o, data, name);
-            c_decl(data->g, data->source, corto_function(o), FALSE, TRUE);
-            g_fileWrite(data->source, ";\n");
             g_fileWrite(data->source, "corto_function(%s)->fptr = (corto_word)_%s;\n", varId, name);
         }
     }
@@ -852,7 +871,7 @@ static int c_loadDefine(corto_object o, void* userData) {
 }
 
 /* Entry point for generator */
-int corto_genMain(corto_generator g) {
+int corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
 
     /* Default prefixes for corto namespaces */
@@ -865,9 +884,23 @@ int corto_genMain(corto_generator g) {
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;
     walkData.header = c_loadHeaderFileOpen(g);
+    if (!walkData.header) {
+        goto error;
+    }
     walkData.source = c_loadSourceFileOpen(g);
+    if (!walkData.source) {
+        goto error;
+    }
     walkData.collections = c_findType(g, corto_collection_o);
     walkData.errorCount = 0;
+
+    g_fileWrite(walkData.source, "\n/* Forward declarations */\n");
+    if (!g_walkRecursive(g, c_walkProcedures, &walkData)) {
+        goto error;
+    }
+
+    g_fileWrite(walkData.source, "\n");
+
 
     /* Write comment indicating definitions in sourcefile */
     c_sourceWriteVarDefStart(walkData.source);

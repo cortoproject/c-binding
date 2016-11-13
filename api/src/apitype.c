@@ -94,7 +94,7 @@ static corto_int16 c_apiCastAuto(
         m ? corto_idof(m) : "");
 
     if (!scoped) {
-        g_fileWrite(data->header, "_name");
+        g_fileWrite(data->header, "_id");
         count = 1;
     }
 
@@ -110,20 +110,20 @@ static corto_int16 c_apiCastAuto(
 
     g_fileWrite(
         data->header,
-        ") %s _name = %s%s%s%s(%s",
+        ") %s _id = %s%s%s%s(%s",
         c_typeret(data->g, t, C_ByReference, ret),
         id,
         func,
         m ? "_" : "",
         m ? corto_idof(m) : "",
-        scoped ? "_parent, #_name" : "");
+        scoped ? "_parent, #_id" : "");
 
     iter = corto_llIter(data->args);
     count = 0;
 
     if (scoped) {
         corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _parent */
-        corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _name */
+        corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _id */
         count = 2;
     }
 
@@ -136,7 +136,7 @@ static corto_int16 c_apiCastAuto(
         count++;
     }
 
-    g_fileWrite(data->header, "); (void)_name\n");
+    g_fileWrite(data->header, "); (void)_id\n");
 
     return 0;
 }
@@ -812,7 +812,7 @@ corto_int16 c_apiTypeCreateIntern(
     corto_bool define)
 {
     corto_id id, ret;
-    corto_generator g = data->g;
+    g_generator g = data->g;
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
 
@@ -843,10 +843,10 @@ corto_int16 c_apiTypeCreateIntern(
           ret, id, func, member ? "_" : "", member ? corto_idof(member) : "");
 
         if (scoped) {
-            g_fileWrite(data->header, "corto_object _parent, corto_string _name");
-            g_fileWrite(data->source, "corto_object _parent, corto_string _name");
+            g_fileWrite(data->header, "corto_object _parent, corto_string _id");
+            g_fileWrite(data->source, "corto_object _parent, corto_string _id");
             c_apiCastMacroAddArg(data->args, "_parent", corto_object_o, FALSE);
-            c_apiCastMacroAddArg(data->args, "_name", corto_type(corto_string_o), FALSE);
+            c_apiCastMacroAddArg(data->args, "_id", corto_type(corto_string_o), FALSE);
             data->parameterCount = 2;
         }
 
@@ -873,7 +873,7 @@ corto_int16 c_apiTypeCreateIntern(
         if (scoped) {
             g_fileWrite(
               data->source,
-              "_this = %s(corto_declareChild(_parent, _name, %s_o));\n", id, id);
+              "_this = %s(corto_declareChild(_parent, _id, %s_o));\n", id, id);
         } else {
             g_fileWrite(
               data->source,
@@ -937,7 +937,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     corto_id id, ptr;
     corto_string func = isUpdate ? doUpdate ? "Update" : "Assign" : "Define";
     corto_bool isSet = isUpdate ? doUpdate ? FALSE : TRUE : FALSE;
-    corto_generator g = data->g;
+    g_generator g = data->g;
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
@@ -1151,7 +1151,7 @@ corto_int16 c_apiTypeDeinit(corto_type t, c_apiWalk_t *data) {
 
 corto_int16 c_apiTypeFromStr(corto_type t, c_apiWalk_t *data) {
     corto_id id, ptr, ret;
-    corto_generator g = data->g;
+    g_generator g = data->g;
 
     g_fullOid(data->g, t, id);
 

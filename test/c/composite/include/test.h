@@ -26,6 +26,12 @@ extern "C" {
 #include <HiddenSub.h>
 #include <Line.h>
 #include <Local.h>
+#include <Observable.h>
+#include <ObservableCollection.h>
+#include <ObservableComposite.h>
+#include <ObservableString.h>
+#include <ObservableTarget.h>
+#include <ObservableTargetApi.h>
 #include <Optional.h>
 #include <OptionalApi.h>
 #include <OptionalArray.h>

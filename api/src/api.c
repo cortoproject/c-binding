@@ -155,7 +155,7 @@ error:
 }
 
 /* Open headerfile, write standard header. */
-static g_file c_apiHeaderOpen(corto_generator g) {
+static g_file c_apiHeaderOpen(g_generator g) {
     g_file result;
     corto_id headerFileName, path;
 
@@ -202,7 +202,7 @@ static void c_apiHeaderClose(g_file file) {
 }
 
 /* Open sourcefile */
-static g_file c_apiSourceOpen(corto_generator g) {
+static g_file c_apiSourceOpen(g_generator g) {
     g_file result;
     corto_id sourceFileName;
     corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
@@ -229,7 +229,7 @@ static g_file c_apiSourceOpen(corto_generator g) {
 }
 
 /* Generator main */
-corto_int16 corto_genMain(corto_generator g) {
+corto_int16 corto_genMain(g_generator g) {
     c_apiWalk_t walkData;
 
     /* Default prefixes for corto namespaces */
