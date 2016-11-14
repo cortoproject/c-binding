@@ -18,7 +18,7 @@ extern "c" {
 corto_string corto_genId(corto_string str, corto_id id);
 
 /* Return string with C type for primitive */
-corto_char* c_primitiveId(corto_primitive t, corto_char* buff);
+corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff);
 
 /* Parse type into C-specifier */
 corto_int16 c_specifierId(g_generator g, corto_type t, corto_char* specifier, corto_bool* prefix, corto_char* postfix);

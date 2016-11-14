@@ -818,10 +818,9 @@ static int c_loadDefine(corto_object o, void* userData) {
         return 1;
     }
 
-    corto_id escapedId, varId, typeId, postfix;
+    corto_id escapedId, varId, postfix;
 
     c_varId(data->g, o, varId);
-    c_specifierId(data->g, o, typeId, NULL, postfix);
 
     g_fileWrite(data->source, "if (!corto_checkState(%s, CORTO_DEFINED)) {\n", varId);
     g_fileIndent(data->source);
@@ -856,6 +855,9 @@ static int c_loadDefine(corto_object o, void* userData) {
 
     /* Do size validation - this makes porting to other platforms easier */
     if (corto_instanceof(corto_type(corto_type_o), o)) {
+        corto_id typeId;
+        c_specifierId(data->g, o, typeId, NULL, postfix);
+
         if ((corto_type(o)->kind == CORTO_COMPOSITE) && corto_type(o)->reference) {
             g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
                 varId,

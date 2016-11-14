@@ -146,7 +146,7 @@ corto_string corto_genId(corto_string str, corto_id id) {
 }
 
 /* Get string representing the base-platform type */
-corto_char* c_primitiveId(corto_primitive t, corto_char* buff) {
+corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
     corto_bool appendWidth, appendT;
 
     appendWidth = FALSE;
@@ -200,8 +200,7 @@ corto_char* c_primitiveId(corto_primitive t, corto_char* buff) {
         break;
     case CORTO_ENUM:
     case CORTO_BITMASK:
-        corto_seterr("enumeration\\bitmasks types must be defined using the 'enum' keyword.");
-        goto error;
+        g_fullOid(g, t, buff);
         break;
     case CORTO_TEXT:
         strcpy(buff, "char*");
@@ -329,6 +328,7 @@ corto_int16 c_specifierId(
     if (postfix) {
         *postfix = '\0';
     }
+    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
 
     /* If type is not a reference, objects that are defined with it need to add a prefix. This
      * won't be used for members or nested type-specifiers. */
@@ -350,15 +350,15 @@ corto_int16 c_specifierId(
 
     /* Check if object is scoped */
     if (corto_checkAttr(t, CORTO_ATTR_SCOPED) && corto_childof(root_o, t)) {
-        if (t->kind == CORTO_PRIMITIVE) {
-            c_primitiveId(corto_primitive(t), specifier);
+        if (cppbinding && (t->kind == CORTO_PRIMITIVE)) {
+            c_primitiveId(g, corto_primitive(t), specifier);
         } else {
             g_fullOid(g, t, specifier);
         }
     } else {
         switch(corto_type(t)->kind) {
         case CORTO_PRIMITIVE:
-            c_primitiveId(corto_primitive(t), specifier);
+            c_primitiveId(g, corto_primitive(t), specifier);
             break;
         case CORTO_COLLECTION: {
             corto_id _specifier, _postfix;
