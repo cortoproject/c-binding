@@ -21,8 +21,9 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_file file;
     corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
     corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
+    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
 
-    sprintf(filename, "_load.%s", cpp ? "cpp" : "c");
+    sprintf(filename, "_project.%s", cpp ? "cpp" : "c");
 
     file = g_hiddenFileOpen(g, filename);
     if(!file) {
@@ -37,23 +38,31 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     corto_id header;
     g_fileWrite(file, "#include <%s>\n", c_mainheader(g, header));
     if (!app && g_getCurrent(g)) {
-        c_includeFrom(g, file, g_getCurrent(g), "_interface.h");
+        c_includeFrom(g, file, g_getCurrent(g), "_project.h");
     }
+
     g_fileWrite(file, "\n");
-    if (g_getCurrent(g)) {
-        g_fileWrite(file, "int %s_load(void);\n", g_getProjectName(g));
-    }
     g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
     g_fileWrite(file, "\n");
-    if (!app) {
-        g_fileWrite(file, "#ifdef __cplusplus\n");
-        g_fileWrite(file, "extern \"C\"\n");
-        g_fileWrite(file, "#endif\n");
-        if (g_getCurrent(g)) {
-          c_writeExport(g, file);
-          g_fileWrite(file, " ");
+
+    if (g_getCurrent(g)) {
+        if (cppbinding) {
+            cpp_openScope(file, g_getCurrent(g));
+            g_fileWrite(file, "namespace %s {\n", cpp_cprefix());
+            g_fileWrite(file, "\n");
         }
+        g_fileWrite(file, "int %s_load(void);\n", g_getProjectName(g));
+        g_fileWrite(file, "\n");
     }
+
+    g_fileWrite(file, "#ifdef __cplusplus\n");
+    g_fileWrite(file, "extern \"C\"\n");
+    g_fileWrite(file, "#endif\n");
+    if (g_getCurrent(g)) {
+      c_writeExport(g, file);
+      g_fileWrite(file, " ");
+    }
+
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
     g_fileIndent(file);
     if (app) g_fileWrite(file, "corto_start();\n");
@@ -66,6 +75,13 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_fileWrite(file, "return 0;\n");
     g_fileDedent(file);
     g_fileWrite(file, "}\n\n");
+
+    if (g_getCurrent(g)) {
+        if (cppbinding) {
+            g_fileWrite(file, "}");
+            cpp_closeScope(file);
+        }
+    }
 
     return 0;
 error:
@@ -116,7 +132,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(g_generator g) {
 
     c_includeFrom(g, file, corto_o, "corto.h");
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "#include <_interface.h>\n");
+        g_fileWrite(file, "#include <_project.h>\n");
     }
     g_fileWrite(file, "\n");
 
@@ -248,9 +264,9 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
     corto_id interfaceHeaderName;
 
     if (g_getCurrent(g)) {
-        sprintf(interfaceHeaderName, "_interface.h");
+        sprintf(interfaceHeaderName, "_project.h");
     } else {
-        sprintf(interfaceHeaderName, "%s/_interface.h", g_getName(g));
+        sprintf(interfaceHeaderName, "%s/_project.h", g_getName(g));
     }
 
     g_file interfaceHeader = g_fileOpen(g, interfaceHeaderName);

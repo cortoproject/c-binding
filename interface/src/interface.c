@@ -493,9 +493,9 @@ static corto_int16 c_interfaceHeaderWrite(
     }
 
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-        g_fileWrite(result, "#include <%s/_interface.h>\n", g_getName(g));
+        g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
     } else {
-        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
+        c_includeFrom(g, result, g_getCurrent(g), "_project.h");
     }
 
     /* If a header exists, write it */
@@ -534,7 +534,7 @@ static corto_int16 c_interfaceHeaderWrite(
 
     c_includeFrom(g, result, g_getCurrent(g), "_type.h");
     c_includeFrom(g, result, g_getCurrent(g), "_api.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
     g_fileWrite(result, "\n");
 
@@ -642,7 +642,7 @@ static g_file c_interfaceWrapperFileOpen(g_generator g) {
     g_fileWrite(result, " */\n\n");
 
     c_include(g, result, g_getCurrent(g));
-    c_includeFrom(g, result, g_getCurrent(g), "_meta.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
     return result;
 error:

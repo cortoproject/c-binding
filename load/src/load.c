@@ -288,7 +288,7 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     corto_id headerFileName, path;
 
     /* Create file */
-    sprintf(headerFileName, "_meta.h");
+    sprintf(headerFileName, "_load.h");
     result = g_fileOpen(g, headerFileName);
 
     corto_path(path, root_o, g_getCurrent(g), "_");
@@ -300,10 +300,10 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     g_fileWrite(result, " * Loads objects in object store.\n");
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
-    g_fileWrite(result, "#ifndef %s_META_H\n", path);
-    g_fileWrite(result, "#define %s_META_H\n\n", path);
+    g_fileWrite(result, "#ifndef %s_LOAD_H\n", path);
+    g_fileWrite(result, "#define %s_LOAD_H\n\n", path);
     c_includeFrom(g, result, corto_o, "corto.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
+    c_includeFrom(g, result, g_getCurrent(g), "_project.h");
     g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
@@ -329,9 +329,10 @@ static g_file c_loadSourceFileOpen(g_generator g) {
     g_file result;
     corto_id fileName;
     corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
+    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
 
     /* Create file */
-    sprintf(fileName, "_meta.%s", cpp ? "cpp" : "c");
+    sprintf(fileName, "_load.%s", cpp ? "cpp" : "c");
     result = g_hiddenFileOpen(g, fileName);
     if (!result) {
         goto error;
@@ -347,9 +348,26 @@ static g_file c_loadSourceFileOpen(g_generator g) {
     corto_id header;
     g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
 
+    if (cppbinding) {
+        g_fileWrite(result, "\n");
+        cpp_openScope(result, g_getCurrent(g));
+        g_fileWrite(result, "namespace %s {\n", cpp_cprefix());
+    }
+
     return result;
 error:
     return NULL;
+}
+
+static void c_loadSourceFileClose(g_generator g, g_file result) {
+    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
+    if (cppbinding) {
+        g_fileWrite(result, "\n");
+        g_fileWrite(result, "#ifdef __cplusplus\n");
+        g_fileWrite(result, "}\n");
+        cpp_closeScope(result);
+        g_fileWrite(result, "#endif\n");
+    }
 }
 
 /* Write starting comment of variable definitions */
@@ -921,6 +939,9 @@ int corto_genMain(g_generator g) {
 
     /* Close load-routine */
     c_sourceWriteLoadEnd(walkData.source, &walkData);
+
+    /* Close source file */
+    c_loadSourceFileClose(g, walkData.source);
 
     /* Close headerfile */
     c_loadHeaderFileClose(g, walkData.header);

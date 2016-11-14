@@ -178,9 +178,9 @@ static g_file c_apiHeaderOpen(g_generator g) {
 
     c_includeFrom(g, result, corto_o, "corto.h");
     if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
-        g_fileWrite(result, "#include <%s/_interface.h>\n", g_getName(g));
+        g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
     } else {
-        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
+        c_includeFrom(g, result, g_getCurrent(g), "_project.h");
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");

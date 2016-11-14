@@ -7,7 +7,7 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <_interface.h>
+#include <_project.h>
 /* $header() */
 class myNativeType {
 public:
@@ -20,7 +20,7 @@ public:
 
 #include <_type.h>
 #include <_api.h>
-#include <_meta.h>
+#include <_load.h>
 
 #ifdef __cplusplus
 extern "C" {
