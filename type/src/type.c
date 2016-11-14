@@ -199,7 +199,7 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
         }
         break;
     default:
-        if (!c_primitiveId(corto_primitive(t), buff)) {
+        if (!c_primitiveId(data->g, corto_primitive(t), buff)) {
             goto error;
         }
 
