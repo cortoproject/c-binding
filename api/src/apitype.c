@@ -153,7 +153,7 @@ static corto_int16 c_apiCastMacroCall(
       m ? "_" : "",
       m ? corto_idof(m) : "");
 
-    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
+    corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
     corto_iter iter = corto_llIter(data->args);
     corto_uint32 count = 0;
     while (corto_iterHasNext(&iter)) {

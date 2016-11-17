@@ -67,6 +67,8 @@ corto_char* c_usingConstant(g_generator g, corto_id id);
 /* Write library export for symbol */
 void c_writeExport(g_generator g, g_file file);
 
+char* c_findPackage(g_generator g, corto_object o);
+
 /* Generic routine to create filename for object */
 char* c_filename(g_generator g, char *fileName, corto_object o, char *ext);
 
@@ -99,11 +101,6 @@ int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *use
 /* Print function declaration to file */
 corto_int16 c_decl(g_generator g, g_file file, corto_function f, corto_bool isWrapper, corto_bool cpp);
 
-/* Open & close namespaces. Used for C++ compatibility */
-void cpp_openScope(g_file file, corto_object o);
-void cpp_closeScope(g_file file);
-
-char *cpp_cprefix(void);
 
 #ifdef __cplusplus
 }

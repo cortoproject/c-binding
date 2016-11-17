@@ -175,7 +175,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     corto_bool returnsValue;
     corto_id nameString;
     g_file originalSource = data->source;
-    corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
+    corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
     corto_string _this = cpp ? "_this" : "this";
 
     /* Replace the source with the wrapper so that all nested functions use the correct outputfile.
@@ -302,8 +302,8 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_string snippet, header;
         corto_procedureKind kind;
         corto_type returnType;
-        corto_string doStubs = gen_getAttribute(data->g, "stubs");
-        corto_bool cpp = !strcmp(gen_getAttribute(data->g, "c4cpp"), "true");
+        corto_string doStubs = g_getAttribute(data->g, "stubs");
+        corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
 
         kind = corto_procedure(corto_typeof(o))->kind;
         defined = corto_checkState(o, CORTO_DEFINED) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
@@ -492,7 +492,7 @@ static corto_int16 c_interfaceHeaderWrite(
         c_includeFrom(g, result, corto_o, "corto.h");
     }
 
-    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
     } else {
         c_includeFrom(g, result, g_getCurrent(g), "_project.h");
@@ -576,7 +576,7 @@ static g_file c_interfaceHeaderFileOpen(g_generator g, corto_object o, c_typeWal
         if (isTopLevelObject) {
             data->mainHeader = result;
         } else {
-            if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+            if (strcmp(g_getAttribute(g, "bootstrap"), "true")) {
                 c_filename(g, headerFileName, o, "h");
             } else {
                 sprintf(headerFileName, "_%s.h", corto_idof(o));
@@ -619,12 +619,12 @@ static void c_interfaceHeaderFileClose(g_file file) {
 static g_file c_interfaceWrapperFileOpen(g_generator g) {
     g_file result;
     corto_char fileName[512];
-    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
+    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     corto_object o = g_getCurrent(g);
     sprintf(fileName, "_wrapper.%s", cpp ? "cpp" : "c");
 
-    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
         result = g_fileOpen(g, fileName);
     } else {
         result = g_hiddenFileOpen(g, fileName);
@@ -675,7 +675,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
     int hasProcedures;
     corto_bool isInterface;
     corto_bool isTopLevelObject;
-    corto_bool isBootstrap = !strcmp(gen_getAttribute(data->g, "bootstrap"), "true");
+    corto_bool isBootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
 
     hasProcedures = !corto_scopeWalk(o, c_interfaceCheckProcedures, NULL);
     isInterface = corto_class_instanceof(corto_interface_o, o);
@@ -867,11 +867,11 @@ int corto_genMain(g_generator g) {
     corto_mkdir("include");
 
     /* Default prefixes for corto namespaces */
-    gen_parse(g, corto_o, FALSE, FALSE, "");
-    gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    gen_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
+    g_parse(g, corto_o, FALSE, FALSE, "");
+    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
+    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;
@@ -881,7 +881,7 @@ int corto_genMain(g_generator g) {
     walkData.mainHeader = NULL;
     walkData.generated = corto_llNew();
 
-    if (strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+    if (strcmp(g_getAttribute(g, "bootstrap"), "true")) {
         corto_mkdir(".corto");
 
         corto_object topLevel = g_getCurrent(g);

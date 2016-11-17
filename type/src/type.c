@@ -578,7 +578,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     corto_iter importIter;
     corto_object import;
     corto_string headerSnippet;
-    corto_string bootstrap = gen_getAttribute(g, "bootstrap");
+    corto_string bootstrap = g_getAttribute(g, "bootstrap");
 
     /* Get & write prefix */
     g_object *go = g_findObjectInclusive(g, g_getCurrent(g), NULL);
@@ -736,14 +736,14 @@ corto_int16 corto_genMain(g_generator g) {
     walkData.prefixComma = FALSE;
 
     /* Default prefixes for corto namespaces */
-    gen_parse(g, corto_o, FALSE, FALSE, "");
-    gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    gen_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
+    g_parse(g, corto_o, FALSE, FALSE, "");
+    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
+    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     /* Walk classes, print cast-macro's if not generating for cpp */
-    if (strcmp(gen_getAttribute(g, "lang"), "cpp")) {
+    if (strcmp(g_getAttribute(g, "lang"), "cpp")) {
         g_fileWrite(walkData.header, "\n");
         g_fileWrite(walkData.header, "/* Casting macro's */\n");
         if (corto_genTypeDepWalk(g, NULL, c_typeClassCastWalk, &walkData)) {

@@ -177,7 +177,7 @@ static g_file c_apiHeaderOpen(g_generator g) {
     g_fileWrite(result, "#define %s__API_H\n\n", path);
 
     c_includeFrom(g, result, corto_o, "corto.h");
-    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
     } else {
         c_includeFrom(g, result, g_getCurrent(g), "_project.h");
@@ -205,11 +205,11 @@ static void c_apiHeaderClose(g_file file) {
 static g_file c_apiSourceOpen(g_generator g) {
     g_file result;
     corto_id sourceFileName;
-    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
+    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     /* Create file */
     sprintf(sourceFileName, "_api.%s", cpp ? "cpp" : "c");
-    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true")) {
+    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
         result = g_fileOpen(g, sourceFileName);
     } else {
         result = g_hiddenFileOpen(g, sourceFileName);
@@ -233,11 +233,11 @@ corto_int16 corto_genMain(g_generator g) {
     c_apiWalk_t walkData;
 
     /* Default prefixes for corto namespaces */
-    gen_parse(g, corto_o, FALSE, FALSE, "");
-    gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    gen_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
+    g_parse(g, corto_o, FALSE, FALSE, "");
+    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
+    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     walkData.g = g;
     walkData.header = c_apiHeaderOpen(g);

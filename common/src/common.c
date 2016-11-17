@@ -200,6 +200,9 @@ corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
         break;
     case CORTO_ENUM:
     case CORTO_BITMASK:
+        corto_error(
+          "use c_specifierId instead of c_primitiveId for enums and bitmasks");
+        goto error;
         g_fullOid(g, t, buff);
         break;
     case CORTO_TEXT:
@@ -328,7 +331,7 @@ corto_int16 c_specifierId(
     if (postfix) {
         *postfix = '\0';
     }
-    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
+    corto_bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
 
     /* If type is not a reference, objects that are defined with it need to add a prefix. This
      * won't be used for members or nested type-specifiers. */
@@ -350,11 +353,7 @@ corto_int16 c_specifierId(
 
     /* Check if object is scoped */
     if (corto_checkAttr(t, CORTO_ATTR_SCOPED) && corto_childof(root_o, t)) {
-        if (cppbinding && (t->kind == CORTO_PRIMITIVE)) {
-            c_primitiveId(g, corto_primitive(t), specifier);
-        } else {
-            g_fullOid(g, t, specifier);
-        }
+        g_fullOid(g, t, specifier);
     } else {
         switch(corto_type(t)->kind) {
         case CORTO_PRIMITIVE:
@@ -571,7 +570,7 @@ corto_char* c_usingConstant(g_generator g, corto_id id) {
 
 void c_writeExport(g_generator g, g_file file) {
     corto_id upperName;
-    if (!strcmp(gen_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
+    if (!strcmp(g_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
         strcpy(upperName, g_getName(g));
     } else {
         corto_path(upperName, root_o, g_getCurrent(g), "_");
@@ -580,7 +579,7 @@ void c_writeExport(g_generator g, g_file file) {
     g_fileWrite(file, "%s_EXPORT", upperName);
 }
 
-static char* c_findPackage(g_generator g, corto_object o) {
+char* c_findPackage(g_generator g, corto_object o) {
     corto_object package = o;
     corto_object ptr;
 
@@ -610,7 +609,7 @@ char* c_filename(
 {
     corto_id path;
     corto_object package = c_findPackage(g, o);
-    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
+    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     if (cpp && !strcmp(ext, "c")) {
         ext = "cpp";
@@ -643,8 +642,8 @@ void c_includeFrom(
 
     /* If an app or local project and the object to include is from this project
      * there is no need to prefix the header with a path */
-    if ((!strcmp(gen_getAttribute(g, "local"), "true") ||
-         !strcmp(gen_getAttribute(g, "app"), "true")) &&
+    if ((!strcmp(g_getAttribute(g, "local"), "true") ||
+         !strcmp(g_getAttribute(g, "app"), "true")) &&
         (g_getCurrent(g) == package))
     {
         g_fileWrite(file, "#include <%s>\n", filebuff);
@@ -930,8 +929,8 @@ error:
 
 /* Get filename of mainheader */
 char* c_mainheader(g_generator g, corto_id header) {
-    corto_bool app = !strcmp(gen_getAttribute(g, "app"), "true");
-    corto_bool local = !strcmp(gen_getAttribute(g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
 
     if (!app && !local) {
         corto_id name;
@@ -950,162 +949,4 @@ char* c_mainheader(g_generator g, corto_id header) {
     }
 
     return header;
-}
-
-/* Function builds a scope-stack from root to module */
-static void
-cpp_scopeStack(
-    corto_object module,
-    corto_object* stack /* corto_object[SD_MAX_SCOPE_DEPTH] */)
-{
-    corto_uint32 count;
-    corto_object ptr;
-
-    corto_assert(module != NULL, "NULL passed for module to sd_utilModuleStack");
-
-    /* Count scope depth */
-    ptr = module;
-    count = 1; /* For self */
-    while((ptr = corto_parentof(ptr))) {
-        count++;
-    }
-
-    if(count > CORTO_MAX_SCOPE_DEPTH) {
-        corto_error("cpp_scopeStack: unsupported scope-depth (depth=%d, max=%d).", count, CORTO_MAX_SCOPE_DEPTH);
-    }
-    corto_assert(count <= CORTO_MAX_SCOPE_DEPTH, "MAX_SCOPE_DEPTH overflow.");
-
-    /* Fill module stack */
-    ptr = module;
-    while(count) {
-        stack[count-1] = ptr;
-        ptr = corto_parentof(ptr);
-        count--;
-    }
-
-    /* ptr should be NULL */
-    corto_assert(!ptr, "ptr is NULL.");
-}
-
-/* Find first common module in two module-stacks */
-static corto_object
-cpp_commonScope(
-    corto_object from,
-    corto_object to,
-    corto_object* fromStack,
-    corto_object* toStack,
-    corto_uint32* i_out)
-{
-    corto_object fromPtr, toPtr;
-    corto_uint32 i;
-
-    /* fromPtr and toPtr will initially point to base */
-    i = 0;
-    do {
-        fromPtr = fromStack[i];
-        toPtr = toStack[i];
-        i++;
-    }while((fromPtr != from) && (toPtr != to) && (fromStack[i] == toStack[i]));
-
-    /* Common module is now stored in fromPtr and toPtr. */
-
-    if(i_out) {
-        *i_out = i;
-    }
-
-    return fromPtr;
-}
-
-/* Check whether a type translates to a native construct or may act as a C++ namespace */
-corto_bool
-cpp_nativeType(corto_object o) {
-	corto_bool result = FALSE;
-
-	if(corto_class_instanceof(corto_type_o, o)) {
-		switch(corto_type(o)->kind) {
-		case CORTO_VOID:
-		    if(corto_type(o)->reference) {
-		        result = TRUE;
-		    }
-			break;
-		default:
-			result = TRUE;
-			break;
-		}
-	}
-
-	return result;
-}
-
-/* Open a scope */
-void
-cpp_openScope(
-    g_file file,
-    corto_object to)
-{
-    corto_object from;
-
-    if (to) {
-
-        /* Do not open namespaces for non-void type-scopes */
-        while(cpp_nativeType(to)) {
-        	to = corto_parentof(to);
-        }
-
-        /* If context->module is NULL, start from root */
-        from = g_fileScopeGet(file);
-        if(!from) {
-            from = root_o;
-        }
-
-        /* If from and to are not equal, find shortest path between modules. */
-        if(from != to) {
-            corto_object fromStack[CORTO_MAX_SCOPE_DEPTH], toStack[CORTO_MAX_SCOPE_DEPTH];
-            corto_object fromPtr, toPtr;
-            corto_uint32 i;
-
-            /* Find common module. First build up a scope-stack for the two modules which
-             * are ordered base -> <module>. Then walk through these stacks to find the
-             * last common module. */
-            cpp_scopeStack(from, fromStack);
-            cpp_scopeStack(to, toStack);
-            fromPtr = toPtr = cpp_commonScope(from, to, fromStack, toStack, &i);
-
-            /* Walk down from module 'from' to 'toPtr' */
-            fromPtr = from;
-            while(fromPtr != toPtr) {
-                g_fileWrite(file, "}\n");
-                fromPtr = corto_parentof(fromPtr);
-            }
-
-            /* Walk from toPtr to 'to' */
-            while(toPtr != to) {
-                corto_id id;
-                toPtr = toStack[i];
-                g_fileWrite(file, "namespace %s {\n", g_oid(g_fileGetGenerator(file), toPtr, id));
-                i++;
-            }
-
-            /* Update context->module */
-            g_fileScopeSet(file, to);
-        }
-    }
-}
-
-void cpp_closeScope(g_file file) {
-    corto_object ptr;
-
-    g_fileWrite(file, "\n");
-
-    if((ptr = g_fileScopeGet(file))) {
-        while((ptr = corto_parentof(ptr))) {
-            g_fileWrite(file, "}\n");
-        }
-
-        g_fileScopeSet(file, NULL);
-    }
-}
-
-char *cpp_cprefix(void) {
-    return "types";
 }

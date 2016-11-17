@@ -328,8 +328,7 @@ static void c_loadHeaderFileClose(g_generator g, g_file file) {
 static g_file c_loadSourceFileOpen(g_generator g) {
     g_file result;
     corto_id fileName;
-    corto_bool cpp = !strcmp(gen_getAttribute(g, "c4cpp"), "true");
-    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
+    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     /* Create file */
     sprintf(fileName, "_load.%s", cpp ? "cpp" : "c");
@@ -348,26 +347,9 @@ static g_file c_loadSourceFileOpen(g_generator g) {
     corto_id header;
     g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
 
-    if (cppbinding) {
-        g_fileWrite(result, "\n");
-        cpp_openScope(result, g_getCurrent(g));
-        g_fileWrite(result, "namespace %s {\n", cpp_cprefix());
-    }
-
     return result;
 error:
     return NULL;
-}
-
-static void c_loadSourceFileClose(g_generator g, g_file result) {
-    corto_bool cppbinding = !strcmp(gen_getAttribute(g, "lang"), "cpp");
-    if (cppbinding) {
-        g_fileWrite(result, "\n");
-        g_fileWrite(result, "#ifdef __cplusplus\n");
-        g_fileWrite(result, "}\n");
-        cpp_closeScope(result);
-        g_fileWrite(result, "#endif\n");
-    }
 }
 
 /* Write starting comment of variable definitions */
@@ -895,11 +877,11 @@ int corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
 
     /* Default prefixes for corto namespaces */
-    gen_parse(g, corto_o, FALSE, FALSE, "");
-    gen_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_core_o, FALSE, FALSE, "corto");
-    gen_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    gen_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
+    g_parse(g, corto_o, FALSE, FALSE, "");
+    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
+    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;
@@ -941,9 +923,6 @@ int corto_genMain(g_generator g) {
 
     /* Close load-routine */
     c_sourceWriteLoadEnd(walkData.source, &walkData);
-
-    /* Close source file */
-    c_loadSourceFileClose(g, walkData.source);
 
     /* Close headerfile */
     c_loadHeaderFileClose(g, walkData.header);
