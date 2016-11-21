@@ -40,30 +40,28 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
             sprintf(out, "corto_resolve(NULL, \"%s\")", c_escapeString(id, escaped));
         }
     } else {
-        corto_id ostr, id, escapedId, escapedOstr, escapedContextStr;
+        corto_id ostr, id, escapedOstr, escapedContextStr;
         struct corto_serializer_s stringSer;
         corto_string_ser_t data;
 
         /* Serialize object string */
-        stringSer = corto_string_ser(CORTO_LOCAL, CORTO_NOT, CORTO_SERIALIZER_TRACE_ON_FAIL);
+        stringSer = corto_string_ser(CORTO_LOCAL|CORTO_READONLY|CORTO_PRIVATE, CORTO_NOT, CORTO_SERIALIZER_TRACE_ON_FAIL);
 
         *ostr = '\0';
         data.compactNotation = TRUE;
         data.buffer = CORTO_BUFFER_INIT;
         data.buffer.buf = id;
         data.buffer.max = sizeof(id);
-        data.prefixType = FALSE;
+        data.prefixType = TRUE;
         data.enableColors = FALSE;
         if (corto_serialize(&stringSer, o, &data)) {
             goto error;
         }
 
         c_escapeString(id, escapedOstr);
-        corto_fullpath(id, corto_typeof(o));
-        c_escapeString(id, escapedId);
 
         if (!(src || context)) {
-            sprintf(out, "corto_resolve(NULL, \"%s%s\")", escapedId, escapedOstr);
+            sprintf(out, "corto_resolve(NULL, \"%s\")", escapedOstr);
         } else {
             if (!src) {
                 src = "NULL";
@@ -72,7 +70,7 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
                 context = "NULL";
             }
             c_escapeString(context, escapedContextStr);
-            sprintf(out, "corto_resolve(NULL, \"%s%s\")", escapedId, escapedOstr);
+            sprintf(out, "corto_resolve(NULL, \"%s\")", escapedOstr);
         }
     }
 
