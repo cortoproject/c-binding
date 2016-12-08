@@ -838,7 +838,7 @@ static int c_loadDefine(corto_object o, void* userData) {
         corto_id typeId;
         c_specifierId(data->g, o, typeId, NULL, postfix);
 
-        if ((corto_type(o)->kind == CORTO_COMPOSITE) && corto_type(o)->reference) {
+        if ((corto_type(o)->kind == CORTO_COMPOSITE) && corto_type(o)->reference && (corto_interface(o)->kind != CORTO_INTERFACE)) {
             g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
                 varId,
                 typeId);
