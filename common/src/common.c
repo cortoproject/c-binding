@@ -331,7 +331,6 @@ corto_int16 c_specifierId(
     if (postfix) {
         *postfix = '\0';
     }
-    corto_bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
 
     /* If type is not a reference, objects that are defined with it need to add a prefix. This
      * won't be used for members or nested type-specifiers. */

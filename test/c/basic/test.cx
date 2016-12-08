@@ -185,6 +185,7 @@ test/Suite collectionApi::
     updated: bool
 
 test/Suite targetApi::
+    void setup() method
     void tc_create()
     void tc_createChild()
     void tc_createAuto()
@@ -192,4 +193,5 @@ test/Suite targetApi::
     void tc_set()
     void tc_str()
     void tc_fromStr()
+    void tc_fromStrOwnedByMount()
     void tc_compare()

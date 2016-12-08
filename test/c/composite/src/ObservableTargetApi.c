@@ -172,7 +172,7 @@ corto_void _test_ObservableTargetApi_tc_str(
     test_assert(o != NULL);
 
     corto_string str = test_ObservableTargetStr(o);
-    test_assertstr(str, "{{10,0},20}");
+    test_assertstr(str, "{{10,0,0},20}");
     corto_dealloc(str);
 
     test_assert(!corto_delete(o));
