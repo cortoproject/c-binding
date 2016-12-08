@@ -1,6 +1,7 @@
 
 #include "corto/corto.h"
 #include "corto/gen/c/common/common.h"
+#include <corto/fmt/json/json.h>
 
 /* Load dependencies */
 static void c_projectLoadPackages(g_file file) {
@@ -316,6 +317,189 @@ error:
     return -1;
 }
 
+
+static corto_int16 corto_printCortoListAsRubyArray(g_file f, const char* rubyName, corto_ll list)
+{
+    g_fileWrite(f, "%s = [\n", rubyName);
+    g_fileIndent(f);
+    {
+        corto_stringlistForeach(list, elem) {
+            g_fileWrite(f, "\"%s\",\n", elem);
+        }
+    }
+    g_fileDedent(f);
+    g_fileWrite(f, "]\n");
+    return 0;
+}
+
+static corto_int16 corto_writeRakefile(corto_generator g, corto_package package)
+{
+    g_file rakefile = g_fileOpen(g, "rakefile");
+    g_fileWrite(rakefile, "PACKAGE = '%s'\n", corto_fullpath(NULL, package));
+
+    if (corto_llSize(package->lib)) {
+        corto_printCortoListAsRubyArray(rakefile, "LIB", package->lib);
+    }
+    if (corto_llSize(package->libpath)) {
+        corto_printCortoListAsRubyArray(rakefile, "LIBPATH", package->libpath);
+    }
+    if (corto_llSize(package->include)) {
+        corto_printCortoListAsRubyArray(rakefile, "INCLUDE", package->include);
+    }
+    if (corto_llSize(package->link)) {
+        corto_printCortoListAsRubyArray(rakefile, "LINK", package->link);
+    }
+    if (corto_llSize(package->dependencies)) {
+        corto_printCortoListAsRubyArray(rakefile, "USE_PACKAGE", package->dependencies);
+    }
+    if (corto_llSize(package->cflags)) {
+        corto_printCortoListAsRubyArray(rakefile, "CFLAGS", package->cflags);
+    }
+
+    g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
+    g_fileClose(rakefile);
+    return 0;
+}
+
+/*
+ * This method changes the id!
+ */
+static void corto_readPackageJson_separateParentAndName(char* id, char** parentName, char** name)
+{
+    char *ptr = strrchr(id, '/');
+    if (ptr) {
+        *name = ptr + 1;
+        *parentName = id;
+        *ptr = '\0';
+    } else {
+        *name = id;
+        *parentName = NULL;
+    }
+}
+
+static corto_object corto_readPackageJson_declarePackage(const char* parentName, const char* name)
+{
+    corto_object package = NULL;
+    if (parentName) {
+        corto_object parent = corto_resolve(root_o, (corto_string)parentName);
+        if (!parent) {
+            corto_seterr("Cannot find parent package %s", parentName);
+            goto errorNoParent;
+        }
+        package = corto_packageDeclareChild(parent, (corto_string)name);
+        corto_release(parent);
+    } else {
+        package = corto_packageDeclareChild(root_o, (corto_string)name);
+    }
+    return package;
+
+errorNoParent:
+    return NULL;
+}
+
+static corto_int16 corto_readPackageJson(corto_generator g)
+{
+    if (!corto_fileTest("package.json")) {
+        goto warning;
+    }
+
+    char* fileContent = corto_fileLoad("package.json");
+    if (!fileContent) {
+        goto errorFileLoad;
+    }
+
+    JSON_Value* value = json_parse_string(fileContent);
+    if (!value) {
+        corto_seterr("Error parsing package.json");
+        goto errorParsePackageJson;
+    }
+
+    JSON_Object* packageAsObject = json_value_get_object(value);
+    if (!packageAsObject) {
+        corto_seterr("Main object in package.json is not JSON object");
+        goto errorPackageNotObject;
+    }
+    const char* id = json_object_get_string(packageAsObject, "id");
+    if (!id) {
+        corto_seterr("No \"id\" string field found");
+        goto errorNoId;
+    }
+
+    char* idbuf = corto_strdup(id);
+    if (!idbuf) {
+        goto errorIdBuf;
+    }
+    char *name = NULL;
+    char *parentName = NULL;
+    corto_readPackageJson_separateParentAndName(idbuf, &parentName, &name);
+
+    corto_package package = corto_readPackageJson_declarePackage(parentName, name);
+    if (!package) {
+        goto errorNoPackage;
+    }
+
+    JSON_Object* valueObject = json_object_get_object(packageAsObject, "value");
+    if (!valueObject) {
+        corto_seterr("No \"value\" object field found");
+        goto errorGetValue;
+    }
+
+    char* valueStr = json_serialize_to_string(json_object_get_value(packageAsObject, "value"));
+    if (!valueStr) {
+        corto_seterr("Error serializing value to string");
+        goto errorSerializeToString;
+    }
+
+    if (json_toCorto(package, valueStr)) {
+        goto errorToCorto;
+    }
+
+    if (corto_writeRakefile(g, package)) {
+        goto errorWriteRakefile;
+    }
+
+    corto_delete(package);
+    corto_dealloc(valueStr);
+    corto_dealloc(idbuf);
+    corto_dealloc(value);
+    corto_dealloc(fileContent);
+
+    return 0;
+
+errorWriteRakefile:
+errorToCorto:
+    corto_delete(package);
+
+    corto_dealloc(valueStr);
+errorSerializeToString:
+errorGetValue:
+errorNoPackage:
+    corto_dealloc(idbuf);
+errorIdBuf:
+errorNoId:
+errorPackageNotObject:
+    json_value_free(value);
+errorParsePackageJson:
+    corto_dealloc(fileContent);
+errorFileLoad:
+    return -1;
+
+warning:
+    corto_warning("Warning: package.json is not found; consider upgrading to the new build system.");
+    return 0;
+}
+
+static corto_int16 corto_genRakefile(corto_generator g)
+{
+    if (corto_readPackageJson(g)) {
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
 /* Generator main */
 corto_int16 corto_genMain(g_generator g) {
     corto_bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
@@ -324,6 +508,10 @@ corto_int16 corto_genMain(g_generator g) {
     corto_mkdir("include");
     corto_mkdir("src");
     corto_mkdir(".corto");
+
+    if (corto_genRakefile(g)) {
+        goto error;
+    }
 
     if (c_projectGenerateMainFile(g)) {
         if (!corto_lasterr()) {
