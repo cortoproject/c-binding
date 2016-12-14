@@ -173,7 +173,7 @@ error:
 static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     corto_id id, returnTypeId;
     corto_bool returnsValue;
-    corto_id nameString;
+    char *nameString = NULL;
     g_file originalSource = data->source;
     corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
     corto_string _this = cpp ? "_this" : "this";
@@ -206,7 +206,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     }
 
     /* Obtain string for function name */
-    c_escapeString(corto_idof(o), nameString);
+    nameString = c_escapeString(corto_idof(o));
 
     /* Write casting macro to header */
     c_interfaceCastMacro(corto_function(o), g_fullOid(data->g, o, id), data);
@@ -284,8 +284,11 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
 
     data->source = originalSource;
 
+    corto_dealloc(nameString);
+
     return 0;
 error:
+    if (nameString) corto_dealloc(nameString);
     return -1;
 }
 

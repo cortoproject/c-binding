@@ -450,24 +450,11 @@ corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier) {
     return specifier;
 }
 
-corto_char* c_escapeString(corto_string str, corto_id id) {
-    corto_char *ptr, *bptr, ch;
-
-    ptr = str;
-    bptr = id;
-
-    while((ch = *ptr)) {
-        if (ch == '"') {
-            *bptr = '\\';
-            bptr++;
-        }
-        *bptr = ch;
-        bptr++;
-        ptr++;
-    }
-    *bptr = '\0';
-
-    return id;
+corto_char* c_escapeString(corto_string str) {
+    size_t length = stresc(NULL, 0, str);
+    corto_string out = corto_alloc(length + 1);
+    stresc(out, length + 1, str);
+    return out;
 }
 
 corto_bool c_procedureHasThis(corto_function o) {
@@ -515,7 +502,7 @@ corto_string c_typeptr(g_generator g, corto_type t, corto_id id) {
     return id;
 }
 
-corto_string c_typeret(g_generator g, corto_type t, enum c_refKind ref, corto_id id) {
+corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id) {
     if ((t->kind == CORTO_COLLECTION &&
         (corto_collection(t)->kind == CORTO_ARRAY)))
     {

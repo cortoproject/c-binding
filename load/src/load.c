@@ -25,11 +25,14 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
         c_varId(data->g, o, varId);
         sprintf(out, "(corto_claim(%s), %s)", varId, varId);
     } else if (corto_checkAttr(o, CORTO_ATTR_SCOPED) && corto_childof(root_o, o)) {
-        corto_id id, escaped;
+        corto_id id;
+        char *escaped;
         corto_fullpath(id, o);
 
+        escaped = c_escapeString(id);
+
         if (!(src || context)) {
-            sprintf(out, "corto_resolve(NULL, \"%s\")", c_escapeString(id, escaped));
+            sprintf(out, "corto_resolve(NULL, \"%s\")", escaped);
         } else {
             if (!src) {
                 src = "NULL";
@@ -37,10 +40,13 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
             if (!context) {
                 context = "NULL";
             }
-            sprintf(out, "corto_resolve(NULL, \"%s\")", c_escapeString(id, escaped));
+            sprintf(out, "corto_resolve(NULL, \"%s\")", escaped);
         }
+
+        corto_dealloc(escaped);
     } else {
-        corto_id ostr, id, escapedOstr, escapedContextStr;
+        corto_id ostr;
+        char *escapedOstr;
         struct corto_serializer_s stringSer;
         corto_string_ser_t data;
 
@@ -50,28 +56,20 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
         *ostr = '\0';
         data.compactNotation = TRUE;
         data.buffer = CORTO_BUFFER_INIT;
-        data.buffer.buf = id;
-        data.buffer.max = sizeof(id);
+        data.buffer.buf = NULL;
+        data.buffer.max = 0;
         data.prefixType = TRUE;
         data.enableColors = FALSE;
         if (corto_serialize(&stringSer, o, &data)) {
             goto error;
         }
 
-        c_escapeString(id, escapedOstr);
+        char *str = corto_buffer_str(&data.buffer);
 
-        if (!(src || context)) {
-            sprintf(out, "corto_resolve(NULL, \"%s\")", escapedOstr);
-        } else {
-            if (!src) {
-                src = "NULL";
-            }
-            if (!context) {
-                context = "NULL";
-            }
-            c_escapeString(context, escapedContextStr);
-            sprintf(out, "corto_resolve(NULL, \"%s\")", escapedOstr);
-        }
+        escapedOstr = c_escapeString(str);
+        sprintf(out, "corto_resolve(NULL, \"%s\")", escapedOstr);
+        corto_dealloc(escapedOstr);
+        corto_dealloc(str);
     }
 
     return out;
@@ -718,7 +716,8 @@ static struct corto_serializer_s c_initSerializer(void) {
 /* Declare object */
 static int c_loadDeclare(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id varId, parentId, typeId, escapedName, typeCast, postfix;
+    corto_id varId, parentId, typeId, typeCast, postfix;
+    char *escapedName = NULL;
 
     data = userData;
 
@@ -736,12 +735,13 @@ static int c_loadDeclare(corto_object o, void* userData) {
             return 1;
         }
 
-        c_escapeString(corto_idof(o), escapedName);
+        escapedName = c_escapeString(corto_idof(o));
         g_fileWrite(data->source, "%s = %s(corto_declareChild(%s, \"%s\", ",
             varId,
             typeCast,
             c_varId(data->g, corto_parentof(o), parentId),
             escapedName);
+        corto_dealloc(escapedName);
     }
 
     /* Declaration */
@@ -756,7 +756,6 @@ static int c_loadDeclare(corto_object o, void* userData) {
     /* Error checking */
     g_fileWrite(data->source, "if (!%s) {\n", varId);
     g_fileIndent(data->source);
-    c_escapeString(corto_fullpath(NULL, o), escapedName);
     g_fileWrite(data->source, "corto_error(\"%s_load: failed to declare '%s' (%%s)\", corto_lasterr());\n",
             g_getProjectName(data->g),
             varId);
@@ -798,7 +797,8 @@ static int c_loadDefine(corto_object o, void* userData) {
         return 1;
     }
 
-    corto_id escapedId, varId, postfix;
+    corto_id varId, postfix;
+    char *escapedId = NULL;
 
     c_varId(data->g, o, varId);
 
@@ -823,9 +823,11 @@ static int c_loadDefine(corto_object o, void* userData) {
     /* Define object */
     g_fileWrite(data->source, "if (corto_define(%s)) {\n", varId);
     g_fileIndent(data->source);
+    escapedId = c_escapeString(varId);
     g_fileWrite(data->source, "corto_error(\"%s_load: failed to define '%s' (%%s)\", corto_lasterr());\n",
             g_getProjectName(data->g),
-            c_escapeString(varId, escapedId));
+            escapedId);
+    corto_dealloc(escapedId);
     g_fileWrite(data->source, "goto error;\n");
     data->errorCount++;
     g_fileDedent(data->source);

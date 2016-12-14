@@ -31,7 +31,7 @@ corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier);
 corto_char* c_constantId(g_generator g, corto_constant* c, corto_char* buffer);
 
 /* Translate string to c-compatible string (do escaping of ") */
-corto_char* c_escapeString(corto_string str, corto_id id);
+corto_char* c_escapeString(corto_string str);
 
 /* Returns TRUE if procedure has this parameter */
 corto_bool c_procedureHasThis(corto_function o);
@@ -52,11 +52,11 @@ corto_string c_typeptr(g_generator g, corto_type t, corto_id id);
 corto_string c_typeval(g_generator g, corto_type t, corto_id id);
 
 /* Return string with typename[*] when type is used as returntype */
-enum c_refKind {
+typedef enum c_refKind {
     C_ByValue,
     C_ByReference
-};
-corto_string c_typeret(g_generator g, corto_type t, enum c_refKind ref, corto_id id);
+} c_refKind;
+corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id);
 
 /* Generate USING name */
 corto_char* c_usingName(g_generator g, corto_object o, corto_id id);
