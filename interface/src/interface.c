@@ -327,7 +327,6 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
             if (corto_method(o)->_virtual) {
                 c_interfaceGenerateVirtual(o, data);
             }
-            break;
         default:
             if (defined) {
                 goto ok;
