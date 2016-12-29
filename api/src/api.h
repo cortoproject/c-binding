@@ -7,6 +7,9 @@
 #define corto_api_H
 
 #include "corto/corto.h"
+#include "corto/gen/c/common/common.h"
+#include "corto/lang/c/c.h"
+
 
 #ifdef __cplusplus
 extern "C" {

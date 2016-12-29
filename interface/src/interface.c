@@ -535,13 +535,15 @@ static corto_int16 c_interfaceHeaderWrite(
     }
 
     c_includeFrom(g, result, g_getCurrent(g), "_type.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_api.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
     g_fileWrite(result, "\n");
 
     if (mainHeader) {
         corto_string snippet;
+
+        c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+        c_includeFrom(g, result, g_getCurrent(g), "_load.h");
+
         if ((snippet = g_fileLookupSnippet(result, ""))) {
             g_fileWrite(result, "\n");
             g_fileWrite(result, "/* $body()");
@@ -578,12 +580,7 @@ static g_file c_interfaceHeaderFileOpen(g_generator g, corto_object o, c_typeWal
         if (isTopLevelObject) {
             data->mainHeader = result;
         } else {
-            if (strcmp(g_getAttribute(g, "bootstrap"), "true")) {
-                c_filename(g, headerFileName, o, "h");
-            } else {
-                sprintf(headerFileName, "_%s.h", corto_idof(o));
-            }
-
+            c_mainheader(g, mainHeader);
             data->mainHeader = g_fileOpen(g, mainHeader);
             if (!data->mainHeader) {
                 goto error;
@@ -833,7 +830,7 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
                 if (!strstr(id, ".old")) {
                     corto_id newname;
                     sprintf(newname, "src/%s.old", file);
-                    rename (id, newname);
+                    corto_rename (id, newname);
                     printf("c_interface: %s: stale file, please remove (renamed to %s.old)\n", file, file);
 
                     /* Remove corresponding headerfile */

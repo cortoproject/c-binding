@@ -631,7 +631,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
         importIter = corto_llIter(g->imports);
         while(corto_iterHasNext(&importIter)) {
             import = corto_iterNext(&importIter);
-            c_includeFrom(g, result, import, "_type.h");
+            c_include(g, result, import);
         }
         g_fileWrite(result, "\n");
     }

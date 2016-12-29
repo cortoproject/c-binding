@@ -1341,7 +1341,7 @@ corto_int16 c_apiDelegateInitCallback(
     } else {
         g_fileWrite(data->source, "d->_parent.instance = NULL;\n");
     }
-    g_fileWrite(data->source, "d->_parent.procedure = corto_functionDeclare();\n");
+    g_fileWrite(data->source, "d->_parent.procedure = corto_declare(corto_function_o);\n");
     g_fileWrite(data->source, "d->_parent.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
     g_fileWrite(
         data->source, "corto_function_parseParamString(d->_parent.procedure, \"(");

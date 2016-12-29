@@ -143,7 +143,7 @@ static corto_int16 c_projectGenerateMainHeaderFile(g_generator g) {
             corto_string str = corto_iterNext(&iter);
             corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
             if (!package) {
-                corto_seterr("packages.txt contains unresolved package '%s'", str);
+                corto_seterr("project configuration contains unresolved package '%s'", str);
 
                 /* Don't break out of generation here, as this will mess up the
                  * file's code snippet */
@@ -236,30 +236,6 @@ error:
     return -1;
 }
 
-/* Generate dependency makefile for project */
-static corto_int16 c_projectGeneratePackageFile(g_generator g) {
-    corto_file file = NULL;
-
-    g_resolveImports(g);
-    if (g->imports) {
-        file = corto_fileAppend(".corto/packages.txt");
-        corto_iter iter = corto_llIter(g->imports);
-
-        while (corto_iterHasNext(&iter)) {
-            corto_object import = corto_iterNext(&iter);
-            corto_id id;
-            corto_fullpath(id, import);
-            if (!corto_loadRequiresPackage(id)) {
-                fprintf(corto_fileGet(file), "%s\n", id);
-            }
-        }
-
-        corto_fileClose(file);
-    }
-
-    return 0;
-}
-
 /* Generate interface header with macro's for exporting */
 static corto_int16 c_genInterfaceHeader(g_generator g) {
     corto_id interfaceHeaderName;
@@ -342,12 +318,6 @@ corto_int16 corto_genMain(g_generator g) {
         if(c_projectGenerateDepMakefile(g)) {
             if (!corto_lasterr()) {
                 corto_seterr("failed to create dependency rakefile");
-            }
-            goto error;
-        }
-        if(c_projectGeneratePackageFile(g)) {
-            if (!corto_lasterr()) {
-                corto_seterr("failed to create packages.txt");
             }
             goto error;
         }
