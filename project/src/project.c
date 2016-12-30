@@ -239,11 +239,7 @@ error:
 static corto_int16 c_genInterfaceHeader(g_generator g) {
     corto_id interfaceHeaderName;
 
-    if (g_getCurrent(g)) {
-        sprintf(interfaceHeaderName, "_project.h");
-    } else {
-        sprintf(interfaceHeaderName, "%s/_project.h", g_getName(g));
-    }
+    sprintf(interfaceHeaderName, "_project.h");
 
     g_file interfaceHeader = g_fileOpen(g, interfaceHeaderName);
 
