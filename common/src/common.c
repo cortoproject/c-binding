@@ -558,6 +558,11 @@ void c_writeExport(g_generator g, g_file file) {
     corto_id upperName;
     if (!strcmp(g_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
         strcpy(upperName, g_getName(g));
+        char *ptr, ch;
+        for (ptr = upperName; (ch = *ptr); ptr++) {
+            if (ch == '/') *ptr = '_';
+        }
+
     } else {
         corto_path(upperName, root_o, g_getCurrent(g), "_");
     }

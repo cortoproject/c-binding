@@ -85,7 +85,6 @@ error:
 /* Generate main header containing includes to dependencies */
 static corto_int16 c_projectGenerateMainHeaderFile(g_generator g) {
     g_file file;
-    corto_ll packages;
     corto_id upperName;
     corto_bool error = FALSE;
     corto_id filename;
@@ -137,10 +136,11 @@ static corto_int16 c_projectGenerateMainHeaderFile(g_generator g) {
     }
     g_fileWrite(file, "\n");
 
-    if ((packages = corto_loadGetPackages())) {
-        corto_iter iter = corto_llIter(packages);
+    if (g->imports) {
+        corto_iter iter = corto_llIter(g->imports);
         while (corto_iterHasNext(&iter)) {
-            corto_string str = corto_iterNext(&iter);
+            corto_object import = corto_iterNext(&iter);
+            corto_string str = corto_path(NULL, NULL, import, "/");
             corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
             if (!package) {
                 corto_seterr("project configuration contains unresolved package '%s'", str);
@@ -155,7 +155,6 @@ static corto_int16 c_projectGenerateMainHeaderFile(g_generator g) {
                 corto_dealloc(package);
             }
         }
-        corto_loadFreePackages(packages);
     }
 
     g_fileWrite(file, "/* $header()");
@@ -260,6 +259,10 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
             corto_path(upperFullName, root_o, g_getCurrent(g), "_");
         } else {
             strcpy(upperFullName, g_getName(g));
+            char *ptr, ch;
+            for (ptr = upperFullName; (ch = *ptr); ptr++) {
+                if (ch == '/') *ptr = '_';
+            }
         }
         corto_strupper(upperFullName);
 

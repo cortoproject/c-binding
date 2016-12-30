@@ -512,24 +512,22 @@ static corto_int16 c_interfaceHeaderWrite(
 
     if (mainHeader) {
         /* Add header files for dependent packages */
-        corto_ll packages = corto_loadGetPackages();
-        if (packages) {
-            corto_iter iter = corto_llIter(packages);
+        if (g->imports) {
+            corto_iter iter = corto_llIter(g->imports);
             while (corto_iterHasNext(&iter)) {
-                corto_string str = corto_iterNext(&iter);
+                corto_object import = corto_iterNext(&iter);
+                corto_string str = corto_path(NULL, NULL, import, "/");
                 corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
                 if (!package) {
-                    corto_seterr("package.txt contains unresolved package '%s'", str);
+                    corto_seterr("project configuration contains unresolved package '%s'", str);
                     goto error;
                 } else {
                     corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
-                    g_fileWrite(
-                      data->mainHeader, "#include <%s/%s.h>\n", package, name);
+                    g_fileWrite(data->mainHeader, "#include <%s/%s.h>\n", package, name);
                     corto_dealloc(name);
                     corto_dealloc(package);
                 }
             }
-            corto_loadFreePackages(packages);
             g_fileWrite(result, "\n");
         }
     }
