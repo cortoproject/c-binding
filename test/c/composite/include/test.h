@@ -13,6 +13,8 @@ typedef void* myNativeType;
 /* $end */
 
 #include <corto/test/test.h>
+#include <corto/core/c/c.h>
+#include <corto/lang/c/c.h>
 
 #include <_type.h>
 
