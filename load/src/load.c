@@ -472,6 +472,11 @@ static corto_int16 c_initPrimitive(corto_serializer s, corto_value* v, void* use
         if (corto_convert(corto_primitive(t), ptr, corto_primitive(corto_string_o), &str)) {
             goto error;
         }
+
+        /* Capitalize NAN */
+        if ((corto_primitive(t)->kind == CORTO_FLOAT) && !strcmp(str, "nan")) {
+            corto_setstr(&str, "NAN");
+        }
     }
 
     g_fileWrite(data->source, "%s", str);
