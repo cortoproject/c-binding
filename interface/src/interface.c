@@ -478,6 +478,7 @@ static corto_int16 c_interfaceHeaderWrite(
     corto_bool mainHeader,
     c_typeWalk_t *data)
 {
+    corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     corto_id path;
     strcpy(path, name);
     corto_strupper(path);
@@ -494,7 +495,7 @@ static corto_int16 c_interfaceHeaderWrite(
         c_includeFrom(g, result, corto_o, "corto.h");
     }
 
-    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
+    if (bootstrap) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
     } else {
         c_includeFrom(g, result, g_getCurrent(g), "_project.h");
@@ -539,7 +540,12 @@ static corto_int16 c_interfaceHeaderWrite(
     if (mainHeader) {
         corto_string snippet;
 
-        c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+        /* Currently the bootstrap code generation is one step ahead of regular
+         * corto projects in that it splits up the language-specific code in a
+         * separate package */
+        if (!bootstrap) {
+            c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+        }
         c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
         if ((snippet = g_fileLookupSnippet(result, ""))) {

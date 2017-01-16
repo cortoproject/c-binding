@@ -36,7 +36,7 @@ static corto_int16 c_typeConstant(corto_serializer s, corto_value* v, void* user
         g_fileWrite(data->header, "#define %s (0x%x)\n", c_constantId(data->g, v->is.constant.t, constantId), *v->is.constant.t);
         break;
     default:
-        corto_error("c_typeConstant: invalid constant parent-type.");
+        corto_seterr("c_typeConstant: invalid constant parent-type.");
         goto error;
         break;
     }
@@ -511,9 +511,8 @@ static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userDa
         result = c_typeIterator(s, v, userData);
         break;
     default:
-        corto_error("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant(corto_typeKind_o, t->kind)));
+        corto_seterr("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant(corto_typeKind_o, t->kind)));
         goto error;
-        break;
     }
 
     g_fileWrite(data->header, "\n");
@@ -691,7 +690,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
         }
         break;
     default:
-        corto_error("c_typeDeclare: only composite types can be forward declared.");
+        corto_seterr("c_typeDeclare: only composite types can be forward declared.");
         goto error;
         break;
     }

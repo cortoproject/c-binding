@@ -200,7 +200,7 @@ corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
         break;
     case CORTO_ENUM:
     case CORTO_BITMASK:
-        corto_error(
+        corto_seterr(
           "use c_specifierId instead of c_primitiveId for enums and bitmasks");
         goto error;
         g_fullOid(g, t, buff);
