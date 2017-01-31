@@ -745,12 +745,13 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
         g_fileIndent(data->source);
         sprintf(lvalue, "%s[i]", cVar);
-        if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
-            c_apiAssign(
-              corto_collection(t)->elementType, FALSE, 0, lvalue, "elements[i]", data);
+
+        /* c_apiAssign expects value as parameter while elements[i] points to
+         * the value directly. Compensate with a & */
+        if (c_typeRequiresPtr(elementType)) {
+            c_apiAssign(elementType, FALSE, 0, lvalue, "&elements[i]", data);
         } else {
-            c_apiAssign(
-              corto_collection(t)->elementType, FALSE, 0, lvalue, "&elements[i]", data);
+            c_apiAssign(elementType, FALSE, 0, lvalue, "elements[i]", data);
         }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
@@ -760,10 +761,13 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
         g_fileWrite(data->source, "%sClear(*%s);\n", id, cVar);
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
         g_fileIndent(data->source);
-        if (elementType->reference || (elementType->kind == CORTO_PRIMITIVE)) {
-            g_fileWrite(data->source, "%sAppend(*%s, elements[i]);\n", id, cVar);
-        } else {
+
+        /* Append expects value as regular parameter while elements[i] points to
+         * the value directly. Compensate with a & */
+        if (c_typeRequiresPtr(elementType)) {
             g_fileWrite(data->source, "%sAppend(*%s, &elements[i]);\n", id, cVar);
+        } else {
+            g_fileWrite(data->source, "%sAppend(*%s, elements[i]);\n", id, cVar);
         }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");

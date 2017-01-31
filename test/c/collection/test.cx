@@ -11,6 +11,10 @@ array complexArray: Point, 3
 sequence complexSequence: Point
 list complexList: Point
 
+array nestedArray: primitiveArray, 2
+sequence nestedSequence: primitiveSequence, 2
+list nestedList: primitiveList, 2
+
 primitiveArray arrayObject: 1, 2, 3
 primitiveSequence sequenceObject: 1, 2, 3
 primitiveList listObject: 1, 2, 3
