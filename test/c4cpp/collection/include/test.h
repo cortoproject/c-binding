@@ -7,7 +7,7 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <_project.h>
+#include <include/_project.h>
 /* $header() */
 /* You can put your own definitions here! */
 /* $end */
@@ -16,20 +16,20 @@
 #include <corto/core/c/c.h>
 #include <corto/lang/c/c.h>
 
-#include <_type.h>
+#include <include/_type.h>
+#include <include/_api.h>
+#include <include/_load.h>
 
-#include <_api.h>
-#include <_load.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <AnonymousArray.h>
-#include <AnonymousBoundedList.h>
-#include <AnonymousBoundedSequence.h>
-#include <AnonymousList.h>
-#include <AnonymousSequence.h>
-#include <Point.h>
+#include <include/AnonymousArray.h>
+#include <include/AnonymousBoundedList.h>
+#include <include/AnonymousBoundedSequence.h>
+#include <include/AnonymousList.h>
+#include <include/AnonymousSequence.h>
+#include <include/Point.h>
 
 #ifdef __cplusplus
 }

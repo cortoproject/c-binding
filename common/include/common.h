@@ -68,7 +68,7 @@ corto_char* c_usingConstant(g_generator g, corto_id id);
 /* Write library export for symbol */
 void c_writeExport(g_generator g, g_file file);
 
-char* c_findPackage(g_generator g, corto_object o);
+corto_object c_findPackage(g_generator g, corto_object o);
 
 /* Generic routine to create filename for object */
 char* c_filename(g_generator g, char *fileName, corto_object o, char *ext);

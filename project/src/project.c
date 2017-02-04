@@ -3,15 +3,15 @@
 #include "corto/gen/c/common/common.h"
 
 /* Load dependencies */
-static void c_projectLoadPackages(g_file file) {
-    corto_ll packages;
+static void c_projectLoadPackages(g_generator g, g_file file) {
 
-    if ((packages = corto_loadGetPackages())) {
-        corto_iter iter = corto_llIter(packages);
-        while (corto_iterHasNext(&iter)) {
-            corto_string str = corto_iterNext(&iter);
-            g_fileWrite(file, "if (corto_load(\"%s\", 0, NULL)) return -1;\n", str);
-        }
+    corto_iter iter = corto_llIter(g->imports);
+    while (corto_iterHasNext(&iter)) {
+        corto_object o = corto_iterNext(&iter);
+        g_fileWrite(
+            file, 
+            "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 
+            corto_path(NULL, NULL, o, "/"));
     }
 }
 
@@ -67,7 +67,7 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
     g_fileIndent(file);
     if (app) g_fileWrite(file, "corto_start();\n");
-    c_projectLoadPackages(file);
+    c_projectLoadPackages(g, file);
     if (g_getCurrent(g)) {
         g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));
     }

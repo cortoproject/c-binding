@@ -7,7 +7,7 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <_project.h>
+#include <include/_project.h>
 /* $header() */
 class myNativeType {
 public:
@@ -20,28 +20,28 @@ public:
 #include <corto/core/c/c.h>
 #include <corto/lang/c/c.h>
 
-#include <_type.h>
+#include <include/_type.h>
+#include <include/_api.h>
+#include <include/_load.h>
 
-#include <_api.h>
-#include <_load.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <anyApi.h>
-#include <collectionApi.h>
-#include <collectionType.h>
-#include <compositeApi.h>
-#include <compositeReferenceApi.h>
-#include <compositeReferenceType.h>
-#include <compositeType.h>
-#include <compositeUnionApi.h>
-#include <compositeUnionType.h>
-#include <Foo.h>
-#include <primitiveApi.h>
-#include <primitiveType.h>
-#include <voidApi.h>
-#include <voidReferenceApi.h>
+#include <include/anyApi.h>
+#include <include/collectionApi.h>
+#include <include/collectionType.h>
+#include <include/compositeApi.h>
+#include <include/compositeReferenceApi.h>
+#include <include/compositeReferenceType.h>
+#include <include/compositeType.h>
+#include <include/compositeUnionApi.h>
+#include <include/compositeUnionType.h>
+#include <include/Foo.h>
+#include <include/primitiveApi.h>
+#include <include/primitiveType.h>
+#include <include/voidApi.h>
+#include <include/voidReferenceApi.h>
 
 #ifdef __cplusplus
 }

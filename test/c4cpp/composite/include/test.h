@@ -7,7 +7,7 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <_project.h>
+#include <include/_project.h>
 /* $header() */
 /* You can put your own definitions here! */
 /* $end */
@@ -16,31 +16,31 @@
 #include <corto/core/c/c.h>
 #include <corto/lang/c/c.h>
 
-#include <_type.h>
+#include <include/_type.h>
+#include <include/_api.h>
+#include <include/_load.h>
 
-#include <_api.h>
-#include <_load.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <CompositeArg.h>
-#include <HiddenBase.h>
-#include <HiddenSub.h>
-#include <Line.h>
-#include <Local.h>
-#include <Optional.h>
-#include <OptionalApi.h>
-#include <OptionalArray.h>
-#include <OptionalComposite.h>
-#include <OptionalCompositeApi.h>
-#include <OptionalSequence.h>
-#include <OptionalString.h>
-#include <OptionalStringApi.h>
-#include <Point.h>
-#include <Point3D.h>
-#include <Private.h>
-#include <Readonly.h>
+#include <include/CompositeArg.h>
+#include <include/HiddenBase.h>
+#include <include/HiddenSub.h>
+#include <include/Line.h>
+#include <include/Local.h>
+#include <include/Optional.h>
+#include <include/OptionalApi.h>
+#include <include/OptionalArray.h>
+#include <include/OptionalComposite.h>
+#include <include/OptionalCompositeApi.h>
+#include <include/OptionalSequence.h>
+#include <include/OptionalString.h>
+#include <include/OptionalStringApi.h>
+#include <include/Point.h>
+#include <include/Point3D.h>
+#include <include/Private.h>
+#include <include/Readonly.h>
 
 #ifdef __cplusplus
 }

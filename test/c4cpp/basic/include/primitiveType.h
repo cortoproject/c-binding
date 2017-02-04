@@ -7,8 +7,8 @@
 #define TEST_PRIMITIVETYPE_H
 
 #include <corto/corto.h>
-#include <_project.h>
-#include <_type.h>
+#include <include/_project.h>
+#include <include/_type.h>
 
 #ifdef __cplusplus
 extern "C" {

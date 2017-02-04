@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 test_Point _test_CompositeArg_f(
     test_CompositeArg* _this,

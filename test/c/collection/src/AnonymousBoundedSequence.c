@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 corto_int32Seq3 _test_AnonymousBoundedSequence_f(
     test_AnonymousBoundedSequence this,

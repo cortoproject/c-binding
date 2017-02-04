@@ -535,8 +535,6 @@ static corto_int16 c_interfaceHeaderWrite(
 
     c_includeFrom(g, result, g_getCurrent(g), "_type.h");
 
-    g_fileWrite(result, "\n");
-
     if (mainHeader) {
         corto_string snippet;
 
@@ -555,6 +553,7 @@ static corto_int16 c_interfaceHeaderWrite(
             g_fileWrite(result, "$end */\n\n");
         }
     }
+    g_fileWrite(result, "\n");
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
@@ -672,6 +671,39 @@ error:
     return NULL;
 }
 
+static corto_int16 c_interfaceWriteMain(g_file source, corto_string id, c_typeWalk_t* data) {
+    corto_string snippet;
+
+    CORTO_UNUSED(data);
+
+    g_fileWrite(source, "\n");
+
+    if ((snippet = g_fileLookupHeader(source, "main"))) {
+        g_fileWrite(source, "\n");
+        g_fileWrite(source, "/* $header(main)");
+        g_fileWrite(source, "%s", snippet);
+        g_fileWrite(source, "$end */\n");
+    }
+
+    g_fileWrite(source, "int %sMain(int argc, char *argv[]) {\n", id);
+    g_fileWrite(source, "/* $begin(main)");
+    g_fileIndent(source);
+    if ((snippet = g_fileLookupSnippet(source, "main"))) {
+        g_fileWrite(source, "%s", snippet);
+        g_fileWrite(source, "$end */\n");
+        g_fileDedent(source);
+    } else {
+        g_fileWrite(source, " */\n\n");
+        g_fileWrite(source, "/* Insert implementation */\n\n");
+        g_fileWrite(source, "return 0;\n");
+        g_fileDedent(source);
+        g_fileWrite(source, "/* $end */\n");
+    }
+    g_fileWrite(source, "}\n");
+
+    return 0;
+}
+
 /* Generate interface for class */
 static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
     corto_string snippet;
@@ -727,31 +759,27 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
 
         /* If top level file, generate main function */
         if (isTopLevelObject && !isBootstrap) {
-            g_fileWrite(data->source, "\n");
-            if ((snippet = g_fileLookupHeader(data->source, "main"))) {
-                g_fileWrite(data->source, "\n");
-                g_fileWrite(data->source, "/* $header(main)");
-                g_fileWrite(data->source, "%s", snippet);
-                g_fileWrite(data->source, "$end */\n");
+            if (c_interfaceWriteMain(data->source, corto_idof(o), data)) {
+                goto error;
             }
-            g_fileWrite(data->source, "int %sMain(int argc, char* argv[]) {\n", corto_idof(o));
-            g_fileWrite(data->source, "/* $begin(main)");
-            g_fileIndent(data->source);
-            if ((snippet = g_fileLookupSnippet(data->source, "main"))) {
-                g_fileWrite(data->source, "%s", snippet);
-                g_fileWrite(data->source, "$end */\n");
-                g_fileDedent(data->source);
-            } else {
-                g_fileWrite(data->source, " */\n\n");
-                g_fileWrite(data->source, "/* Insert implementation */\n\n");
-                g_fileWrite(data->source, "return 0;\n");
-                g_fileDedent(data->source);
-                g_fileWrite(data->source, "/* $end */\n");
-            }
-            g_fileWrite(data->source, "}\n");
         }
 
         g_fileClose(data->source);
+    }
+
+    if (!isTopLevelObject && (o == g_getCurrent(data->g))) {
+        /* If object is current object, but object is not a package, this project
+         * does not have a package. In that case, generate main source file with
+         * the name of the project, instead the name of the object. */
+        corto_id fileName, header;
+        sprintf(fileName, "%s.c", g_getName(data->g));
+        g_file file = g_fileOpen(data->g, fileName);
+
+        g_fileWrite(file, "#include <%s>\n", c_mainheader(data->g, header));
+
+        if (c_interfaceWriteMain(file, g_getName(data->g), data)) {
+            goto error;
+        }
     }
 
     /* Close */

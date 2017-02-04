@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 corto_void _test_f_collectionReferenceArg(
     test_PointArray3 *pts)
@@ -77,7 +77,7 @@ corto_void _test_f_referenceArg(
 /* $end */
 }
 
-int testMain(int argc, char* argv[]) {
+int testMain(int argc, char *argv[]) {
 /* $begin(main) */
     int result = 0;
     test_Runner runner = test_RunnerCreate("corto/gen/c4cpp/function", argv[0], (argc > 1) ? argv[1] : NULL);

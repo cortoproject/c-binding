@@ -570,12 +570,14 @@ void c_writeExport(g_generator g, g_file file) {
     g_fileWrite(file, "%s_EXPORT", upperName);
 }
 
-char* c_findPackage(g_generator g, corto_object o) {
+corto_object c_findPackage(g_generator g, corto_object o) {
     corto_object package = o;
     corto_object ptr;
 
-    while (package && !corto_instanceof(corto_package_o, package)) {
-        package = corto_parentof(package);
+    if (o != g_getCurrent(g)) {
+        while (package && !corto_instanceof(corto_package_o, package)) {
+            package = corto_parentof(package);
+        }
     }
 
     /* If package is in scope of current package, use current package */
@@ -635,9 +637,12 @@ void c_includeFrom(
      * there is no need to prefix the header with a path */
     if ((!strcmp(g_getAttribute(g, "local"), "true") ||
          !strcmp(g_getAttribute(g, "app"), "true")) &&
-        (g_getCurrent(g) == package))
+        ((g_getCurrent(g) == package)))
     {
-        g_fileWrite(file, "#include <%s>\n", filebuff);
+        /* Never include headers by just their names, as this could potentially
+         * conflict with system headers, for example when a user creates a class
+         * called "time". */
+        g_fileWrite(file, "#include <include/%s>\n", filebuff);
     } else {
         g_fileWrite(file, "#include <%s/%s>\n",
           corto_path(path, root_o, package, "/"),
@@ -936,7 +941,7 @@ char* c_mainheader(g_generator g, corto_id header) {
         }
         sprintf(header, "%s/%s.h", name, g_getProjectName(g));
     } else {
-        sprintf(header, "%s.h", g_getProjectName(g));
+        sprintf(header, "include/%s.h", g_getProjectName(g));
     }
 
     return header;

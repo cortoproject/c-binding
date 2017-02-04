@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 corto_int32List _test_AnonymousList_f(
     test_AnonymousList _this,

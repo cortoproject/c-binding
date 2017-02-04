@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 corto_void _test_OptionalStringApi_onUpdate(
     test_OptionalStringApi this,

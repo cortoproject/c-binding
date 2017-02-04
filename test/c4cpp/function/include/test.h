@@ -7,7 +7,7 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <_project.h>
+#include <include/_project.h>
 /* $header() */
 class myNativeType {
 public:
@@ -20,10 +20,10 @@ public:
 #include <corto/core/c/c.h>
 #include <corto/lang/c/c.h>
 
-#include <_type.h>
+#include <include/_type.h>
+#include <include/_api.h>
+#include <include/_load.h>
 
-#include <_api.h>
-#include <_load.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,8 +55,8 @@ TEST_EXPORT corto_void _test_f_primitiveReferenceArg(
 TEST_EXPORT corto_void _test_f_referenceArg(
     test_Foo f);
 #define test_f_referenceArg(f) _test_f_referenceArg(test_Foo(f))
-#include <Foo.h>
-#include <Point.h>
+#include <include/Foo.h>
+#include <include/Point.h>
 
 #ifdef __cplusplus
 }
