@@ -481,8 +481,10 @@ corto_string c_paramName(corto_string name, corto_string buffer) {
 }
 
 corto_bool c_paramRequiresPtr(corto_parameter *p) {
-    return !p->type->reference &&
-           (p->passByReference || (p->type->kind == CORTO_COMPOSITE));
+    return (!p->type->reference &&
+           (p->passByReference || (p->type->kind == CORTO_COMPOSITE))) ||
+           p->inout == CORTO_OUT ||
+           p->inout == CORTO_INOUT;
 }
 
 corto_bool c_typeRequiresPtr(corto_type t) {
