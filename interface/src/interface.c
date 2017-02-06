@@ -78,10 +78,12 @@ static int c_interfaceParamCastDef(corto_parameter *o, void *userData) {
     return 1;
 }
 
-static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isReference) {
+static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isReference, corto_inout inout) {
     if ((isReference || t->reference) &&
         (t->kind != CORTO_VOID) && (t->kind != CORTO_ANY) &&
-        (corto_checkAttr(t, CORTO_ATTR_SCOPED))) {
+        (corto_checkAttr(t, CORTO_ATTR_SCOPED)) &&
+        (!inout)) 
+    {
         return TRUE;
     } else {
         return FALSE;
@@ -110,7 +112,7 @@ static int c_interfaceParamCastWalk(corto_parameter *o, void *userData) {
             g_fileWrite(data->header, "#%s", o->name + 1);
         }
     } else {
-        if (c_interfaceParamRequiresCast(o->type, o->passByReference)) {
+        if (c_interfaceParamRequiresCast(o->type, o->passByReference, o->inout)) {
             g_fileWrite(data->header, "%s(%s)", specifier, o->name);
         } else {
             g_fileWrite(data->header, "%s", c_paramName(o->name, name));
