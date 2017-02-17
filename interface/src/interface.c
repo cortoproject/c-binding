@@ -680,9 +680,9 @@ static corto_int16 c_interfaceWriteMain(g_file source, corto_string id, c_typeWa
 
     g_fileWrite(source, "\n");
 
-    if ((snippet = g_fileLookupHeader(source, "main"))) {
+    if ((snippet = g_fileLookupHeader(source, ""))) {
         g_fileWrite(source, "\n");
-        g_fileWrite(source, "/* $header(main)");
+        g_fileWrite(source, "/* $header()");
         g_fileWrite(source, "%s", snippet);
         g_fileWrite(source, "$end */\n");
     }
