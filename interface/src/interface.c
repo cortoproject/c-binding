@@ -680,13 +680,6 @@ static corto_int16 c_interfaceWriteMain(g_file source, corto_string id, c_typeWa
 
     g_fileWrite(source, "\n");
 
-    if ((snippet = g_fileLookupHeader(source, ""))) {
-        g_fileWrite(source, "\n");
-        g_fileWrite(source, "/* $header()");
-        g_fileWrite(source, "%s", snippet);
-        g_fileWrite(source, "$end */\n");
-    }
-
     g_fileWrite(source, "int %sMain(int argc, char *argv[]) {\n", id);
     g_fileWrite(source, "/* $begin(main)");
     g_fileIndent(source);
@@ -778,6 +771,13 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         g_file file = g_fileOpen(data->g, fileName);
 
         g_fileWrite(file, "#include <%s>\n", c_mainheader(data->g, header));
+
+        if ((snippet = g_fileLookupHeader(file, ""))) {
+            g_fileWrite(file, "\n");
+            g_fileWrite(file, "/* $header()");
+            g_fileWrite(file, "%s", snippet);
+            g_fileWrite(file, "$end */\n");
+        }
 
         if (c_interfaceWriteMain(file, g_getName(data->g), data)) {
             goto error;
