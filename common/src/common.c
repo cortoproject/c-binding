@@ -582,13 +582,25 @@ corto_object c_findPackage(g_generator g, corto_object o) {
         }
     }
 
-    /* If package is in scope of current package, use current package */
+    /* If package is in scope of current package and not an import, use 
+     * current package */
     if (g_getCurrent(g)) {
-        ptr = package;
-        while (ptr && (ptr != g_getCurrent(g))) {
-            ptr = corto_parentof(ptr);
-            if (ptr == g_getCurrent(g)) {
-                package = ptr;
+        ptr = NULL;
+        corto_iter it = corto_llIter(g->imports);
+        while (corto_iterHasNext(&it)) {
+            corto_object o = corto_iterNext(&it);
+            if (o == package) {
+                ptr = package;
+            }
+        }
+
+        if (!ptr) {
+            ptr = package;
+            while (ptr && (ptr != g_getCurrent(g))) {
+                ptr = corto_parentof(ptr);
+                if (ptr == g_getCurrent(g)) {
+                    package = ptr;
+                }
             }
         }
     }

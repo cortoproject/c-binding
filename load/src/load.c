@@ -360,6 +360,8 @@ static void c_sourceWriteLoadStart(g_generator g, g_file file) {
     g_fileWrite(file, "int %s_load(void) {\n", g_getProjectName(g));
     g_fileIndent(file);
     g_fileWrite(file, "corto_object _a_; /* Used for resolving anonymous objects */\n");
+    g_fileWrite(file, "corto_object _e_; /* Used for resolving extern objects */\n");
+    g_fileWrite(file, "(void)_e_;\n");
     g_fileWrite(file, "_a_ = NULL;\n\n");
     g_fileWrite(file, "corto_attr prevAttr = corto_setAttr(CORTO_ATTR_PERSISTENT);\n\n");
 }
@@ -740,11 +742,26 @@ static int c_loadDeclare(corto_object o, void* userData) {
             return 1;
         }
 
+        if (g_mustParse(data->g, corto_parentof(o))) {
+            c_varId(data->g, corto_parentof(o), parentId);
+        } else {
+            g_fileWrite(data->source, "_e_ = corto_lookup(NULL, \"%s\");\n",
+                corto_fullpath(NULL, corto_parentof(o)));
+            strcpy(parentId, "_e_");
+
+            g_fileWrite(data->source, "if (!_e_) {\n");
+            g_fileIndent(data->source);
+            g_fileWrite(data->source, "corto_error(\"failed to lookup '%s'\");\n", corto_fullpath(NULL, corto_parentof(o)));
+            g_fileWrite(data->source, "goto error;\n");
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "}\n");
+        }
+
         escapedName = c_escapeString(corto_idof(o));
         g_fileWrite(data->source, "%s = %s(corto_declareChild(%s, \"%s\", ",
             varId,
             typeCast,
-            c_varId(data->g, corto_parentof(o), parentId),
+            parentId,
             escapedName);
         corto_dealloc(escapedName);
     }
@@ -756,6 +773,10 @@ static int c_loadDeclare(corto_object o, void* userData) {
     } else {
         g_fileWrite(data->source, "%s));\n",
             c_varId(data->g, corto_typeof(o), typeId));
+    }
+
+    if (corto_checkAttr(o, CORTO_ATTR_SCOPED) && corto_parentof(o) && !g_mustParse(data->g, corto_parentof(o))) {
+        g_fileWrite(data->source, "corto_release(_e_);\n");
     }
 
     /* Error checking */

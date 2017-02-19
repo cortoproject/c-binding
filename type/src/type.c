@@ -722,9 +722,6 @@ static int c_typeDefine(corto_object o, void* userData) {
 corto_int16 corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
 
-    /* Resolve imports so include files for external can be added. */
-    g_resolveImports(g);
-
     /* Prepare walkdata, open headerfile */
     walkData.header = c_typeHeaderFileOpen(g);
     if (!walkData.header) {
