@@ -24,6 +24,7 @@ typedef struct c_typeWalk_t {
     corto_bool generateSource;
     corto_id sizeExpr;
     corto_ll generated;
+    corto_bool mainWritten;
 } c_typeWalk_t;
 
 static g_file c_interfaceOpenFile(corto_string name, c_typeWalk_t *data) {
@@ -184,8 +185,12 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
      * This file will be restored at the end of the function */
     data->source = data->wrapper;
 
+    /* Write casting macro to header */
+    g_fileWrite(data->header, "\n");
+    c_interfaceCastMacro(corto_function(o), g_fullOid(data->g, o, id), data);
+
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " ");
+    g_fileWrite(data->header, "\n");
     if (c_decl(data->g, data->header, corto_function(o), TRUE, TRUE)) {
         goto error;
     }
@@ -209,9 +214,6 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
 
     /* Obtain string for function name */
     nameString = c_escapeString(corto_idof(o));
-
-    /* Write casting macro to header */
-    c_interfaceCastMacro(corto_function(o), g_fullOid(data->g, o, id), data);
 
     /* Begin of function */
     g_fileWrite(data->wrapper, "\n{\n");
@@ -309,6 +311,9 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_type returnType;
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
+        
+        corto_fullpath(fullname, o);
+        c_functionName(data->g, o, functionName);
 
         kind = corto_procedure(corto_typeof(o))->kind;
         defined = corto_checkState(o, CORTO_DEFINED) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
@@ -322,19 +327,10 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
             }
         }
 
-        /* If procedure is a delegate, generate delegate forwarding-function. Nothing
-         * further needs to be generated in the sourcefile for a delegate. */
-        switch (kind) {
-        case CORTO_METHOD:
-            if (corto_method(o)->_virtual) {
-                c_interfaceGenerateVirtual(o, data);
-            }
-        default:
-            if (defined) {
-                goto ok;
-            }
-            break;
-        }
+
+        /* Write the macro wrapper for automatic casting of parameter types */
+        g_fileWrite(data->header, "\n");
+        c_interfaceCastMacro(o, functionName, data);
 
         /* Generate function-return type string */
         returnType = ((corto_function)o)->returnType;
@@ -344,19 +340,15 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
             strcpy(returnSpec, "void");
         }
 
-        corto_fullpath(fullname, o);
-        c_functionName(data->g, o, functionName);
         if (corto_function(o)->overloaded) {
             strcpy(signatureName, fullname + 1); /* Skip scope */
         } else {
             corto_signatureName(fullname + 1, signatureName);
         }
 
-        g_fileWrite(data->header, "\n");
-
         /* Start of function */
         c_writeExport(data->g, data->header);
-        g_fileWrite(data->header, " ");
+        g_fileWrite(data->header, "\n");
         if (c_decl(data->g, data->header, corto_function(o), FALSE, TRUE)) {
             goto error;
         }
@@ -445,8 +437,19 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->source, "$end */\n");
         g_fileWrite(data->source, "}\n");
 
-        /* Write the macro wrapper for automatic casting of parameter types */
-        c_interfaceCastMacro(o, functionName, data);
+        /* If procedure is a delegate, generate delegate forwarding-function. Nothing
+         * further needs to be generated in the sourcefile for a delegate. */
+        switch (kind) {
+        case CORTO_METHOD:
+            if (corto_method(o)->_virtual) {
+                c_interfaceGenerateVirtual(o, data);
+            }
+        default:
+            if (defined) {
+                goto ok;
+            }
+            break;
+        }
     }
 
 ok:
@@ -481,9 +484,12 @@ static corto_int16 c_interfaceHeaderWrite(
     c_typeWalk_t *data)
 {
     corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
+    corto_bool error = FALSE;
     corto_id path;
     strcpy(path, name);
     corto_strupper(path);
+    char *ptr, ch;
+    for (ptr = path; (ch = *ptr); ptr++) if (ch == '/') *ptr = '_';
 
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
@@ -493,24 +499,15 @@ static corto_int16 c_interfaceHeaderWrite(
     g_fileWrite(result, "#define %s_H\n\n", path);
 
     /* Include corto, if not generating corto */
-    if (o != corto_o) {
+    if (o && (o != corto_o)) {
         c_includeFrom(g, result, corto_o, "corto.h");
     }
 
     if (bootstrap) {
-        g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
+        g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
     } else {
+        c_include(g, result, corto_o);
         c_includeFrom(g, result, g_getCurrent(g), "_project.h");
-    }
-
-    /* If a header exists, write it */
-    if (mainHeader) {
-        corto_string snippet;
-        if ((snippet = g_fileLookupHeader(result, ""))) {
-            g_fileWrite(result, "/* $header()");
-            g_fileWrite(result, "%s", snippet);
-            g_fileWrite(result, "$end */\n\n");
-        }
     }
 
     if (mainHeader) {
@@ -523,21 +520,40 @@ static corto_int16 c_interfaceHeaderWrite(
                 corto_string package = corto_locate(str, CORTO_LOCATION_FULLNAME);
                 if (!package) {
                     corto_seterr("project configuration contains unresolved package '%s'", str);
-                    goto error;
+
+                    /* Don't break out of generation here, as this will mess up the
+                     * file's code snippet */
+                    error = TRUE;
                 } else {
                     corto_string name = corto_locate(str, CORTO_LOCATION_NAME);
-                    g_fileWrite(data->mainHeader, "#include <%s/%s.h>\n", package, name);
+                    g_fileWrite(result, "#include <%s/%s.h>\n", package, name);
                     corto_dealloc(name);
                     corto_dealloc(package);
                 }
             }
+        }
+    }
+    if (error) {
+        goto error;
+    }
+
+    /* If a header exists, write it */
+    if (mainHeader) {
+        corto_string snippet;
+        if ((snippet = g_fileLookupHeader(result, ""))) {
             g_fileWrite(result, "\n");
+            g_fileWrite(result, "/* $header()");
+            g_fileWrite(result, "%s", snippet);
+            g_fileWrite(result, "$end */\n");
         }
     }
 
-    c_includeFrom(g, result, g_getCurrent(g), "_type.h");
+    if (o) {
+        g_fileWrite(result, "\n");
+        c_includeFrom(g, result, g_getCurrent(g), "_type.h");
+    }
 
-    if (mainHeader) {
+    if (mainHeader && o) {
         corto_string snippet;
 
         /* Currently the bootstrap code generation is one step ahead of regular
@@ -555,11 +571,11 @@ static corto_int16 c_interfaceHeaderWrite(
             g_fileWrite(result, "$end */\n\n");
         }
     }
-    g_fileWrite(result, "\n");
 
+    g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
-    g_fileWrite(result, "#endif\n\n");
+    g_fileWrite(result, "#endif\n");
 
     return 0;
 error:
@@ -610,13 +626,14 @@ error:
 }
 
 /* Close headerfile */
-static void c_interfaceHeaderFileClose(g_file file) {
+static void c_interfaceHeaderFileClose(g_file file, c_typeWalk_t *data) {
 
     /* Print standard comments and includes */
     g_fileWrite(file, "\n");
     g_fileWrite(file, "#ifdef __cplusplus\n");
     g_fileWrite(file, "}\n");
     g_fileWrite(file, "#endif\n");
+    g_fileWrite(file, "\n");
     g_fileWrite(file, "#endif\n\n");
 }
 
@@ -654,11 +671,15 @@ error:
 }
 
 /* Open generator sourcefile */
-static g_file c_interfaceSourceFileOpen(corto_object o, c_typeWalk_t *data) {
+static g_file c_interfaceSourceFileOpen(corto_object o, corto_string name, c_typeWalk_t *data) {
     g_file result;
     corto_id fileName;
 
-    c_filename(data->g, fileName, o, "c");
+    if (o) {
+        c_filename(data->g, fileName, o, "c");
+    } else {
+        strcpy(fileName, name);
+    }
 
     result = c_interfaceOpenFile(fileName, data);
     if (!result) {
@@ -666,7 +687,9 @@ static g_file c_interfaceSourceFileOpen(corto_object o, c_typeWalk_t *data) {
     }
 
     /* Include main header */
-    c_include(data->g, result, g_getCurrent(data->g));
+    if (o) {
+        c_include(data->g, result, g_getCurrent(data->g));
+    }
 
     return result;
 error:
@@ -723,7 +746,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
      * an interface and has procedures. When the object is not an interface
      * but does have procedures (typical example is callbacks or static functions)
      * these are appended to the header of the first scope in the hierarchy. */
-    if (hasProcedures || (isTopLevelObject && !isBootstrap)) {
+    if (hasProcedures || ((isTopLevelObject && !isBootstrap) && !strcmp(g_getProjectName(data->g), corto_idof(o)))) {
 
         /* Create a wrapper file if it was not already created */
         if (!data->wrapper) {
@@ -734,7 +757,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         }
 
         /* Open sourcefile */
-        data->source = c_interfaceSourceFileOpen(o, data);
+        data->source = c_interfaceSourceFileOpen(o, NULL, data);
         if (!data->source) {
             goto error;
         }
@@ -752,9 +775,16 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
             goto error;
         }
 
+        if (isTopLevelObject && hasProcedures) {
+            /* put newline between procedures and headers */
+            g_fileWrite(data->header, "\n"); 
+        }
+
+
         /* If top level file, generate main function */
         if (isTopLevelObject && !isBootstrap) {
-            if (c_interfaceWriteMain(data->source, corto_idof(o), data)) {
+            data->mainWritten = TRUE;
+            if (c_interfaceWriteMain(data->source, g_getProjectName(data->g), data)) {
                 goto error;
             }
         }
@@ -762,31 +792,9 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         g_fileClose(data->source);
     }
 
-    if (!isTopLevelObject && (o == g_getCurrent(data->g))) {
-        /* If object is current object, but object is not a package, this project
-         * does not have a package. In that case, generate main source file with
-         * the name of the project, instead the name of the object. */
-        corto_id fileName, header;
-        sprintf(fileName, "%s.c", g_getName(data->g));
-        g_file file = g_fileOpen(data->g, fileName);
-
-        g_fileWrite(file, "#include <%s>\n", c_mainheader(data->g, header));
-
-        if ((snippet = g_fileLookupHeader(file, ""))) {
-            g_fileWrite(file, "\n");
-            g_fileWrite(file, "/* $header()");
-            g_fileWrite(file, "%s", snippet);
-            g_fileWrite(file, "$end */\n");
-        }
-
-        if (c_interfaceWriteMain(file, g_getName(data->g), data)) {
-            goto error;
-        }
-    }
-
     /* Close */
     if ((hasProcedures || isInterface) && !isTopLevelObject) {
-        c_interfaceHeaderFileClose(data->header);
+        c_interfaceHeaderFileClose(data->header, data);
     }
 
     return 0;
@@ -891,6 +899,65 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
     return 0;
 }
 
+/* Walk interfaces */
+static int c_interfaceHeaderInclude(corto_object o, void *userData) {
+    c_typeWalk_t* data;
+    data = userData;
+    c_include(data->g, data->source, o);
+    return 1;
+}
+
+corto_int16 c_interfaceWriteMainHeader(c_typeWalk_t *data) {
+    corto_id fileName;
+    corto_bool error = FALSE;
+    sprintf(fileName, "%s.h", g_getProjectName(data->g));
+    g_file file = g_fileOpen(data->g, fileName);
+    if (!file) {
+        goto error;
+    }
+
+    if (c_interfaceHeaderWrite(data->g, file, NULL, g_getName(data->g), fileName, TRUE, data)) {
+        goto error;
+    }
+
+    data->source = file;
+    g_walkNoScope(data->g, c_interfaceHeaderInclude, data);
+    c_interfaceHeaderFileClose(file, data);
+
+    return error;
+error:
+    return -1;
+}
+
+corto_int16 c_interfaceWriteMainSource(c_typeWalk_t *data) {
+    corto_string snippet;
+    corto_id fileName, header;
+    corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
+
+    sprintf(fileName, "%s.%s", g_getProjectName(data->g), cpp ? "cpp" : "c");
+    g_file file = c_interfaceSourceFileOpen(NULL, fileName, data);
+    if (!file) {
+        goto error;
+    }
+
+    g_fileWrite(file, "#include <%s>\n", c_mainheader(data->g, header));
+
+    if ((snippet = g_fileLookupHeader(file, ""))) {
+        g_fileWrite(file, "\n");
+        g_fileWrite(file, "/* $header()");
+        g_fileWrite(file, "%s", snippet);
+        g_fileWrite(file, "$end */\n");
+    }
+
+    if (c_interfaceWriteMain(file, g_getProjectName(data->g), data)) {
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
 /* Entry point for generator */
 int corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
@@ -913,6 +980,7 @@ int corto_genMain(g_generator g) {
     walkData.wrapper = NULL;
     walkData.mainHeader = NULL;
     walkData.generated = corto_llNew();
+    walkData.mainWritten = FALSE;
 
     if (strcmp(g_getAttribute(g, "bootstrap"), "true")) {
         corto_mkdir(".corto");
@@ -921,29 +989,31 @@ int corto_genMain(g_generator g) {
 
         /* If parsing an object and not a package, the mainheader should be
          * the name of the project, not the object */
-        if (!corto_instanceof(corto_package_o, topLevel)) {
-            corto_id headerFileName;
-            sprintf(headerFileName, "%s.h", g_getName(g));
+        if (g_getCurrent(g)) {
+            if (!corto_instanceof(corto_package_o, topLevel)) {
+                corto_id headerFileName;
+                sprintf(headerFileName, "%s.h", g_getProjectName(g));
 
-            g_file mainHeader = g_fileOpen(g, headerFileName);
-            if (!mainHeader) {
-                corto_seterr("failed to open file '%s'", headerFileName);
-                goto error;
-            }
+                g_file mainHeader = g_fileOpen(g, headerFileName);
+                if (!mainHeader) {
+                    corto_seterr("failed to open file '%s'", headerFileName);
+                    goto error;
+                }
 
-            walkData.mainHeader = mainHeader;
+                walkData.mainHeader = mainHeader;
 
-            /* Write header contents */
-            if (c_interfaceHeaderWrite(
-                g,
-                mainHeader,
-                NULL,
-                g_getName(g),
-                headerFileName,
-                TRUE,
-                &walkData))
-            {
-                goto error;
+                /* Write header contents */
+                if (c_interfaceHeaderWrite(
+                    g,
+                    mainHeader,
+                    NULL,
+                    g_getProjectName(g),
+                    headerFileName,
+                    TRUE,
+                    &walkData))
+                {
+                    goto error;
+                }
             }
         }
     }
@@ -954,7 +1024,19 @@ int corto_genMain(g_generator g) {
     }
 
     if (walkData.mainHeader) {
-        c_interfaceHeaderFileClose(walkData.mainHeader);
+        c_interfaceHeaderFileClose(walkData.mainHeader, &walkData);
+    }
+
+    /* If none of the scopes that was generated code for had the same name as
+     * the project, or if this project does not have a package, generate a main
+     * source and header file separately */
+    if (!walkData.mainWritten) {
+        if (c_interfaceWriteMainSource(&walkData)) {
+            goto error;
+        }
+        if (c_interfaceWriteMainHeader(&walkData)) {
+            goto error;
+        }
     }
 
     c_interfaceMarkUnusedFiles(&walkData);

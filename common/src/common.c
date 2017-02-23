@@ -586,11 +586,13 @@ corto_object c_findPackage(g_generator g, corto_object o) {
      * current package */
     if (g_getCurrent(g)) {
         ptr = NULL;
-        corto_iter it = corto_llIter(g->imports);
-        while (corto_iterHasNext(&it)) {
-            corto_object o = corto_iterNext(&it);
-            if (o == package) {
-                ptr = package;
+        if (g->imports) {
+            corto_iter it = corto_llIter(g->imports);
+            while (corto_iterHasNext(&it)) {
+                corto_object o = corto_iterNext(&it);
+                if (o == package) {
+                    ptr = package;
+                }
             }
         }
 
@@ -641,7 +643,11 @@ void c_includeFrom(
 {
     corto_id path, filebuff;
     va_list list;
-    corto_object package = c_findPackage(g, o);
+    corto_object package = NULL;
+
+    if (o) {
+        package = c_findPackage(g, o);
+    }
 
     va_start(list, include);
     vsprintf(filebuff, include, list);
@@ -649,9 +655,10 @@ void c_includeFrom(
 
     /* If an app or local project and the object to include is from this project
      * there is no need to prefix the header with a path */
-    if ((!strcmp(g_getAttribute(g, "local"), "true") ||
+    if ((!package ||
+         !strcmp(g_getAttribute(g, "local"), "true") ||
          !strcmp(g_getAttribute(g, "app"), "true")) &&
-        ((g_getCurrent(g) == package)))
+        (g_getCurrent(g) == package))
     {
         /* Never include headers by just their names, as this could potentially
          * conflict with system headers, for example when a user creates a class
