@@ -950,7 +950,7 @@ corto_int16 c_interfaceWriteMainSource(c_typeWalk_t *data) {
     } else {
         g_fileWrite(file, "\n");
         g_fileWrite(file, "/* $header() */\n");
-        g_fileWrite(file, "/* Enter code outside of main here. */\n", snippet);
+        g_fileWrite(file, "/* Enter code outside of main here. */\n");
         g_fileWrite(file, "/* $end */\n");
     }
 
