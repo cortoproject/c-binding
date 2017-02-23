@@ -551,10 +551,7 @@ static corto_int16 c_interfaceHeaderWrite(
     if (o) {
         g_fileWrite(result, "\n");
         c_includeFrom(g, result, g_getCurrent(g), "_type.h");
-    }
-
-    if (mainHeader && o) {
-        corto_string snippet;
+        c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
         /* Currently the bootstrap code generation is one step ahead of regular
          * corto projects in that it splits up the language-specific code in a
@@ -562,7 +559,10 @@ static corto_int16 c_interfaceHeaderWrite(
         if (!bootstrap) {
             c_includeFrom(g, result, g_getCurrent(g), "_api.h");
         }
-        c_includeFrom(g, result, g_getCurrent(g), "_load.h");
+    }
+
+    if (mainHeader && o) {
+        corto_string snippet;
 
         if ((snippet = g_fileLookupSnippet(result, ""))) {
             g_fileWrite(result, "\n");
@@ -947,6 +947,11 @@ corto_int16 c_interfaceWriteMainSource(c_typeWalk_t *data) {
         g_fileWrite(file, "/* $header()");
         g_fileWrite(file, "%s", snippet);
         g_fileWrite(file, "$end */\n");
+    } else {
+        g_fileWrite(file, "\n");
+        g_fileWrite(file, "/* $header() */\n");
+        g_fileWrite(file, "/* Enter code outside of main here. */\n", snippet);
+        g_fileWrite(file, "/* $end */\n");
     }
 
     if (c_interfaceWriteMain(file, g_getProjectName(data->g), data)) {
