@@ -540,11 +540,15 @@ static corto_int16 c_interfaceHeaderWrite(
     /* If a header exists, write it */
     if (mainHeader) {
         corto_string snippet;
+        g_fileWrite(result, "\n");
         if ((snippet = g_fileLookupHeader(result, ""))) {
-            g_fileWrite(result, "\n");
             g_fileWrite(result, "/* $header()");
             g_fileWrite(result, "%s", snippet);
             g_fileWrite(result, "$end */\n");
+        } else {
+            g_fileWrite(result, "/* $header() */\n");
+            g_fileWrite(result, "/* Enter additional code here. */\n");
+            g_fileWrite(result, "/* $end */\n");
         }
     }
 
@@ -564,11 +568,15 @@ static corto_int16 c_interfaceHeaderWrite(
     if (mainHeader && o) {
         corto_string snippet;
 
+        g_fileWrite(result, "\n");
         if ((snippet = g_fileLookupSnippet(result, ""))) {
-            g_fileWrite(result, "\n");
             g_fileWrite(result, "/* $body()");
             g_fileWrite(result, "%s", snippet);
             g_fileWrite(result, "$end */\n\n");
+        } else {
+            g_fileWrite(result, "/* $body() */\n");
+            g_fileWrite(result, "/* Enter code that requires types here */\n", snippet);
+            g_fileWrite(result, "/* $end */\n\n");
         }
     }
 
