@@ -655,8 +655,7 @@ void c_includeFrom(
 
     /* If an app or local project and the object to include is from this project
      * there is no need to prefix the header with a path */
-    if ((!package ||
-         !strcmp(g_getAttribute(g, "local"), "true") ||
+    if ((!strcmp(g_getAttribute(g, "local"), "true") ||
          !strcmp(g_getAttribute(g, "app"), "true")) &&
         (g_getCurrent(g) == package))
     {
@@ -665,8 +664,14 @@ void c_includeFrom(
          * called "time". */
         g_fileWrite(file, "#include <include/%s>\n", filebuff);
     } else {
+        if (package) {
+            corto_path(path, root_o, package, "/");
+        } else {
+            char *ptr, ch;
+            strcpy(path, g_getName(g));
+        }
         g_fileWrite(file, "#include <%s/%s>\n",
-          corto_path(path, root_o, package, "/"),
+          path,
           filebuff);
     }
 }

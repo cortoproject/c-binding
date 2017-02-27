@@ -974,6 +974,7 @@ error:
 /* Entry point for generator */
 int corto_genMain(g_generator g) {
     c_typeWalk_t walkData;
+    corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     /* Create source and include directories */
     corto_mkdir("src");
@@ -995,7 +996,7 @@ int corto_genMain(g_generator g) {
     walkData.generated = corto_llNew();
     walkData.mainWritten = FALSE;
 
-    if (strcmp(g_getAttribute(g, "bootstrap"), "true")) {
+    if (!bootstrap) {
         corto_mkdir(".corto");
 
         corto_object topLevel = g_getCurrent(g);
@@ -1043,7 +1044,7 @@ int corto_genMain(g_generator g) {
     /* If none of the scopes that was generated code for had the same name as
      * the project, or if this project does not have a package, generate a main
      * source and header file separately */
-    if (!walkData.mainWritten) {
+    if (!walkData.mainWritten && !bootstrap) {
         if (c_interfaceWriteMainSource(&walkData)) {
             goto error;
         }
