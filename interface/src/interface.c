@@ -486,6 +486,9 @@ static corto_int16 c_interfaceHeaderWrite(
     corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     corto_bool error = FALSE;
     corto_id path;
+
+    CORTO_UNUSED(data);
+
     strcpy(path, name);
     corto_strupper(path);
     char *ptr, ch;
@@ -636,6 +639,8 @@ error:
 /* Close headerfile */
 static void c_interfaceHeaderFileClose(g_file file, c_typeWalk_t *data) {
 
+    CORTO_UNUSED(data);
+
     /* Print standard comments and includes */
     g_fileWrite(file, "\n");
     g_fileWrite(file, "#ifdef __cplusplus\n");
@@ -682,9 +687,10 @@ error:
 static g_file c_interfaceSourceFileOpen(corto_object o, corto_string name, c_typeWalk_t *data) {
     g_file result;
     corto_id fileName;
+    corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
 
     if (o) {
-        c_filename(data->g, fileName, o, "c");
+        c_filename(data->g, fileName, o, cpp ? "cpp" : "c");
     } else {
         strcpy(fileName, name);
     }
