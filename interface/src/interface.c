@@ -568,18 +568,18 @@ static corto_int16 c_interfaceHeaderWrite(
         }
     }
 
-    if (mainHeader && o) {
+    if (mainHeader) {
         corto_string snippet;
 
         g_fileWrite(result, "\n");
         if ((snippet = g_fileLookupSnippet(result, ""))) {
             g_fileWrite(result, "/* $body()");
             g_fileWrite(result, "%s", snippet);
-            g_fileWrite(result, "$end */\n\n");
+            g_fileWrite(result, "$end */\n");
         } else {
             g_fileWrite(result, "/* $body() */\n");
             g_fileWrite(result, "/* Enter code that requires types here */\n", snippet);
-            g_fileWrite(result, "/* $end */\n\n");
+            g_fileWrite(result, "/* $end */\n");
         }
     }
 
