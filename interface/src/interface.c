@@ -1054,8 +1054,10 @@ int corto_genMain(g_generator g) {
         if (c_interfaceWriteMainSource(&walkData)) {
             goto error;
         }
-        if (c_interfaceWriteMainHeader(&walkData)) {
-            goto error;
+        if (!walkData.mainHeader) {
+            if (c_interfaceWriteMainHeader(&walkData)) {
+                goto error;
+            }
         }
     }
 
