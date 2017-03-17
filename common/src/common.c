@@ -667,7 +667,6 @@ void c_includeFrom(
         if (package) {
             corto_path(path, root_o, package, "/");
         } else {
-            char *ptr, ch;
             strcpy(path, g_getName(g));
         }
         g_fileWrite(file, "#include <%s/%s>\n",
