@@ -144,7 +144,8 @@ static int c_interfaceCastMacro(corto_function o, corto_string functionName, c_t
     g_fileWrite(data->header, ") _%s(", functionName);
 
     if (c_procedureHasThis(o)) {
-        if (corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
+        corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
+        if (!thisType || thisType->reference) {
             corto_id classId;
             corto_type parentType = corto_parentof(o);
             g_fullOid(data->g, parentType, classId);
@@ -307,7 +308,6 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
     if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
         corto_id fullname, functionName, signatureName, returnSpec;
         corto_string snippet, header;
-        corto_procedureKind kind;
         corto_type returnType;
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
@@ -315,7 +315,6 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_fullpath(fullname, o);
         c_functionName(data->g, o, functionName);
 
-        kind = corto_procedure(corto_typeof(o))->kind;
         defined = corto_checkState(o, CORTO_DEFINED) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
 
         /* Check whether generation of stubs must be forced */
@@ -414,7 +413,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
                 g_fileWrite(data->source, ",NULL");
             }
             if (corto_class_instanceof(corto_interface_o, corto_parentof(o))) {
-                if (corto_procedure(corto_typeof(o))->kind != CORTO_FUNCTION) {
+                if (corto_procedure(corto_typeof(o))->hasThis) {
                     if (!cpp) {
                         g_fileWrite(data->source, ",this");
                     } else {
@@ -437,22 +436,11 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->source, "$end */\n");
         g_fileWrite(data->source, "}\n");
 
-        /* If procedure is a delegate, generate delegate forwarding-function. Nothing
-         * further needs to be generated in the sourcefile for a delegate. */
-        switch (kind) {
-        case CORTO_METHOD:
-            if (corto_method(o)->_virtual) {
-                c_interfaceGenerateVirtual(o, data);
-            }
-        default:
-            if (defined) {
-                goto ok;
-            }
-            break;
+        if (corto_function(o)->overridable) {
+            c_interfaceGenerateVirtual(o, data);
         }
     }
 
-ok:
     return 1;
 error:
     return 0;

@@ -1393,16 +1393,18 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
         g_fileWrite(data->source, ", %s* _result", returnId);
     }
 
-    {corto_parameterseqForeach(t->parameters, p) {
-        g_fullOid(data->g, p.type, paramType);
-        g_id(data->g, p.name, paramName);
+    corto_int32 i;
+    for (i = 0; i < t->parameters.length; i++) {
+        corto_parameter *p = &t->parameters.buffer[i];
+        g_fullOid(data->g, p->type, paramType);
+        g_id(data->g, p->name, paramName);
         corto_bool ptr =
-            !p.type->reference &&
-            (p.passByReference || (p.type->kind == CORTO_COMPOSITE));
+            !p->type->reference &&
+            (p->passByReference || (p->type->kind == CORTO_COMPOSITE));
 
         g_fileWrite(data->header, ", %s%s %s", paramType, ptr ? "*" : "", paramName);
         g_fileWrite(data->source, ", %s%s %s", paramType, ptr ? "*" : "", paramName);
-    }}
+    }
 
     g_fileWrite(data->header, ");\n");
     g_fileWrite(data->source, ") {\n");
@@ -1417,11 +1419,12 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     } else {
         g_fileWrite(data->source, "corto_call(_delegate->_parent.procedure, NULL, _delegate->_parent.instance");
     }
-    {corto_parameterseqForeach(t->parameters, p) {
-        g_fullOid(data->g, p.type, paramType);
-        g_id(data->g, p.name, paramName);
+    for (i = 0; i < t->parameters.length; i++) {
+        corto_parameter *p = &t->parameters.buffer[i];
+        g_fullOid(data->g, p->type, paramType);
+        g_id(data->g, p->name, paramName);
         g_fileWrite(data->source, ", %s", paramName);
-    }}
+    }
     g_fileWrite(data->source, ");\n");
     g_fileDedent(data->source);
     g_fileWrite(data->source, "} else {\n");
@@ -1431,11 +1434,12 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     } else {
         g_fileWrite(data->source, "corto_call(_delegate->_parent.procedure, NULL");
     }
-    {corto_parameterseqForeach(t->parameters, p) {
-        g_fullOid(data->g, p.type, paramType);
-        g_id(data->g, p.name, paramName);
+    for (i = 0; i < t->parameters.length; i++) {
+        corto_parameter *p = &t->parameters.buffer[i];
+        g_fullOid(data->g, p->type, paramType);
+        g_id(data->g, p->name, paramName);
         g_fileWrite(data->source, ", %s", paramName);
-    }}
+    }
     g_fileWrite(data->source, ");\n");
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");

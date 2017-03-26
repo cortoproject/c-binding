@@ -459,7 +459,7 @@ corto_char* c_escapeString(corto_string str) {
 
 corto_bool c_procedureHasThis(corto_function o) {
     corto_procedure t = corto_procedure(corto_typeof(o));
-    return t->kind == CORTO_METHOD || t->kind == CORTO_OBSERVER || t->kind == CORTO_METAPROCEDURE;
+    return t->hasThis;
 }
 
 corto_string c_paramName(corto_string name, corto_string buffer) {
@@ -781,10 +781,8 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
 
 char* c_functionName(g_generator g, corto_function o, corto_id id) {
     g_fullOid(g, o, id);
-    if (corto_instanceof(corto_type(corto_method_o), o)) {
-        if (corto_method(o)->_virtual) {
-            strcat(id, "_v");
-        }
+    if (o->overridable) {
+        strcat(id, "_v");
     }
     return id;
 }
@@ -916,7 +914,8 @@ corto_int16 c_decl(
 
     /* Add 'this' parameter to methods */
     if (c_procedureHasThis(o)) {
-        if (corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
+        corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
+        if (!thisType || thisType->reference) {
             c_paramThis(g, file, cpp, corto_parentof(o));
         } else {
             if (!cpp) {

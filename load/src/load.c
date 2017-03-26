@@ -692,7 +692,7 @@ static int c_loadCFunction(corto_function o, c_typeWalk_t* data, corto_id name) 
     /* Print name */
     g_fullOid(data->g, o, name);
     if (c_procedureHasThis(o)) {
-        if (corto_instanceof(corto_type(corto_method_o), o) && corto_method(o)->_virtual) {
+        if (o->overridable) {
             strcat(name, "_v");
         }
     }
