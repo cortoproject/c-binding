@@ -5,13 +5,15 @@
 /* Load dependencies */
 static void c_projectLoadPackages(g_generator g, g_file file) {
 
-    corto_iter iter = corto_llIter(g->imports);
-    while (corto_iterHasNext(&iter)) {
-        corto_object o = corto_iterNext(&iter);
-        g_fileWrite(
-            file, 
-            "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 
-            corto_path(NULL, NULL, o, "/"));
+    if (g->imports) {
+        corto_iter iter = corto_llIter(g->imports);
+        while (corto_iterHasNext(&iter)) {
+            corto_object o = corto_iterNext(&iter);
+            g_fileWrite(
+                file, 
+                "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 
+                corto_path(NULL, NULL, o, "/"));
+        }
     }
 }
 
