@@ -621,14 +621,7 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
         break;
     }
     case CORTO_LIST:
-        /* Create list object */
-        if (*(corto_ll*)ptr) {
-            g_fileWrite(data->source, "%s = corto_llNew();\n",
-                    c_loadMemberId(data, v, memberId, FALSE));
-            size = corto_llSize(*(corto_ll*)ptr);
-        } else {
-            g_fileWrite(data->source, "%s = NULL;\n", c_loadMemberId(data, v, memberId, FALSE));
-        }
+        /* Lists are created by initializer */
         break;
     case CORTO_MAP: {
         corto_id keyId;
