@@ -362,12 +362,11 @@ static void c_sourceWriteLoadStart(g_generator g, g_file file) {
     g_fileWrite(file, "corto_object _e_; /* Used for resolving extern objects */\n");
     g_fileWrite(file, "(void)_e_;\n");
     g_fileWrite(file, "_a_ = NULL;\n\n");
-    g_fileWrite(file, "corto_attr prevAttr = corto_setAttr(CORTO_ATTR_PERSISTENT);\n\n");
+    g_fileWrite(file, "corto_attr prevAttr = corto_getAttr();\n\n");
 }
 
 /* Write end of load-routine */
 static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
-    g_fileWrite(file, "corto_setAttr(prevAttr);\n\n");
     g_fileWrite(file, "if (_a_) {\n");
     g_fileIndent(file);
     g_fileWrite(file, "corto_release(_a_);\n");
@@ -383,6 +382,7 @@ static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
         g_fileWrite(file, "corto_release(_a_);\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
+        g_fileWrite(file, "corto_setAttr(prevAttr);\n");
         g_fileWrite(file, "return -1;\n");
     }
     g_fileDedent(file);
@@ -621,14 +621,7 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
         break;
     }
     case CORTO_LIST:
-        /* Create list object */
-        if (*(corto_ll*)ptr) {
-            g_fileWrite(data->source, "%s = corto_llNew();\n",
-                    c_loadMemberId(data, v, memberId, FALSE));
-            size = corto_llSize(*(corto_ll*)ptr);
-        } else {
-            g_fileWrite(data->source, "%s = NULL;\n", c_loadMemberId(data, v, memberId, FALSE));
-        }
+        /* Lists are created by initializer */
         break;
     case CORTO_MAP: {
         corto_id keyId;
@@ -734,6 +727,10 @@ static int c_loadDeclare(corto_object o, void* userData) {
     c_varId(data->g, o, varId);
     c_specifierId(data->g, corto_typeof(o), typeCast, NULL, postfix);
 
+    if (o == g_getCurrent(data->g) && corto_instanceof(corto_package_o, o)) {
+         g_fileWrite(data->source, "prevAttr = corto_setAttr(CORTO_ATTR_PERSISTENT);\n");
+    }
+
     if (!corto_checkAttr(o, CORTO_ATTR_SCOPED) || !corto_childof(root_o, o)) {
         g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
     } else {
@@ -788,7 +785,13 @@ static int c_loadDeclare(corto_object o, void* userData) {
     data->errorCount++;
     g_fileDedent(data->source);
 
-    g_fileWrite(data->source, "}\n\n");
+    g_fileWrite(data->source, "}\n");
+
+    if (o == g_getCurrent(data->g) && corto_instanceof(corto_package_o, o)) {
+        g_fileWrite(data->source, "corto_setAttr(prevAttr);\n");
+    }
+
+    g_fileWrite(data->source, "\n");
 
     return 1;
 }
