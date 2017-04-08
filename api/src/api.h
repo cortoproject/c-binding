@@ -15,6 +15,7 @@ extern "C" {
 
 typedef struct c_apiWalk_t {
     g_generator g;
+    g_file mainHeader;
     g_file header;
     g_file source;
     corto_string _this;
