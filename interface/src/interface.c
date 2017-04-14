@@ -472,6 +472,8 @@ static corto_int16 c_interfaceHeaderWrite(
     c_typeWalk_t *data)
 {
     corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+
     corto_bool error = FALSE;
     corto_id path;
 
@@ -548,11 +550,12 @@ static corto_int16 c_interfaceHeaderWrite(
         c_includeFrom(g, result, g_getCurrent(g), "_type.h");
         c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
-        /* Currently the bootstrap code generation is one step ahead of regular
-         * corto projects in that it splits up the language-specific code in a
-         * separate package */
         if (!bootstrap) {
-            c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+            if (!local) {
+                c_includeFrom(g, result, g_getCurrent(g), "c/_api.h");
+            } else {
+                c_includeFrom(g, result, g_getCurrent(g), "_api.h");   
+            }
         }
     }
 

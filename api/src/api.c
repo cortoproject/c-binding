@@ -157,12 +157,13 @@ error:
 /* Open headerfile, write standard header. */
 static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     g_file result;
+    corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
     corto_id headerFileName, path;
     corto_id name;
     corto_fullpath(name, g_getCurrent(data->g));
     char *namePtr = g_getName(data->g), *ptr = name + 1;
 
-    while (*namePtr == *ptr) {
+    while (*namePtr == *ptr && *namePtr && *ptr) {
         namePtr ++;
         ptr ++;
     }
@@ -179,7 +180,9 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     /* Create file */
     sprintf(headerFileName, "%s.h", ptr);
 
-    g_fileWrite(data->mainHeader, "#include <%s/c/%s>\n", g_getName(data->g), headerFileName);
+    if (!local) {
+        g_fileWrite(data->mainHeader, "#include <%s/c/%s>\n", g_getName(data->g), headerFileName);
+    }
 
     /* Create file */
     result = g_fileOpen(data->g, headerFileName);
@@ -202,6 +205,7 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(data->g));
     } else {
         c_includeFrom(data->g, result, g_getCurrent(data->g), "_project.h");
+        c_includeFrom(data->g, result, g_getCurrent(data->g), "_type.h");
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
@@ -227,11 +231,12 @@ static g_file c_apiSourceOpen(g_generator g) {
     g_file result;
     corto_id sourceFileName;
     corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     corto_id name;
     corto_fullpath(name, g_getCurrent(g));
     char *namePtr = g_getName(g), *ptr = name + 1;
 
-    while (*namePtr == *ptr) {
+    while (*namePtr == *ptr && *namePtr && *ptr) {
         namePtr ++;
         ptr ++;
     }
@@ -261,7 +266,11 @@ static g_file c_apiSourceOpen(g_generator g) {
     g_fileWrite(result, " */\n\n");
 
     c_include(g, result, g_getCurrent(g));
-    g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
+    if (!local) {
+        g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
+    } else {
+        g_fileWrite(result, "#include <include/_api.h>\n");
+    }
 
     return result;
 error:
@@ -270,6 +279,8 @@ error:
 
 static int c_apiWalkPackages(corto_object o, void* userData) {
     c_apiWalk_t *data = userData;
+
+    CORTO_UNUSED(o);
 
     g_generator g = data->g;
 
@@ -296,42 +307,46 @@ error:
 
 /* Generator main */
 corto_int16 corto_genMain(g_generator g) {
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     c_apiWalk_t walkData;
     memset(&walkData, 0, sizeof(walkData));
     char *cwd = corto_strdup(corto_cwd());
 
     /* Create project files */
-    if (!corto_fileTest("c/rakefile")) {
-        corto_int8 ret, sig;
-        corto_id cmd;
-        sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent", g_getName(g));
-        sig = corto_proccmd(cmd, &ret);
-        if (sig || ret) {
-            corto_seterr("failed to setup project for '%s/c'", 
-                g_getName(g));
-            goto error;
+    if (!local) {
+        if (!corto_fileTest("c/rakefile")) {
+            corto_int8 ret, sig;
+            corto_id cmd;
+            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent", g_getName(g));
+            sig = corto_proccmd(cmd, &ret);
+            if (sig || ret) {
+                corto_seterr("failed to setup project for '%s/c'", 
+                    g_getName(g));
+                goto error;
+            }
+
+            /* Overwrite rakefile */
+            g_file rakefile = g_fileOpen(g, "c/rakefile");
+            if (!rakefile) {
+                corto_seterr("failed to open c/rakefile: %s", corto_lasterr());
+                goto error;
+            }
+            g_fileWrite(rakefile, "PACKAGE = '%s/c'\n\n", g_getName(g));
+            g_fileWrite(rakefile, "NOCORTO = true\n");
+            g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
+            g_fileClose(rakefile);
         }
 
-        /* Overwrite rakefile */
-        g_file rakefile = g_fileOpen(g, "c/rakefile");
-        if (!rakefile) {
-            corto_seterr("failed to open c/rakefile: %s", corto_lasterr());
+        corto_chdir("c");
+
+        walkData.mainHeader = g_fileOpen(g, "c.h");
+        if (!walkData.mainHeader) {
             goto error;
         }
-        g_fileWrite(rakefile, "PACKAGE = '%s/c'\n\n", g_getName(g));
-        g_fileWrite(rakefile, "NOCORTO = true\n");
-        g_fileWrite(rakefile, "USE_PACKAGE = ['%s']\n\n", g_getName(g));
-        g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
-        g_fileClose(rakefile);
+    } else {
+        walkData.mainHeader = NULL;
     }
-
-    corto_chdir("c");
-
     walkData.g = g;
-    walkData.mainHeader = g_fileOpen(g, "c.h");
-    if (!walkData.mainHeader) {
-        goto error;
-    }
 
     walkData.collections = c_findType(g, corto_collection_o);
     walkData.iterators = c_findType(g, corto_iterator_o);
@@ -354,8 +369,10 @@ corto_int16 corto_genMain(g_generator g) {
     corto_llFree(walkData.collections);
     corto_llFree(walkData.iterators);
 
-    corto_chdir(cwd);
-    corto_dealloc(cwd);
+    if (!local) {
+        corto_chdir(cwd);
+        corto_dealloc(cwd);
+    }
 
     return 0;
 error:
