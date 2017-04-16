@@ -355,9 +355,6 @@ corto_int16 c_specifierId(
         g_fullOid(g, t, specifier);
     } else {
         switch(corto_type(t)->kind) {
-        case CORTO_PRIMITIVE:
-            c_primitiveId(g, corto_primitive(t), specifier);
-            break;
         case CORTO_COLLECTION: {
             corto_id _specifier, _postfix;
             corto_type elementType = corto_collection(t)->elementType;

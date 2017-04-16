@@ -204,10 +204,8 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
         }
 
         /* Write typedef */
-        if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
-            g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-            g_fileWrite(data->header, "typedef %s %s;\n", buff, c_typeId(data->g, t, id));
-        }
+        g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
+        g_fileWrite(data->header, "typedef %s %s;\n", buff, c_typeId(data->g, t, id));
         break;
     }
 
@@ -397,8 +395,11 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
     data = userData;
     t = corto_value_getType(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
+    g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
+    g_fileWrite(data->header, "#define %s_DEFINED\n", id);
     g_fileWrite(data->header, "CORTO_LIST(%s);\n",
             id);
+    g_fileWrite(data->header, "#endif\n");
 
     return 0;
 }
@@ -570,14 +571,87 @@ error:
     return -1;
 }
 
+typedef struct c_typeDepWalk_t {
+    g_generator g;
+    corto_ll dependencies;
+} c_typeDepWalk_t;
+
+static corto_package c_typeGetDepencency(g_generator g, corto_object o) {
+    corto_package result = NULL;
+
+    if (!g_mustParse(g, o)) {
+        corto_object parent = o;
+        while (parent && !corto_instanceof(corto_package_o, parent)) {
+            parent = corto_parentof(parent);
+        }
+
+        if (parent && !corto_childof(g_getCurrent(g), parent)) {
+            result = parent;
+        }
+    }
+
+    return result;
+}
+
+/* Serialize dependencies on references */
+static corto_int16 c_typeEvalRef(corto_serializer s, corto_value* info, void* userData) {
+    c_typeDepWalk_t *data = userData;
+
+    CORTO_UNUSED(s);
+
+    corto_object dep = *(corto_object*)corto_value_getPtr(info);
+    if (dep) {
+        dep = c_typeGetDepencency(data->g, dep);
+    }
+
+    if (dep) {
+        if (!data->dependencies) {
+            data->dependencies = corto_llNew();
+        }
+        if (!corto_llHasObject(data->dependencies, dep)) {
+            corto_llAppend(data->dependencies, dep);
+        }
+    }
+
+    return 0;
+}
+
+/* Dependency serializer */
+struct corto_serializer_s corto_typeDepSerializer(void) {
+    struct corto_serializer_s s;
+
+    corto_serializerInit(&s);
+    s.reference = c_typeEvalRef;
+    s.access = CORTO_LOCAL;
+    s.accessKind = CORTO_NOT;
+
+    return s;
+}
+
+static int c_typeCollectDependency(corto_object o, void *userData) {
+    struct corto_serializer_s s = corto_typeDepSerializer();
+    corto_serialize(&s, o, userData);
+    return 1;
+}
+
+static corto_ll c_typeCollectDependencies(g_generator g) {
+    c_typeDepWalk_t walkData = {.g = g};
+
+    /* Walk objects in dependency order */
+    if (corto_genDepWalk(g, NULL, c_typeCollectDependency, &walkData)) {
+        goto error;
+    }
+
+    return walkData.dependencies;
+error:
+    return NULL;
+}
+
 /* Open headerfile, write standard header. */
 static g_file c_typeHeaderFileOpen(g_generator g) {
     g_file result;
     corto_id headerFileName, path;
-    corto_iter importIter;
-    corto_object import;
-    corto_string headerSnippet;
-    corto_string bootstrap = g_getAttribute(g, "bootstrap");
+    corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     /* Get & write prefix */
     g_object *go = g_findObjectInclusive(g, g_getCurrent(g), NULL);
@@ -615,29 +689,30 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     g_fileWrite(result, "#define %s__TYPE_H\n\n", path);
 
     /* Don't include this file when generating for the bootstrap */
-    if (!bootstrap || strcmp(bootstrap, "true")) {
-        c_includeFrom(g, result, corto_o, "corto.h");
-    } else {
+    if (bootstrap) {
         if (g_getCurrent(g) == corto_lang_o) {
             c_includeFrom(g, result, corto_o, "def.h");
         } else {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
-    }
-
-    /* Include imports */
-    if (g->imports) {
-        importIter = corto_llIter(g->imports);
-        while(corto_iterHasNext(&importIter)) {
-            import = corto_iterNext(&importIter);
-            c_include(g, result, import);
+    } else {
+        /* Dynamically determine dependencies of metadata so we know which _type
+         * headers to include. This cannot be derived from the list of imports
+         * because it can contain packages that don't have a _type header.
+         *
+         * We also don't want to include the main header of the import packages
+         * here because that would potentially include headers to which this
+         * package does not have include paths for. */
+        corto_ll dependencies = c_typeCollectDependencies(g);
+        if (dependencies) {
+            corto_iter it = corto_llIter(dependencies);
+            while (corto_iterHasNext(&it)) {
+                corto_object o = corto_iterNext(&it);
+                c_includeFrom(g, result, o, "_type.h");
+            }
+            corto_llFree(dependencies);
+            g_fileWrite(result, "\n");
         }
-        g_fileWrite(result, "\n");
-    }
-
-    headerSnippet = g_fileLookupHeader(result, "");
-    if (headerSnippet) {
-        g_fileWrite(result, "\n/* $header()%s$end */\n\n", headerSnippet);
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");

@@ -104,31 +104,6 @@ static int c_projectCleanInclude(corto_object o, void *userData) {
     return 1;
 }
 
-/* Generate dependency makefile for project */
-static corto_int16 c_projectGenerateDepMakefile(g_generator g) {
-    g_file file;
-    c_projectCleanInclude_t walkData;
-
-    file = g_hiddenFileOpen(g, "dep.rb");
-    if(!file) {
-        goto error;
-    }
-
-    g_fileWrite(file, "require 'rake/clean'\n");
-
-    g_fileWrite(file, "\n");
-    g_fileWrite(file, "# Clobber generated header files\n");
-    walkData.file = file;
-    walkData.g = g;
-    g_fileWrite(file, "\n");
-    g_walkRecursive(g, c_projectCleanInclude, &walkData);
-    g_fileWrite(file, "CLOBBER.include(\".corto/dep.rb\")\n");
-
-    return 0;
-error:
-    return -1;
-}
-
 /* Generate interface header with macro's for exporting */
 static corto_int16 c_genInterfaceHeader(g_generator g) {
     corto_id interfaceHeaderName;
@@ -205,15 +180,6 @@ corto_int16 corto_genMain(g_generator g) {
             corto_seterr("failed to create interface header");
         }
         goto error;
-    }
-
-    if (g->objects) {
-        if(c_projectGenerateDepMakefile(g)) {
-            if (!corto_lasterr()) {
-                corto_seterr("failed to create dependency rakefile");
-            }
-            goto error;
-        }
     }
 
     return 0;
