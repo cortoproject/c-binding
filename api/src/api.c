@@ -158,6 +158,7 @@ error:
 static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     g_file result;
     corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
     corto_id headerFileName, path;
     corto_id name;
     corto_fullpath(name, g_getCurrent(data->g));
@@ -180,7 +181,7 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     /* Create file */
     sprintf(headerFileName, "%s.h", ptr);
 
-    if (!local) {
+    if (!local && !app) {
         g_fileWrite(data->mainHeader, "#include <%s/c/%s>\n", g_getName(data->g), headerFileName);
     }
 
@@ -232,6 +233,7 @@ static g_file c_apiSourceOpen(g_generator g) {
     corto_id sourceFileName;
     corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
     corto_id name;
     corto_fullpath(name, g_getCurrent(g));
     char *namePtr = g_getName(g), *ptr = name + 1;
@@ -265,11 +267,12 @@ static g_file c_apiSourceOpen(g_generator g) {
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
 
-    if (!local) {
+    if (!local && !app) {
         g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
         g_fileWrite(result, "#include <%s/_load.h>\n", g_getName(g));
     } else {
         g_fileWrite(result, "#include <include/_api.h>\n");
+        g_fileWrite(result, "#include <include/_load.h>\n", g_getName(g));
     }
     g_fileWrite(result, "\n");
 
@@ -309,12 +312,14 @@ error:
 /* Generator main */
 corto_int16 corto_genMain(g_generator g) {
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
+
     c_apiWalk_t walkData;
     memset(&walkData, 0, sizeof(walkData));
     char *cwd = corto_strdup(corto_cwd());
 
     /* Create project files */
-    if (!local) {
+    if (!local && !app) {
         if (!corto_fileTest("c/rakefile")) {
             corto_int8 ret, sig;
             corto_id cmd;

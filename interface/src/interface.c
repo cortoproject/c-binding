@@ -473,6 +473,7 @@ static corto_int16 c_interfaceHeaderWrite(
 {
     corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
 
     corto_bool error = FALSE;
     corto_id path;
@@ -552,7 +553,7 @@ static corto_int16 c_interfaceHeaderWrite(
         c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
         if (!bootstrap) {
-            if (!local) {
+            if (!local && !app) {
                 c_includeFrom(g, result, g_getCurrent(g), "c/_api.h");
             } else {
                 c_includeFrom(g, result, g_getCurrent(g), "_api.h");   
