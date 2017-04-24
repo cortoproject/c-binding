@@ -571,6 +571,26 @@ error:
     return -1;
 }
 
+/* Print class-cast macro's */
+static int c_typeNativeTypedefWalk(corto_object o, void* userData) {
+    c_typeWalk_t* data;
+    corto_id id;
+
+    data = userData;
+
+    if (corto_instanceof(corto_native_type_o, o)) {
+        corto_id postfix;
+        if (c_specifierId(data->g, o, id, NULL, postfix)) {
+            goto error;
+        }
+        g_fileWrite(data->header, "typedef void* %s;\n", id);
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
 typedef struct c_typeDepWalk_t {
     g_generator g;
     corto_ll dependencies;
@@ -787,9 +807,6 @@ static int c_typeDefine(corto_object o, void* userData) {
     /* Do metawalk on type */
     result = corto_metaWalk(&s, corto_type(o), userData);
 
-    /* TODO: Print cast macro */
-    /* c_typeClassCastWalk(o, userData); */
-
     return result;
 }
 
@@ -821,6 +838,18 @@ corto_int16 corto_genMain(g_generator g) {
             goto error;
         }
     }
+
+    /* Define native types as void* if _type.h is used by itself */
+    corto_id path;
+    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_strupper(path);
+    g_fileWrite(walkData.header, "\n");
+    g_fileWrite(walkData.header, "/* Native types */\n");
+    g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
+    if (corto_genTypeDepWalk(g, NULL, c_typeNativeTypedefWalk, &walkData)) {
+        goto error;
+    }
+    g_fileWrite(walkData.header, "#endif\n");
 
     g_fileWrite(walkData.header, "\n");
     g_fileWrite(walkData.header, "/* Type definitions */\n");
