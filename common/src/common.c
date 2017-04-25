@@ -672,6 +672,18 @@ void c_includeFrom(
     }
 }
 
+void c_includeDependencies(g_generator g, g_file file, corto_string header) {
+    corto_ll dependencies = g_getDependencies(g);
+    if (dependencies) {
+        corto_iter it = corto_llIter(dependencies);
+        while (corto_iterHasNext(&it)) {
+            corto_object o = corto_iterNext(&it);
+            c_includeFrom(g, file, o, header);
+        }
+        corto_llFree(dependencies);
+    }
+}
+
 void c_include(g_generator g, g_file file, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(g, o);
@@ -967,3 +979,5 @@ char* c_mainheader(g_generator g, corto_id header) {
 
     return header;
 }
+
+

@@ -300,6 +300,11 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     g_fileWrite(result, "#define %s_LOAD_H\n\n", path);
     c_includeFrom(g, result, corto_o, "corto.h");
     c_includeFrom(g, result, g_getCurrent(g), "_project.h");
+
+    /* Include _type.h from dependencies, just in case there are objects of a
+     * type defined in another package */
+    c_includeDependencies(g, result, "_type.h");
+
     g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
@@ -622,6 +627,7 @@ static corto_int16 c_initCollection(corto_serializer s, corto_value* v, void* us
     }
     case CORTO_LIST:
         /* Lists are created by initializer */
+        size = corto_llSize(*(corto_ll*)ptr);
         break;
     case CORTO_MAP: {
         corto_id keyId;
