@@ -8,7 +8,7 @@
 
 #include <include/test.h>
 
-corto_int16 _test_compositeType_init(
+int16_t _test_compositeType_init(
     test_compositeType* this)
 {
 /* $begin(test/compositeType/init) */

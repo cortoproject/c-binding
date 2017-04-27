@@ -160,17 +160,20 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
     corto_id headerFileName, path;
-    corto_id name;
-    corto_fullpath(name, g_getCurrent(data->g));
+    corto_id name = {0};
     char *namePtr = g_getName(data->g), *ptr = name + 1;
 
-    while (*namePtr == *ptr && *namePtr && *ptr) {
-        namePtr ++;
-        ptr ++;
-    }
+    if (!app && !local) {
+        corto_fullpath(name, g_getCurrent(data->g));
 
-    if (ptr[0] == '/') {
-        ptr ++;
+        while (*namePtr == *ptr && *namePtr && *ptr) {
+            namePtr ++;
+            ptr ++;
+        }
+
+        if (ptr[0] == '/') {
+            ptr ++;
+        }
     }
 
     if (!ptr[0]) {
@@ -234,17 +237,23 @@ static g_file c_apiSourceOpen(g_generator g) {
     corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
-    corto_id name;
-    corto_fullpath(name, g_getCurrent(g));
+    corto_id name = {0};
     char *namePtr = g_getName(g), *ptr = name + 1;
+    corto_bool hidden = FALSE;
 
-    while (*namePtr == *ptr && *namePtr && *ptr) {
-        namePtr ++;
-        ptr ++;
-    }
+    if (!app && !local) {
+        corto_fullpath(name, g_getCurrent(g));
 
-    if (ptr[0] == '/') {
-        ptr ++;
+        while (*namePtr == *ptr && *namePtr && *ptr) {
+            namePtr ++;
+            ptr ++;
+        }
+
+        if (ptr[0] == '/') {
+            ptr ++;
+        }
+    } else {
+        hidden = TRUE;
     }
 
     if (!ptr[0]) {
@@ -254,7 +263,12 @@ static g_file c_apiSourceOpen(g_generator g) {
 
     /* Create file */
     sprintf(sourceFileName, "%s.%s", ptr, cpp ? "cpp" : "c");
-    result = g_fileOpen(g, sourceFileName);
+
+    if (hidden) {
+        result = g_hiddenFileOpen(g, "%s", sourceFileName);
+    } else {
+        result = g_fileOpen(g, "%s", sourceFileName);
+    }
 
     if (!result) {
         goto error;

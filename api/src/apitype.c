@@ -160,8 +160,8 @@ static corto_int16 c_apiCastMacroCall(
         c_arg *arg = corto_iterNext(&iter);
         corto_id argName;
         if (arg->type && arg->optional) {
-            corto_id typeId, postfix;
-            c_specifierId(data->g, arg->type, typeId, NULL, postfix);
+            corto_id typeId;
+            c_typeId(data->g, arg->type, typeId);
             sprintf(argName, "%s__optional_##%s", typeId, arg->name);
         } else {
             strcpy(argName, arg->name);
@@ -954,7 +954,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
 
         data->args = corto_llNew();
         data->parameterCount = 1;
-        g_fullOid(data->g, t, id);
+        c_typeId(data->g, t, id);
 
         c_writeExport(data->g, data->header);
 
@@ -1340,15 +1340,15 @@ corto_int16 c_apiDelegateInitCallback(
     g_fileIndent(data->source);
 
     if (instance) {
-        g_fileWrite(data->source, "d->_parent.instance = instance;\n");
+        g_fileWrite(data->source, "d->super.instance = instance;\n");
         g_fileWrite(data->source, "corto_claim(instance);\n");
     } else {
-        g_fileWrite(data->source, "d->_parent.instance = NULL;\n");
+        g_fileWrite(data->source, "d->super.instance = NULL;\n");
     }
-    g_fileWrite(data->source, "d->_parent.procedure = corto_declare(corto_function_o);\n");
-    g_fileWrite(data->source, "d->_parent.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
+    g_fileWrite(data->source, "d->super.procedure = corto_declare(corto_function_o);\n");
+    g_fileWrite(data->source, "d->super.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
     g_fileWrite(
-        data->source, "corto_function_parseParamString(d->_parent.procedure, \"(");
+        data->source, "corto_function_parseParamString(d->super.procedure, \"(");
 
     firstComma = 0;
     if (instance) {
@@ -1367,9 +1367,9 @@ corto_int16 c_apiDelegateInitCallback(
 
     g_fileWrite(data->source, ")\");\n");
     g_fileWrite(
-        data->source, "d->_parent.procedure->fptr = (corto_word)callback;\n");
+        data->source, "d->super.procedure->fptr = (corto_word)callback;\n");
 
-    g_fileWrite(data->source, "corto_define(d->_parent.procedure);\n");
+    g_fileWrite(data->source, "corto_define(d->super.procedure);\n");
     g_fileWrite(data->source, "return 0;\n");
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");
@@ -1410,14 +1410,14 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     g_fileWrite(data->source, ") {\n");
     g_fileIndent(data->source);
 
-    g_fileWrite(data->source, "if (_delegate->_parent.procedure) {\n");
+    g_fileWrite(data->source, "if (_delegate->super.procedure) {\n");
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "if (_delegate->_parent.instance) {\n");
+    g_fileWrite(data->source, "if (_delegate->super.instance) {\n");
     g_fileIndent(data->source);
     if (hasReturn) {
-        g_fileWrite(data->source, "corto_call(_delegate->_parent.procedure, _result, _delegate->_parent.instance");
+        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, _result, _delegate->super.instance");
     } else {
-        g_fileWrite(data->source, "corto_call(_delegate->_parent.procedure, NULL, _delegate->_parent.instance");
+        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, NULL, _delegate->super.instance");
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
@@ -1430,9 +1430,9 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     g_fileWrite(data->source, "} else {\n");
     g_fileIndent(data->source);
     if (hasReturn) {
-        g_fileWrite(data->source, "corto_call(_delegate->_parent.procedure, _result");
+        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, _result");
     } else {
-        g_fileWrite(data->source, "corto_call(_delegate->_parent.procedure, NULL");
+        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, NULL");
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];

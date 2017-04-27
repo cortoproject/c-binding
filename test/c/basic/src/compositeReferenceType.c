@@ -8,7 +8,7 @@
 
 #include <include/test.h>
 
-corto_int16 _test_compositeReferenceType_init(
+int16_t _test_compositeReferenceType_init(
     test_compositeReferenceType this)
 {
 /* $begin(test/compositeReferenceType/init) */

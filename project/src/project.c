@@ -84,26 +84,6 @@ error:
     return -1;
 }
 
-typedef struct c_projectCleanInclude_t {
-    g_generator g;
-    g_file file;
-} c_projectCleanInclude_t;
-
-static int c_projectCleanInclude(corto_object o, void *userData) {
-    c_projectCleanInclude_t *data = userData;
-
-    if ((o != g_getCurrent(data->g)) &&
-        (corto_instanceof(corto_type(corto_interface_o), o) ||
-        corto_instanceof(corto_type(corto_package_o), o))) {
-        corto_id id;
-        g_fileWrite(
-          data->file, "CLOBBER.include(\"include/%s\")\n",
-          c_filename(data->g, id, o, "h"));
-    }
-
-    return 1;
-}
-
 /* Generate interface header with macro's for exporting */
 static corto_int16 c_genInterfaceHeader(g_generator g) {
     corto_id interfaceHeaderName;

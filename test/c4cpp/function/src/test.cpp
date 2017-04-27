@@ -48,7 +48,7 @@ corto_void _test_f_noArgs(void)
 }
 
 corto_void _test_f_primitiveArg(
-    corto_uint32 a)
+    uint32_t a)
 {
 /* $begin(test/f_primitiveArg) */
 
@@ -58,7 +58,7 @@ corto_void _test_f_primitiveArg(
 }
 
 corto_void _test_f_primitiveReferenceArg(
-    corto_uint32 *a)
+    uint32_t *a)
 {
 /* $begin(test/f_primitiveReferenceArg) */
 

@@ -721,7 +721,7 @@ static struct corto_serializer_s c_initSerializer(void) {
 /* Declare object */
 static int c_loadDeclare(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id varId, parentId, typeId, typeCast, postfix;
+    corto_id varId, parentId, typeId, typeCast;
     char *escapedName = NULL;
 
     data = userData;
@@ -731,7 +731,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
     }
 
     c_varId(data->g, o, varId);
-    c_specifierId(data->g, corto_typeof(o), typeCast, NULL, postfix);
+    c_typeId(data->g, corto_typeof(o), typeCast);
 
     if (o == g_getCurrent(data->g) && corto_instanceof(corto_package_o, o)) {
          g_fileWrite(data->source, "prevAttr = corto_setAttr(CORTO_ATTR_PERSISTENT);\n");

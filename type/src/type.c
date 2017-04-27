@@ -70,7 +70,7 @@ static corto_int16 c_typeMember(corto_serializer s, corto_value* v, void* userDa
               g_id(data->g, corto_idof(m), memberId),
               postfix);
         } else {
-            g_fileWrite(data->header, "%s _parent%s;\n", specifier, postfix);
+            g_fileWrite(data->header, "%s super%s;\n", specifier, postfix);
         }
     }
 
@@ -236,9 +236,9 @@ static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userDa
     /* Write base */
     if (corto_interface(t)->base && corto_type(corto_interface(t)->base)->alignment) {
         if (corto_type(corto_interface(t)->base)->reference) {
-            g_fileWrite(data->header, "struct %s_s _parent;\n", c_typeId(data->g, corto_interface(t)->base, id));
+            g_fileWrite(data->header, "struct %s_s super;\n", c_typeId(data->g, corto_interface(t)->base, id));
         } else {
-            g_fileWrite(data->header, "%s _parent;\n", c_typeId(data->g, corto_interface(t)->base, id));
+            g_fileWrite(data->header, "%s super;\n", c_typeId(data->g, corto_interface(t)->base, id));
         }
     }
 
@@ -368,15 +368,13 @@ static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* user
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
 
     if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
-        g_fileWrite(data->header, "CORTO_SEQUENCE(%s, %s,);\n",
-                id,
-                id3);
+        g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
+            id, id3, id);
     } else {
         g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
         g_fileWrite(data->header, "#define %s_DEFINED\n", id);
-        g_fileWrite(data->header, "CORTO_SEQUENCE(%s, %s,);\n",
-                id,
-                id3);
+        g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
+            id, id3, id);
         g_fileWrite(data->header, "#endif\n");
     }
 
@@ -397,7 +395,7 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
     g_fileWrite(data->header, "#define %s_DEFINED\n", id);
-    g_fileWrite(data->header, "CORTO_LIST(%s);\n",
+    g_fileWrite(data->header, "typedef corto_ll %s;\n",
             id);
     g_fileWrite(data->header, "#endif\n");
 
@@ -468,7 +466,7 @@ static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* user
     data = userData;
     t = corto_value_getType(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "CORTO_ITERATOR(%s);\n",
+    g_fileWrite(data->header, "typedef corto_iter %s;\n",
             id);
 
     return 0;
@@ -545,50 +543,48 @@ struct corto_serializer_s c_typeSerializer(void) {
 /* Print class-cast macro's */
 static int c_typeClassCastWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id id, ptr;
+    corto_id id, varId, ptr;
 
     data = userData;
 
     if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
-        corto_id postfix;
-        if (c_specifierId(data->g, o, id, NULL, postfix)) {
-            goto error;
-        }
+        c_typeId(data->g, o, id);
+        c_typeret(data->g, o, C_ByReference, ptr);
+        c_varId(data->g, o, varId);
 
         if (corto_type(o)->kind != CORTO_VOID) {
             g_fileWrite(data->header,
-                "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
-                id, c_typeret(data->g, o, C_ByReference, ptr), id);
+                "#define %s(o) ((%s)corto_assertType((corto_type)%s, o))\n",
+                id, ptr, varId);
         } else {
             g_fileWrite(data->header,
                 "#define %s(o) ((%s)o)\n",
-                id, c_typeret(data->g, o, C_ByReference, ptr));
+                id, ptr);
         }
     }
 
     return 0;
-error:
-    return -1;
 }
 
-/* Print class-cast macro's */
+/* Print native type typedefs */
 static int c_typeNativeTypedefWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id id;
 
     data = userData;
 
     if (corto_instanceof(corto_native_type_o, o)) {
-        corto_id postfix;
-        if (c_specifierId(data->g, o, id, NULL, postfix)) {
-            goto error;
+        char *nativeName = corto_native_type(o)->name;
+        bool isPtr = nativeName[strlen(nativeName) - 1] == '*';
+        corto_id id;
+        strcpy(id, nativeName);
+        if (isPtr) {
+            id[strlen(id) - 1] = '\0';
         }
+
         g_fileWrite(data->header, "typedef void* %s;\n", id);
     }
 
     return 0;
-error:
-    return -1;
 }
 
 /* Open headerfile, write standard header. */
@@ -764,7 +760,7 @@ corto_int16 corto_genMain(g_generator g) {
     g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
     if (corto_genTypeDepWalk(g, NULL, c_typeNativeTypedefWalk, &walkData)) {
         goto error;
-    }
+    }    
     g_fileWrite(walkData.header, "#endif\n");
 
     g_fileWrite(walkData.header, "\n");

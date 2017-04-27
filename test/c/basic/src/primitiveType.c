@@ -8,8 +8,8 @@
 
 #include <include/test.h>
 
-corto_int16 _test_primitiveType_init(
-    test_primitiveType* this)
+int16_t _test_primitiveType_init(
+    int32_t* this)
 {
 /* $begin(test/primitiveType/init) */
     *this = 5;
