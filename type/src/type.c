@@ -15,7 +15,7 @@ typedef struct c_typeWalk_t {
 } c_typeWalk_t;
 
 /* Enumeration constant */
-static corto_int16 c_typeConstant(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeConstant(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id constantId;
 
@@ -47,7 +47,7 @@ error:
 }
 
 /* Member */
-static corto_int16 c_typeMember(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeMember(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_member m;
     corto_id specifier, postfix, memberId;
@@ -81,7 +81,7 @@ error:
 
 
 /* Enumeration object */
-static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typePrimitiveEnum(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_enum t;
     corto_id id;
@@ -96,7 +96,7 @@ static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void*
     g_fileIndent(data->header);
 
     /* Write enumeration constants */
-    if (corto_serializeConstants(s, v, userData)) {
+    if (corto_walk_constants(s, v, userData)) {
         goto error;
     }
 
@@ -110,7 +110,7 @@ error:
 }
 
 /* Bitmask object */
-static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typePrimitiveBitmask(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_enum t;
     corto_id id;
@@ -124,7 +124,7 @@ static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, vo
 
     /* Write enumeration constants */
     g_fileIndent(data->header);
-    if (corto_serializeConstants(s, v, userData)) {
+    if (corto_walk_constants(s, v, userData)) {
         goto error;
     }
     g_fileDedent(data->header);
@@ -135,7 +135,7 @@ error:
 }
 
 /* Void object */
-static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeVoid(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id;
@@ -156,7 +156,7 @@ static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData
 }
 
 /* Void object */
-static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id;
@@ -173,7 +173,7 @@ static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData)
 }
 
 /* Primitive object */
-static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typePrimitive(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_char buff[16];
     corto_type t;
     corto_id id;
@@ -215,7 +215,7 @@ error:
 }
 
 /* Struct object */
-static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeStruct(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id id;
     corto_type t;
@@ -242,7 +242,7 @@ static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userDa
         }
     }
 
-    if (corto_serializeMembers(s, v, userData)) {
+    if (corto_walk_members(s, v, userData)) {
         goto error;
     }
     g_fileDedent(data->header);
@@ -256,7 +256,7 @@ error:
 }
 
 /* Union object */
-static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeUnion(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id id;
     corto_type t;
@@ -275,7 +275,7 @@ static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userDat
     g_fileWrite(data->header, "union {\n");
     g_fileIndent(data->header);
 
-    if (corto_serializeCases(s, v, userData)) {
+    if (corto_walk_cases(s, v, userData)) {
         goto error;
     }
 
@@ -293,7 +293,7 @@ error:
 }
 
 /* Abstract object */
-static corto_int16 c_typeAbstract(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeAbstract(corto_walk_opt* s, corto_value* v, void* userData) {
     CORTO_UNUSED(s);
     CORTO_UNUSED(v);
     CORTO_UNUSED(userData);
@@ -302,7 +302,7 @@ static corto_int16 c_typeAbstract(corto_serializer s, corto_value* v, void* user
 }
 
 /* Composite object */
-static corto_int16 c_typeComposite(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeComposite(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     t = corto_value_typeof(v);
@@ -333,7 +333,7 @@ error:
 }
 
 /* Array object */
-static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeArray(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, id3, postfix, postfix2;
@@ -354,7 +354,7 @@ static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userDat
 }
 
 /* Sequence object */
-static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, id3, postfix, postfix2;
@@ -382,7 +382,7 @@ static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* user
 }
 
 /* List object */
-static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeList(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, postfix;
@@ -403,7 +403,7 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
 }
 
 /* Map object */
-static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, postfix;
@@ -421,7 +421,7 @@ static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData)
 }
 
 /* Collection object */
-static corto_int16 c_typeCollection(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeCollection(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     t = corto_value_typeof(v);
@@ -454,7 +454,7 @@ error:
 }
 
 /* Iterator object */
-static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeIterator(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     CORTO_UNUSED(s);
@@ -473,7 +473,7 @@ static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* user
 }
 
 /* Type object */
-static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_type t;
     corto_int16 result;
@@ -522,20 +522,20 @@ error:
 }
 
 /* Metawalk-serializer for types */
-struct corto_serializer_s c_typeSerializer(void) {
-    struct corto_serializer_s s;
+corto_walk_opt c_typeSerializer(void) {
+    corto_walk_opt s;
 
     /* Initialize serializer */
-    corto_serializerInit(&s);
+    corto_walk_init(&s);
     s.metaprogram[CORTO_OBJECT] = c_typeObject;
     s.metaprogram[CORTO_BASE] = c_typeMember;
     s.metaprogram[CORTO_MEMBER] = c_typeMember;
     s.metaprogram[CORTO_CONSTANT] = c_typeConstant;
     s.access = CORTO_GLOBAL;
     s.accessKind = CORTO_XOR;
-    s.aliasAction = CORTO_SERIALIZER_ALIAS_IGNORE;
-    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
-    s.traceKind = CORTO_SERIALIZER_TRACE_ON_FAIL;
+    s.aliasAction = CORTO_WALK_ALIAS_IGNORE;
+    s.optionalAction = CORTO_WALK_OPTIONAL_ALWAYS;
+    s.traceKind = CORTO_WALK_TRACE_ON_FAIL;
 
     return s;
 }
@@ -708,7 +708,7 @@ error:
 }
 
 static int c_typeDefine(corto_object o, void* userData) {
-    struct corto_serializer_s s;
+    corto_walk_opt s;
     int result;
 
     result = 0;
@@ -717,7 +717,7 @@ static int c_typeDefine(corto_object o, void* userData) {
     s = c_typeSerializer();
 
     /* Do metawalk on type */
-    result = corto_metaWalk(&s, corto_type(o), userData);
+    result = corto_metawalk(&s, corto_type(o), userData);
 
     return result;
 }

@@ -383,7 +383,7 @@ static corto_int16 c_apiAssign(
 }
 
 /* Translate members to function parameters. */
-static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_apiAssignMember(corto_walk_opt* s, corto_value* v, void* userData) {
     c_apiWalk_t *data;
     corto_member m;
     corto_id memberIdTmp, memberParamId, memberId;
@@ -417,7 +417,7 @@ static corto_int16 c_apiAssignMember(corto_serializer s, corto_value* v, void* u
 }
 
 /* Translate members to function parameters. */
-static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_apiParamMember(corto_walk_opt* s, corto_value* v, void* userData) {
     c_apiWalk_t* data;
     corto_member m;
     corto_id typeSpec, typePostfix, memberIdTmp, memberId;
@@ -471,27 +471,27 @@ static corto_int16 c_apiParamMember(corto_serializer s, corto_value* v, void* us
 }
 
 /* Member parameter serializer */
-static struct corto_serializer_s c_apiParamSerializer(void) {
-    struct corto_serializer_s s;
+static corto_walk_opt c_apiParamSerializer(void) {
+    corto_walk_opt s;
 
-    corto_serializerInit(&s);
+    corto_walk_init(&s);
     s.metaprogram[CORTO_MEMBER] = c_apiParamMember;
     s.access = CORTO_LOCAL|CORTO_READONLY|CORTO_PRIVATE|CORTO_HIDDEN;
     s.accessKind = CORTO_NOT;
-    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
+    s.optionalAction = CORTO_WALK_OPTIONAL_ALWAYS;
 
     return s;
 }
 
 /* Member parameter serializer */
-static struct corto_serializer_s c_apiAssignSerializer(void) {
-    struct corto_serializer_s s;
+static corto_walk_opt c_apiAssignSerializer(void) {
+    corto_walk_opt s;
 
-    corto_serializerInit(&s);
+    corto_walk_init(&s);
     s.metaprogram[CORTO_MEMBER] = c_apiAssignMember;
     s.access = CORTO_LOCAL|CORTO_READONLY|CORTO_PRIVATE|CORTO_HIDDEN;
     s.accessKind = CORTO_NOT;
-    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
+    s.optionalAction = CORTO_WALK_OPTIONAL_ALWAYS;
 
     return s;
 }
@@ -530,8 +530,8 @@ corto_int16 c_apiTypeInitPrimitive(corto_type t, c_apiWalk_t *data) {
 }
 
 corto_int16 c_apiTypeInitComposite(corto_type t, c_apiWalk_t *data) {
-    struct corto_serializer_s s = c_apiParamSerializer();
-    corto_metaWalk(&s, corto_type(t), data);
+    corto_walk_opt s = c_apiParamSerializer();
+    corto_metawalk(&s, corto_type(t), data);
 
     if (corto_instanceof(corto_procedure_o, t)) {
         if (data->parameterCount) {
@@ -552,7 +552,7 @@ corto_int16 c_apiTypeInitCompositeMember(
     corto_member m,
     c_apiWalk_t *data)
 {
-    struct corto_serializer_s s = c_apiParamSerializer();
+    corto_walk_opt s = c_apiParamSerializer();
     corto_value info = corto_value_member(
         NULL,
         m,
@@ -642,13 +642,13 @@ corto_int16 c_apiTypeAssignPrimitive(corto_type t, corto_string _this, c_apiWalk
 
 /* Assign composite */
 corto_int16 c_apiTypeAssignComposite(corto_type t, corto_string _this, c_apiWalk_t *data) {
-    struct corto_serializer_s s = c_apiAssignSerializer();
+    corto_walk_opt s = c_apiAssignSerializer();
     corto_id id;
 
     g_fullOid(data->g, t, id);
 
     data->_this = _this;
-    corto_metaWalk(&s, corto_type(t), data);
+    corto_metawalk(&s, corto_type(t), data);
 
     if (corto_instanceof(corto_procedure_o, t)) {
         g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", _this);
@@ -660,7 +660,7 @@ corto_int16 c_apiTypeAssignComposite(corto_type t, corto_string _this, c_apiWalk
 
 /* Assign composite */
 corto_int16 c_apiTypeAssignCompositeMember(corto_member m, corto_string _this, c_apiWalk_t *data) {
-    struct corto_serializer_s s = c_apiAssignSerializer();
+    corto_walk_opt s = c_apiAssignSerializer();
     corto_int32 i;
     corto_value info = corto_value_member(
         NULL,
