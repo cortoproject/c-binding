@@ -89,7 +89,7 @@ static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void*
     CORTO_UNUSED(s);
 
     data = userData;
-    t = corto_enum(corto_value_getType(v));
+    t = corto_enum(corto_value_typeof(v));
 
     /* Write enumeration */
     g_fileWrite(data->header, "typedef enum %s {\n", c_typeId(data->g, t, id));
@@ -118,7 +118,7 @@ static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, vo
     CORTO_UNUSED(s);
 
     data = userData;
-    t = corto_enum(corto_value_getType(v));
+    t = corto_enum(corto_value_typeof(v));
 
     g_fileWrite(data->header, "CORTO_BITMASK(%s);\n", c_typeId(data->g, t, id));
 
@@ -142,7 +142,7 @@ static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData
 
     CORTO_UNUSED(s);
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
@@ -163,7 +163,7 @@ static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData)
 
     CORTO_UNUSED(s);
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
@@ -182,7 +182,7 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
     CORTO_UNUSED(s);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
 
     /* Obtain platform type-name for primitive */
     switch(corto_primitive(t)->kind) {
@@ -221,7 +221,7 @@ static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userDa
     corto_type t;
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
 
     /* Open struct */
     if (t->reference) {
@@ -262,7 +262,7 @@ static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userDat
     corto_type t;
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
 
     /* Open struct */
     g_fileWrite(data->header, "struct %s {\n", c_typeId(data->g, t, id));
@@ -305,7 +305,7 @@ static corto_int16 c_typeAbstract(corto_serializer s, corto_value* v, void* user
 static corto_int16 c_typeComposite(corto_serializer s, corto_value* v, void* userData) {
     corto_type t;
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     switch(corto_interface(t)->kind) {
     case CORTO_UNION:
         if (c_typeUnion(s, v, userData)) {
@@ -342,7 +342,7 @@ static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userDat
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
     g_fileWrite(data->header, "typedef %s %s[%d];\n",
@@ -363,7 +363,7 @@ static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* user
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
 
@@ -391,7 +391,7 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
     g_fileWrite(data->header, "#define %s_DEFINED\n", id);
@@ -412,7 +412,7 @@ static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData)
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     g_fileWrite(data->header, "CORTO_MAP(%s);\n",
             id);
@@ -424,7 +424,7 @@ static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData)
 static corto_int16 c_typeCollection(corto_serializer s, corto_value* v, void* userData) {
     corto_type t;
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     switch(corto_collection(t)->kind) {
     case CORTO_ARRAY:
         if (c_typeArray(s, v, userData)) {
@@ -464,7 +464,7 @@ static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* user
     corto_id id, postfix;
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     g_fileWrite(data->header, "typedef corto_iter %s;\n",
             id);
@@ -479,7 +479,7 @@ static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userDa
     corto_int16 result;
 
     data = userData;
-    t = corto_type(corto_value_getType(v));
+    t = corto_type(corto_value_typeof(v));
 
     /* No type needs to be generated if type is a native type */
     if (corto_instanceof(corto_native_type_o, t)) {

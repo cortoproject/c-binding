@@ -306,9 +306,9 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
 
     /* Only generate code for procedures */
     if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-        corto_id fullname, functionName, signatureName, returnSpec;
+        corto_id fullname, functionName, signatureName;
         corto_string snippet, header;
-        corto_type returnType;
+        corto_type returnType = corto_function(o)->returnType;
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
         
@@ -330,14 +330,6 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         /* Write the macro wrapper for automatic casting of parameter types */
         g_fileWrite(data->interfaceHeader, "\n");
         c_interfaceCastMacro(o, functionName, data);
-
-        /* Generate function-return type string */
-        returnType = ((corto_function)o)->returnType;
-        if (returnType) {
-            c_typeret(data->g, returnType, C_ByValue, returnSpec);
-        } else {
-            strcpy(returnSpec, "void");
-        }
 
         if (corto_function(o)->overloaded) {
             strcpy(signatureName, fullname + 1); /* Skip scope */
@@ -553,10 +545,10 @@ static corto_int16 c_interfaceHeaderWrite(
         c_includeFrom(g, result, g_getCurrent(g), "_load.h");
 
         if (!bootstrap) {
-            if (!local && !app) {
-                c_includeFrom(g, result, g_getCurrent(g), "c/_api.h");
-            } else {
+            if (local || app) {
                 c_includeFrom(g, result, g_getCurrent(g), "_api.h");   
+            } else {
+                c_includeFrom(g, result, g_getCurrent(g), "c/_api.h");
             }
         }
     }
@@ -656,7 +648,8 @@ static g_file c_interfaceSourceFileOpen(corto_object o, corto_string name, c_typ
 
     /* Include main header */
     if (o) {
-        c_include(data->g, result, g_getCurrent(data->g));
+        corto_id header;
+        g_fileWrite(result, "#include <%s>\n", c_mainheader(data->g, header));
     }
 
     return result;
@@ -936,6 +929,7 @@ int corto_genMain(g_generator g) {
          * the name of the project, not the object */
         if (g_getCurrent(g)) {
             if (!corto_instanceof(corto_package_o, g_getCurrent(g))) {
+                projectObject = g_getCurrent(g);
                 sprintf(headerFileName, "%s.h", g_getProjectName(g));
                 strcpy(projectName, g_getProjectName(g));
             } else {

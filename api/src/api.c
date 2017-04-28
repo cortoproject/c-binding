@@ -56,46 +56,6 @@ static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
         goto error;
     }
 
-    /* Generate _str function */
-    if (c_apiTypeStr(o, data)) {
-        goto error;
-    }
-
-    /* Generate _fromStr function */
-    if (c_apiTypeFromStr(o, data)) {
-        goto error;
-    }
-
-    /* Generate _copy function */
-    /* if (c_apiTypeCopy(o, data)) {
-        goto error;
-    } */
-
-    /* Generate _compare function */
-    if (c_apiTypeCompare(o, data)) {
-        goto error;
-    }
-
-    g_fileWrite(data->header, "\n");
-
-    return 0;
-error:
-    return -1;
-}
-
-/* Walk all types */
-static corto_int16 c_apiWalkNonReference(corto_type o, c_apiWalk_t* data) {
-
-    /* Generate _init function */
-    if (c_apiTypeInit(o, data)) {
-        goto error;
-    }
-
-    /* Generate _deinit function */
-    if (c_apiTypeDeinit(o, data)) {
-        goto error;
-    }
-
     g_fileWrite(data->header, "\n");
 
     return 0;
@@ -124,11 +84,6 @@ static int c_apiWalk(corto_object o, void* userData) {
         if (corto_type(o)->kind != CORTO_VOID) {
             if (c_apiWalkNonVoid(corto_type(o), userData)) {
                 goto error;
-            }
-            if (!corto_type(o)->reference) {
-                if (c_apiWalkNonReference(corto_type(o), userData)) {
-                    goto error;
-                }
             }
         }
 

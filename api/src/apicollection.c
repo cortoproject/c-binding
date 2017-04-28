@@ -19,7 +19,7 @@ static corto_int16 c_apiElementInit(corto_type elementType, corto_string element
     g_fileWrite(data->source, "{\n");
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_value v;\n");
-    g_fileWrite(data->source, "v = corto_value_value(corto_type(%s), %s);\n", varId, element);
+    g_fileWrite(data->source, "v = corto_value_value(%s, corto_type(%s));\n", element, varId);
     if (isInit) {
         g_fileWrite(data->source, "corto_initv(&v);\n");
     } else {
@@ -27,28 +27,6 @@ static corto_int16 c_apiElementInit(corto_type elementType, corto_string element
     }
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");
-
-    return 0;
-}
-
-/* Create sequence foreach-macro */
-static corto_int16 c_apiSequenceTypeForeach(corto_sequence o, c_apiWalk_t* data) {
-    corto_id id, elementId;
-    corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
-
-    c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-
-    /* Macro */
-    g_fileWrite(data->header, "#define %sForeach(seq, elem) \\\n", id);
-    g_fileIndent(data->header);
-    g_fileWrite(data->header, "corto_uint32 elem##_iter;\\\n");
-    g_fileWrite(data->header, "%s elem;\\\n", elementId);
-    g_fileWrite(data->header, "for(elem##_iter = 0; (elem##_iter < (seq).length) ? elem = (seq).buffer[elem##_iter], TRUE : FALSE; elem##_iter++)\\\n");
-
-    g_fileDedent(data->header);
-    g_fileWrite(data->header, "\n");
 
     return 0;
 }
@@ -218,11 +196,6 @@ static corto_int16 c_apiWalkSequence(corto_sequence o, c_apiWalk_t* data) {
 
     data->current = o;
 
-    /* Generate foreach */
-    if (c_apiSequenceTypeForeach(o, data)) {
-        goto error;
-    }
-
     /* Generate append */
     if (c_apiSequenceTypeAppend(o, data)) {
         goto error;
@@ -246,41 +219,6 @@ static corto_int16 c_apiWalkSequence(corto_sequence o, c_apiWalk_t* data) {
     return 0;
 error:
     return -1;
-}
-
-/* Create list foreach-macro */
-static corto_int16 c_apiListTypeForeach(corto_list o, c_apiWalk_t* data) {
-    corto_id id, elementId;
-    corto_type elementType = corto_collection(o)->elementType;
-    corto_bool prefix, requiresAlloc =
-        corto_collection_requiresAlloc(elementType);
-
-    c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-
-    /* Macro */
-    g_fileWrite(data->header, "#define %sForeach(list, elem) \\\n", id);
-    g_fileIndent(data->header);
-    g_fileWrite(data->header, "corto_iter elem##_iter = corto_llIter(list);\\\n");
-    g_fileWrite(data->header, "%s elem;\\\n", elementId);
-    g_fileWrite(data->header, "while(corto_iterHasNext(&elem##_iter) ? ");
-    if (!elementType->reference) {
-        g_fileWrite(data->header,
-            "elem = %s(%s%s)(corto_word)corto_iterNext(&elem##_iter), TRUE",
-            requiresAlloc ? "*" : "",
-            elementId,
-            requiresAlloc ? "*" : "");
-    } else {
-        g_fileWrite(
-          data->header,
-          "elem = (%s)corto_iterNext(&elem##_iter), TRUE",
-          elementId);
-    }
-    g_fileWrite(data->header, " : FALSE)\n");
-    g_fileDedent(data->header);
-    g_fileWrite(data->header, "\n");
-
-    return 0;
 }
 
 static corto_string corto_operationToApi(corto_string operation, corto_id id) {
@@ -580,10 +518,6 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
     g_fileWrite(data->header, "\n/* %s */\n", corto_fullpath(NULL, o));
 
     data->current = o;
-
-    if (c_apiListTypeForeach(o, data)) {
-        goto error;
-    }
 
     if (c_apiListTypeInsert(o, "Insert", data)) {
         goto error;

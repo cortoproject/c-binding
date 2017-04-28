@@ -362,6 +362,8 @@ corto_int16 c_specifierId(
             if (!c_primitiveId(g, corto_primitive(t), specifier)) {
                 goto error;
             }
+        } else if (t->kind == CORTO_VOID && !t->reference) {
+            strcpy(specifier, "void");
         } else {
             g_fullOid(g, t, specifier);
         }
@@ -746,7 +748,7 @@ corto_ll c_findType(g_generator g, corto_class t) {
     walkData.t = t;
 
     if (corto_genDepWalk(g, c_findTypeWalk, NULL, &walkData)) {
-        corto_seterr("generation of api-routines failed while resolving %s.",
+        corto_seterr("failed to resolve instances of '%s'",
             corto_fullpath(NULL, t));
         goto error;
     }
