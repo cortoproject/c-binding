@@ -578,8 +578,8 @@ corto_object c_findPackage(g_generator g, corto_object o) {
         ptr = NULL;
         if (g->imports) {
             corto_iter it = corto_llIter(g->imports);
-            while (corto_iterHasNext(&it)) {
-                corto_object o = corto_iterNext(&it);
+            while (corto_iter_hasNext(&it)) {
+                corto_object o = corto_iter_next(&it);
                 if (o == package) {
                     ptr = package;
                 }
@@ -669,8 +669,8 @@ void c_includeDependencies(g_generator g, g_file file, corto_string header) {
     corto_ll dependencies = g_getDependencies(g);
     if (dependencies) {
         corto_iter it = corto_llIter(dependencies);
-        while (corto_iterHasNext(&it)) {
-            corto_object o = corto_iterNext(&it);
+        while (corto_iter_hasNext(&it)) {
+            corto_object o = corto_iter_next(&it);
             c_includeFrom(g, file, o, header);
         }
         corto_llFree(dependencies);

@@ -66,8 +66,8 @@ static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_typ
 
 static void c_apiCastMacroFreeArgs(corto_ll args) {
     corto_iter iter = corto_llIter(args);
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
+    while (corto_iter_hasNext(&iter)) {
+        c_arg *arg = corto_iter_next(&iter);
         corto_dealloc(arg->name);
         corto_dealloc(arg);
     }
@@ -99,8 +99,8 @@ static corto_int16 c_apiCastAuto(
     }
 
     corto_iter iter = corto_llIter(data->args);
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
+    while (corto_iter_hasNext(&iter)) {
+        c_arg *arg = corto_iter_next(&iter);
         if (count) {
             g_fileWrite(data->header, ", ");
         }
@@ -122,13 +122,13 @@ static corto_int16 c_apiCastAuto(
     count = 0;
 
     if (scoped) {
-        corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _parent */
-        corto_iterHasNext(&iter) ? corto_iterNext(&iter) : 0; /* _id */
+        corto_iter_hasNext(&iter) ? corto_iter_next(&iter) : 0; /* _parent */
+        corto_iter_hasNext(&iter) ? corto_iter_next(&iter) : 0; /* _id */
         count = 2;
     }
 
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
+    while (corto_iter_hasNext(&iter)) {
+        c_arg *arg = corto_iter_next(&iter);
         if (count) {
             g_fileWrite(data->header, ", ");
         }
@@ -156,8 +156,8 @@ static corto_int16 c_apiCastMacroCall(
     corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
     corto_iter iter = corto_llIter(data->args);
     corto_uint32 count = 0;
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
+    while (corto_iter_hasNext(&iter)) {
+        c_arg *arg = corto_iter_next(&iter);
         corto_id argName;
         if (arg->type && arg->optional) {
             corto_id typeId;
@@ -212,8 +212,8 @@ static corto_int16 c_apiCastMacro(
       m ? corto_idof(m) : "");
 
     corto_iter iter = corto_llIter(data->args);
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
+    while (corto_iter_hasNext(&iter)) {
+        c_arg *arg = corto_iter_next(&iter);
         if (count) {
             g_fileWrite(data->header, ", ");
         }
@@ -231,10 +231,10 @@ static corto_int16 c_apiCastMacro(
 static void c_apiPrintArgs(corto_ll args, corto_uint32 count, corto_uint32 skip, g_file file) {
     corto_iter iter = corto_llIter(args);
     corto_uint32 i; for (i = 0; i < skip; i ++) {
-        corto_iterNext(&iter);
+        corto_iter_next(&iter);
     }
-    while (corto_iterHasNext(&iter)) {
-        c_arg *arg = corto_iterNext(&iter);
+    while (corto_iter_hasNext(&iter)) {
+        c_arg *arg = corto_iter_next(&iter);
         if (count) {
             g_fileWrite(file, ", ");
         }
@@ -283,7 +283,7 @@ static corto_int16 c_apiCastMacroSet(
     /* Unset macro */
     g_fileWrite(
       data->header,
-      "#define %sUnset(_this) _this ? corto_deinitp(_this, %s) : 0; corto_dealloc(_this); _this = NULL;\n",
+      "#define %sUnset(_this) _this ? corto_ptr_deinit(_this, %s) : 0; corto_dealloc(_this); _this = NULL;\n",
       id,
       typeId);
 
@@ -323,7 +323,7 @@ static corto_int16 c_apiAssign(
         corto_id varId;
         g_fileWrite(data->source, "if (%s) {\n", lvalue);
         g_fileIndent(data->source);
-        g_fileWrite(data->source, "corto_deinitp(%s, %s);\n", lvalue, c_varId(data->g, t, varId));
+        g_fileWrite(data->source, "corto_ptr_deinit(%s, %s);\n", lvalue, c_varId(data->g, t, varId));
         g_fileWrite(data->source, "corto_dealloc(%s);\n", lvalue);
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
@@ -362,7 +362,7 @@ static corto_int16 c_apiAssign(
                 g_fileWrite(data->source, "if (%s) {\n", rvalue);
                 g_fileIndent(data->source);
             }
-            g_fileWrite(data->source, "corto_copyp(&%s, %s_o, %s%s);\n",
+            g_fileWrite(data->source, "corto_ptr_copy(&%s, %s_o, %s%s);\n",
                 lvalue, id,
                 noAmpersand ? "" : "&",
                 rvalue);
@@ -630,7 +630,7 @@ corto_int16 c_apiTypeAssignAny(corto_type t, corto_string _this, c_apiWalk_t *da
     g_fileWrite(data->source, "v.value = value;\n");
     g_fileWrite(data->source, "v.type = type;\n");
     g_fileWrite(data->source, "%s->owner = TRUE;\n", _this);
-    g_fileWrite(data->source, "corto_copyp(%s, corto_any_o, &v);\n", _this);
+    g_fileWrite(data->source, "corto_ptr_copy(%s, corto_any_o, &v);\n", _this);
     return 0;
 }
 

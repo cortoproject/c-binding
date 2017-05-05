@@ -120,7 +120,7 @@ static corto_int16 c_typePrimitiveBitmask(corto_walk_opt* s, corto_value* v, voi
     data = userData;
     t = corto_enum(corto_value_typeof(v));
 
-    g_fileWrite(data->header, "CORTO_BITMASK(%s);\n", c_typeId(data->g, t, id));
+    g_fileWrite(data->header, "typedef uint32_t %s;\n", c_typeId(data->g, t, id));
 
     /* Write enumeration constants */
     g_fileIndent(data->header);
@@ -167,7 +167,9 @@ static corto_int16 c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) 
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-    g_fileWrite(data->header, "CORTO_ANY(%s);\n", c_typeId(data->g, t, id));
+    c_typeId(data->g, t, id);
+    g_fileWrite(data->header, 
+        "typedef struct %s {corto_type type; void *value; uint8_t owner;} %s;\n", id, id);
 
     return 0;
 }
@@ -631,7 +633,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     /* Don't include this file when generating for the bootstrap */
     if (bootstrap) {
         if (g_getCurrent(g) == corto_lang_o) {
-            c_includeFrom(g, result, corto_o, "def.h");
+            c_includeFrom(g, result, corto_o, "base.h");
         } else {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
@@ -692,7 +694,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
             }
             break;
         case CORTO_INTERFACE:
-            g_fileWrite(data->header, "CORTO_INTERFACE(%s);\n\n", id);
+            g_fileWrite(data->header, "typedef void *%s;\n\n", id);
             break;
         }
         break;

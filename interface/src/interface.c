@@ -500,8 +500,8 @@ static corto_int16 c_interfaceHeaderWrite(
         /* Add header files for dependent packages */
         if (g->imports) {
             corto_iter iter = corto_llIter(g->imports);
-            while (corto_iterHasNext(&iter)) {
-                corto_object import = corto_iterNext(&iter);
+            while (corto_iter_hasNext(&iter)) {
+                corto_object import = corto_iter_next(&iter);
                 corto_string str = corto_path(NULL, NULL, import, "/");
                 corto_string package = corto_locate(str, NULL, CORTO_LOCATION_FULLNAME);
                 if (!package) {
@@ -809,8 +809,8 @@ static corto_bool c_interfaceWasGeneratedNow(
 {
     corto_iter iter = corto_llIter(data->generated);
 
-    while(corto_iterHasNext(&iter)) {
-        corto_string file = corto_iterNext(&iter);
+    while(corto_iter_hasNext(&iter)) {
+        corto_string file = corto_iter_next(&iter);
         if (!strcmp(file, name)) {
             return TRUE;
         }
@@ -824,8 +824,8 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
     corto_ll files = corto_opendir("./src");
     corto_iter iter = corto_llIter(files);
 
-    while(corto_iterHasNext(&iter)) {
-        corto_string file = corto_iterNext(&iter);
+    while(corto_iter_hasNext(&iter)) {
+        corto_string file = corto_iter_next(&iter);
         corto_id id;
         sprintf(id, "./src/%s", file);
         if (c_interfaceIsGenerated(id)) {
@@ -850,8 +850,8 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
     }
 
     iter = corto_llIter(data->generated);
-    while (corto_iterHasNext(&iter)) {
-        corto_dealloc(corto_iterNext(&iter));
+    while (corto_iter_hasNext(&iter)) {
+        corto_dealloc(corto_iter_next(&iter));
     }
 
     corto_closedir(files);

@@ -7,8 +7,8 @@ static void c_projectLoadPackages(g_generator g, g_file file) {
 
     if (g->imports) {
         corto_iter iter = corto_llIter(g->imports);
-        while (corto_iterHasNext(&iter)) {
-            corto_object o = corto_iterNext(&iter);
+        while (corto_iter_hasNext(&iter)) {
+            corto_object o = corto_iter_next(&iter);
             g_fileWrite(
                 file, 
                 "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 

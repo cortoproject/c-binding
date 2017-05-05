@@ -21,9 +21,9 @@ static corto_int16 c_apiElementInit(corto_type elementType, corto_string element
     g_fileWrite(data->source, "corto_value v;\n");
     g_fileWrite(data->source, "v = corto_value_value(%s, corto_type(%s));\n", element, varId);
     if (isInit) {
-        g_fileWrite(data->source, "corto_initv(&v);\n");
+        g_fileWrite(data->source, "corto_value_init(&v);\n");
     } else {
-        g_fileWrite(data->source, "corto_deinitv(&v);\n");
+        g_fileWrite(data->source, "corto_value_deinit(&v);\n");
     }
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");
@@ -95,7 +95,7 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
     if (elementType->reference) {
         g_fileWrite(data->source, "corto_setref(&seq->buffer[seq->length-1], element);\n");
     } else {
-        g_fileWrite(data->source, "corto_copyp(&seq->buffer[seq->length-1], %s, &element);\n", varId);
+        g_fileWrite(data->source, "corto_ptr_copy(&seq->buffer[seq->length-1], %s, &element);\n", varId);
     }
 
     g_fileWrite(data->source, "return &seq->buffer[seq->length-1];\n");
@@ -298,7 +298,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
     /* Insert element to list */
     if (requiresAlloc) {
         g_fileWrite(data->source, "%s *result = %s%sAlloc(list);\n", elementId, id, operation);
-        g_fileWrite(data->source, "corto_copyp(result, %s, %selement);\n", varId, ptr ? "" : "&");
+        g_fileWrite(data->source, "corto_ptr_copy(result, %s, %selement);\n", varId, ptr ? "" : "&");
     } else {
         if ((elementType->kind == CORTO_PRIMITIVE) && (corto_primitive(elementType)->kind == CORTO_TEXT)) {
             g_fileWrite(data->source, "%s(list, (void*)corto_strdup(element));\n", corto_operationToApi(operation, api));
@@ -490,14 +490,14 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     g_fileIndent(data->source);
 
     g_fileWrite(data->source, "corto_iter iter = corto_llIter(list);\n");
-    g_fileWrite(data->source, "while(corto_iterHasNext(&iter)) {\n");
+    g_fileWrite(data->source, "while(corto_iter_hasNext(&iter)) {\n");
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "void *ptr = corto_iterNext(&iter);\n");
+    g_fileWrite(data->source, "void *ptr = corto_iter_next(&iter);\n");
 
     if (elementType->reference) {
         g_fileWrite(data->source, "corto_release(ptr);\n");
     } else {
-        g_fileWrite(data->source, "corto_deinitp(ptr, %s);\n", varId);
+        g_fileWrite(data->source, "corto_ptr_deinit(ptr, %s);\n", varId);
         if (corto_collection_requiresAlloc(elementType)) {
             g_fileWrite(data->source, "corto_dealloc(ptr);\n");
         }
