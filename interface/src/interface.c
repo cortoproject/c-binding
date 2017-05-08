@@ -30,7 +30,7 @@ typedef struct c_typeWalk_t {
 static g_file c_interfaceOpenFile(corto_string name, c_typeWalk_t *data) {
     g_file result = g_fileOpen(data->g, name);
     if (result) {
-        corto_llAppend(data->generated, corto_strdup(name));
+        corto_ll_append(data->generated, corto_strdup(name));
         g_fileWrite(result, "/* $CORTO_GENERATED\n");
         g_fileWrite(result, " *\n");
         g_fileWrite(result, " * %s\n", name);
@@ -499,7 +499,7 @@ static corto_int16 c_interfaceHeaderWrite(
     if (mainHeader) {
         /* Add header files for dependent packages */
         if (g->imports) {
-            corto_iter iter = corto_llIter(g->imports);
+            corto_iter iter = corto_ll_iter(g->imports);
             while (corto_iter_hasNext(&iter)) {
                 corto_object import = corto_iter_next(&iter);
                 corto_string str = corto_path(NULL, NULL, import, "/");
@@ -807,7 +807,7 @@ static corto_bool c_interfaceWasGeneratedNow(
     corto_string name,
     c_typeWalk_t *data)
 {
-    corto_iter iter = corto_llIter(data->generated);
+    corto_iter iter = corto_ll_iter(data->generated);
 
     while(corto_iter_hasNext(&iter)) {
         corto_string file = corto_iter_next(&iter);
@@ -822,7 +822,7 @@ static corto_bool c_interfaceWasGeneratedNow(
 /* Mark files that haven't been regenerated */
 static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
     corto_ll files = corto_opendir("./src");
-    corto_iter iter = corto_llIter(files);
+    corto_iter iter = corto_ll_iter(files);
 
     while(corto_iter_hasNext(&iter)) {
         corto_string file = corto_iter_next(&iter);
@@ -849,13 +849,13 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
         }
     }
 
-    iter = corto_llIter(data->generated);
+    iter = corto_ll_iter(data->generated);
     while (corto_iter_hasNext(&iter)) {
         corto_dealloc(corto_iter_next(&iter));
     }
 
     corto_closedir(files);
-    corto_llFree(data->generated);
+    corto_ll_free(data->generated);
 
     return 0;
 }
@@ -916,7 +916,7 @@ int corto_genMain(g_generator g) {
     walkData.wrapper = NULL;
     walkData.mainHeader = NULL;
     walkData.interfaceHeader = NULL;
-    walkData.generated = corto_llNew();
+    walkData.generated = corto_ll_new();
     walkData.mainWritten = FALSE;
 
     if (!bootstrap) {

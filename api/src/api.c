@@ -338,11 +338,11 @@ corto_int16 corto_genMain(g_generator g) {
         goto error;
     }
 
-    corto_llWalk(walkData.collections, c_apiCollectionWalk, &walkData);
-    corto_llWalk(walkData.iterators, c_apiIteratorWalk, &walkData);
+    corto_ll_walk(walkData.collections, c_apiCollectionWalk, &walkData);
+    corto_ll_walk(walkData.iterators, c_apiIteratorWalk, &walkData);
 
-    corto_llFree(walkData.collections);
-    corto_llFree(walkData.iterators);
+    corto_ll_free(walkData.collections);
+    corto_ll_free(walkData.iterators);
 
     if (!local) {
         corto_chdir(cwd);

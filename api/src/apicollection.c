@@ -222,7 +222,8 @@ error:
 }
 
 static corto_string corto_operationToApi(corto_string operation, corto_id id) {
-    sprintf(id, "corto_ll%s", operation);
+    sprintf(id, "corto_ll_%s", operation);
+    id[strlen("corto_ll_")] = tolower(id[strlen("corto_ll_")]);
     return id;
 }
 
@@ -359,7 +360,7 @@ static corto_int16 c_apiListTypeRemove(corto_list o, c_apiWalk_t* data) {
 
     g_fileIndent(data->source);
 
-    g_fileWrite(data->source, "corto_llRemove(list, element);\n");
+    g_fileWrite(data->source, "corto_ll_remove(list, element);\n");
     g_fileWrite(data->source, "corto_release(element);\n");
 
     g_fileDedent(data->source);
@@ -428,14 +429,14 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     if (allocRequired) {
         g_fileWrite(
           data->source,
-          "return %s(%s%s)corto_llGet(list, index);\n",
+          "return %s(%s%s)corto_ll_get(list, index);\n",
           (elementType->kind == CORTO_PRIMITIVE) ? "*" : "",
           elementId,
           allocRequired ? "*" : "");
     } else {
         g_fileWrite(
           data->source,
-          "return (%s%s)(corto_word)corto_llGet(list, index);\n",
+          "return (%s%s)(corto_word)corto_ll_get(list, index);\n",
           elementId,
           allocRequired ? "*" : "");
     }
@@ -464,7 +465,7 @@ static corto_int16 c_apiListTypeSize(corto_list o, c_apiWalk_t* data) {
     g_fileIndent(data->source);
 
     /* Insert element to list */
-    g_fileWrite(data->source, "return corto_llSize(list);\n");
+    g_fileWrite(data->source, "return corto_ll_size(list);\n");
 
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");
@@ -489,7 +490,7 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     g_fileWrite(data->source, "void %sClear(%s list) {\n", id, id);
     g_fileIndent(data->source);
 
-    g_fileWrite(data->source, "corto_iter iter = corto_llIter(list);\n");
+    g_fileWrite(data->source, "corto_iter iter = corto_ll_iter(list);\n");
     g_fileWrite(data->source, "while(corto_iter_hasNext(&iter)) {\n");
     g_fileIndent(data->source);
     g_fileWrite(data->source, "void *ptr = corto_iter_next(&iter);\n");
@@ -504,7 +505,7 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     }
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");
-    g_fileWrite(data->source, "corto_llClear(list);\n");
+    g_fileWrite(data->source, "corto_ll_clear(list);\n");
 
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");

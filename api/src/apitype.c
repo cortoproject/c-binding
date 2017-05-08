@@ -21,7 +21,7 @@ static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type ty
         arg->nativeCast = NULL;
         arg->optional = optional;
         arg->isobject = type && type->reference && (type->kind != CORTO_VOID);
-        corto_llAppend(args, arg);
+        corto_ll_append(args, arg);
     }
 }
 
@@ -34,7 +34,7 @@ static void c_apiCastMacroAddThis(corto_ll args, corto_string name, corto_type t
         arg->nativeCast = NULL;
         arg->optional = optional;
         arg->isobject = isobject;
-        corto_llAppend(args, arg);
+        corto_ll_append(args, arg);
     }
 }
 
@@ -47,7 +47,7 @@ static void c_apiCastMacroAddArgNativeCast(corto_ll args, corto_string name, cor
         arg->nativeCast = corto_strdup(type);
         arg->optional = FALSE;
         arg->isobject = FALSE;
-        corto_llAppend(args, arg);
+        corto_ll_append(args, arg);
     }
 }
 
@@ -60,18 +60,18 @@ static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_typ
         arg->nativeCast = NULL;
         arg->optional = optional;
         arg->isobject = type && type->reference && (type->kind != CORTO_VOID);
-        corto_llAppend(args, arg);
+        corto_ll_append(args, arg);
     }
 }
 
 static void c_apiCastMacroFreeArgs(corto_ll args) {
-    corto_iter iter = corto_llIter(args);
+    corto_iter iter = corto_ll_iter(args);
     while (corto_iter_hasNext(&iter)) {
         c_arg *arg = corto_iter_next(&iter);
         corto_dealloc(arg->name);
         corto_dealloc(arg);
     }
-    corto_llFree(args);
+    corto_ll_free(args);
 }
 
 static corto_int16 c_apiCastAuto(
@@ -98,7 +98,7 @@ static corto_int16 c_apiCastAuto(
         count = 1;
     }
 
-    corto_iter iter = corto_llIter(data->args);
+    corto_iter iter = corto_ll_iter(data->args);
     while (corto_iter_hasNext(&iter)) {
         c_arg *arg = corto_iter_next(&iter);
         if (count) {
@@ -118,7 +118,7 @@ static corto_int16 c_apiCastAuto(
         m ? corto_idof(m) : "",
         scoped ? "_parent, #_id" : "");
 
-    iter = corto_llIter(data->args);
+    iter = corto_ll_iter(data->args);
     count = 0;
 
     if (scoped) {
@@ -154,7 +154,7 @@ static corto_int16 c_apiCastMacroCall(
       m ? corto_idof(m) : "");
 
     corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
-    corto_iter iter = corto_llIter(data->args);
+    corto_iter iter = corto_ll_iter(data->args);
     corto_uint32 count = 0;
     while (corto_iter_hasNext(&iter)) {
         c_arg *arg = corto_iter_next(&iter);
@@ -211,7 +211,7 @@ static corto_int16 c_apiCastMacro(
       m ? "_" : "",
       m ? corto_idof(m) : "");
 
-    corto_iter iter = corto_llIter(data->args);
+    corto_iter iter = corto_ll_iter(data->args);
     while (corto_iter_hasNext(&iter)) {
         c_arg *arg = corto_iter_next(&iter);
         if (count) {
@@ -229,7 +229,7 @@ static corto_int16 c_apiCastMacro(
 }
 
 static void c_apiPrintArgs(corto_ll args, corto_uint32 count, corto_uint32 skip, g_file file) {
-    corto_iter iter = corto_llIter(args);
+    corto_iter iter = corto_ll_iter(args);
     corto_uint32 i; for (i = 0; i < skip; i ++) {
         corto_iter_next(&iter);
     }
@@ -834,7 +834,7 @@ corto_int16 c_apiTypeCreateIntern(
         }
 
         /* Collect arguments for casting macro */
-        data->args = corto_llNew();
+        data->args = corto_ll_new();
         data->parameterCount = 0;
 
         /* Function declaration */
@@ -952,7 +952,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             memberCount ++;
         }
 
-        data->args = corto_llNew();
+        data->args = corto_ll_new();
         data->parameterCount = 1;
         c_typeId(data->g, t, id);
 

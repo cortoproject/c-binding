@@ -552,14 +552,14 @@ static corto_int16 c_initElement(corto_walk_opt* s, corto_value* v, void* userDa
     switch (t->kind) {
     case CORTO_LIST: {
         corto_id parentId, elementId;
-        g_fileWrite(data->source, "corto_llAppend(%s, %s%s);\n",
+        g_fileWrite(data->source, "corto_ll_append(%s, %s%s);\n",
                 c_loadMemberId(data, v->parent, parentId, FALSE),
                 requiresAlloc ? "" : "(void*)(intptr_t)", c_loadElementId(v, elementId, 0));
         break;
     }
     case CORTO_MAP: /*{
         corto_id parentId, elementId;
-        g_fileWrite(data->source, "corto_rbtreeSet(%s, %s)",
+        g_fileWrite(data->source, "corto_rb_set(%s, %s)",
                 c_loadMemberId(data->g, v->parent, parentId),
                 c_loadElementId(v, elementId, 0));
         break;
@@ -624,18 +624,18 @@ static corto_int16 c_initCollection(corto_walk_opt* s, corto_value* v, void* use
     }
     case CORTO_LIST:
         /* Lists are created by initializer */
-        size = corto_llSize(*(corto_ll*)ptr);
+        size = corto_ll_size(*(corto_ll*)ptr);
         break;
     case CORTO_MAP: {
         corto_id keyId;
         /* Create map object */
         if (*(corto_rbtree*)ptr) {
-            g_fileWrite(data->source, "%s = corto_rbtreeNew(%s);\n",
-                    c_loadMemberId(data, v, memberId, FALSE), g_fullOid(data->g, corto_rbtreeKeyType(*(corto_rbtree*)ptr), keyId));
+            g_fileWrite(data->source, "%s = corto_rb_new(%s);\n",
+                    c_loadMemberId(data, v, memberId, FALSE), g_fullOid(data->g, corto_rb_keyType(*(corto_rbtree*)ptr), keyId));
         } else {
             g_fileWrite(data->source, "%s = NULL;\n", c_loadMemberId(data, v, memberId, FALSE));
         }
-        size = corto_rbtreeSize(*(corto_rbtree*)ptr);
+        size = corto_rb_size(*(corto_rbtree*)ptr);
         break;
     }
     }

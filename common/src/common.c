@@ -577,7 +577,7 @@ corto_object c_findPackage(g_generator g, corto_object o) {
     if (g_getCurrent(g)) {
         ptr = NULL;
         if (g->imports) {
-            corto_iter it = corto_llIter(g->imports);
+            corto_iter it = corto_ll_iter(g->imports);
             while (corto_iter_hasNext(&it)) {
                 corto_object o = corto_iter_next(&it);
                 if (o == package) {
@@ -668,12 +668,12 @@ void c_includeFrom(
 void c_includeDependencies(g_generator g, g_file file, corto_string header) {
     corto_ll dependencies = g_getDependencies(g);
     if (dependencies) {
-        corto_iter it = corto_llIter(dependencies);
+        corto_iter it = corto_ll_iter(dependencies);
         while (corto_iter_hasNext(&it)) {
             corto_object o = corto_iter_next(&it);
             c_includeFrom(g, file, o, header);
         }
-        corto_llFree(dependencies);
+        corto_ll_free(dependencies);
     }
 }
 
@@ -733,8 +733,8 @@ static int c_findTypeWalk(corto_object o, void* userData) {
     c_findTypeWalk_t* data = userData;
 
     if (corto_instanceof(data->t, o)) {
-        if (!corto_llSize(data->result) || corto_llWalk(data->result, c_checkDuplicates, o)) {
-            corto_llAppend(data->result, o);
+        if (!corto_ll_size(data->result) || corto_ll_walk(data->result, c_checkDuplicates, o)) {
+            corto_ll_append(data->result, o);
         }
     }
 
@@ -744,7 +744,7 @@ static int c_findTypeWalk(corto_object o, void* userData) {
 corto_ll c_findType(g_generator g, corto_class t) {
     c_findTypeWalk_t walkData;
 
-    walkData.result = corto_llNew();
+    walkData.result = corto_ll_new();
     walkData.t = t;
 
     if (corto_genDepWalk(g, c_findTypeWalk, NULL, &walkData)) {
