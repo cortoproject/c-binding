@@ -93,7 +93,7 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
         }
     }
     if (elementType->reference) {
-        g_fileWrite(data->source, "corto_setref(&seq->buffer[seq->length-1], element);\n");
+        g_fileWrite(data->source, "corto_ptr_setref(&seq->buffer[seq->length-1], element);\n");
     } else {
         g_fileWrite(data->source, "corto_ptr_copy(&seq->buffer[seq->length-1], %s, &element);\n", varId);
     }

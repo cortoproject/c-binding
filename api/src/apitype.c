@@ -332,11 +332,11 @@ static corto_int16 c_apiAssign(
             lvalue, rvalue);
     } else {
         if (t->reference) {
-            g_fileWrite(data->source, "corto_setref(%s%s, %s);\n",
+            g_fileWrite(data->source, "corto_ptr_setref(%s%s, %s);\n",
                     ptr ? "" : "&", lvalue, rvalue);
         } else if (t->kind == CORTO_PRIMITIVE) {
             if (corto_primitive(t)->kind == CORTO_TEXT) {
-                g_fileWrite(data->source, "corto_setstr(%s%s, %s);\n",
+                g_fileWrite(data->source, "corto_ptr_setstr(%s%s, %s);\n",
                     ptr ? "" : "&", lvalue, rvalue);
             } else {
                 g_fileWrite(data->source, "%s%s = %s;\n",
