@@ -5,13 +5,15 @@
 /* Load dependencies */
 static void c_projectLoadPackages(g_generator g, g_file file) {
 
-    corto_iter iter = corto_llIter(g->imports);
-    while (corto_iterHasNext(&iter)) {
-        corto_object o = corto_iterNext(&iter);
-        g_fileWrite(
-            file, 
-            "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 
-            corto_path(NULL, NULL, o, "/"));
+    if (g->imports) {
+        corto_iter iter = corto_ll_iter(g->imports);
+        while (corto_iter_hasNext(&iter)) {
+            corto_object o = corto_iter_next(&iter);
+            g_fileWrite(
+                file, 
+                "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 
+                corto_path(NULL, NULL, o, "/"));
+        }
     }
 }
 
@@ -76,51 +78,6 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_fileWrite(file, "return 0;\n");
     g_fileDedent(file);
     g_fileWrite(file, "}\n\n");
-
-    return 0;
-error:
-    return -1;
-}
-
-typedef struct c_projectCleanInclude_t {
-    g_generator g;
-    g_file file;
-} c_projectCleanInclude_t;
-
-static int c_projectCleanInclude(corto_object o, void *userData) {
-    c_projectCleanInclude_t *data = userData;
-
-    if ((o != g_getCurrent(data->g)) &&
-        (corto_instanceof(corto_type(corto_interface_o), o) ||
-        corto_instanceof(corto_type(corto_package_o), o))) {
-        corto_id id;
-        g_fileWrite(
-          data->file, "CLOBBER.include(\"include/%s\")\n",
-          c_filename(data->g, id, o, "h"));
-    }
-
-    return 1;
-}
-
-/* Generate dependency makefile for project */
-static corto_int16 c_projectGenerateDepMakefile(g_generator g) {
-    g_file file;
-    c_projectCleanInclude_t walkData;
-
-    file = g_hiddenFileOpen(g, "dep.rb");
-    if(!file) {
-        goto error;
-    }
-
-    g_fileWrite(file, "require 'rake/clean'\n");
-
-    g_fileWrite(file, "\n");
-    g_fileWrite(file, "# Clobber generated header files\n");
-    walkData.file = file;
-    walkData.g = g;
-    g_fileWrite(file, "\n");
-    g_walkRecursive(g, c_projectCleanInclude, &walkData);
-    g_fileWrite(file, "CLOBBER.include(\".corto/dep.rb\")\n");
 
     return 0;
 error:
@@ -203,15 +160,6 @@ corto_int16 corto_genMain(g_generator g) {
             corto_seterr("failed to create interface header");
         }
         goto error;
-    }
-
-    if (g->objects) {
-        if(c_projectGenerateDepMakefile(g)) {
-            if (!corto_lasterr()) {
-                corto_seterr("failed to create dependency rakefile");
-            }
-            goto error;
-        }
     }
 
     return 0;

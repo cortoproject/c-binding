@@ -8,7 +8,7 @@
 
 #include <include/test.h>
 
-corto_int16 _test_collectionType_init(
+int16_t _test_collectionType_init(
     test_collectionType _this)
 {
 /* $begin(test/collectionType/init) */

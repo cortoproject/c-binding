@@ -13,16 +13,16 @@ corto_int16 c_apiIteratorForeach(corto_iterator o, c_apiWalk_t *data) {
     g_fileWrite(data->header, "#define %sForeach(iter, elem) \\\n", id);
     g_fileIndent(data->header);
     g_fileWrite(data->header, "%s elem;\\\n", elementId);
-    g_fileWrite(data->header, "while(corto_iterHasNext(&iter) ? ");
+    g_fileWrite(data->header, "while(corto_iter_hasNext(&iter) ? ");
     if (!o->elementType->reference) {
         g_fileWrite(data->header,
-            "elem = %s(%s%s)(corto_word)corto_iterNext(&iter), TRUE",
+            "elem = %s(%s%s)(corto_word)corto_iter_next(&iter), TRUE",
             requiresAlloc ? "*" : "",
             elementId,
             requiresAlloc ? "*" : "");
     } else {
         g_fileWrite(
-          data->header, "elem = (%s)corto_iterNext(&iter), TRUE", elementId);
+          data->header, "elem = (%s)corto_iter_next(&iter), TRUE", elementId);
     }
     g_fileWrite(data->header, " : FALSE)\n");
     g_fileDedent(data->header);

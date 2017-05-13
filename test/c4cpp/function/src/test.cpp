@@ -48,7 +48,7 @@ corto_void _test_f_noArgs(void)
 }
 
 corto_void _test_f_primitiveArg(
-    corto_uint32 a)
+    uint32_t a)
 {
 /* $begin(test/f_primitiveArg) */
 
@@ -58,7 +58,7 @@ corto_void _test_f_primitiveArg(
 }
 
 corto_void _test_f_primitiveReferenceArg(
-    corto_uint32 *a)
+    uint32_t *a)
 {
 /* $begin(test/f_primitiveReferenceArg) */
 
@@ -82,7 +82,7 @@ int testMain(int argc, char *argv[]) {
     int result = 0;
     test_Runner runner = test_RunnerCreate("corto/gen/c4cpp/function", argv[0], (argc > 1) ? argv[1] : NULL);
     if (!runner) return -1;
-    if (corto_llSize(runner->failures)) {
+    if (corto_ll_size(runner->failures)) {
         result = -1;
     }
     corto_delete(runner);

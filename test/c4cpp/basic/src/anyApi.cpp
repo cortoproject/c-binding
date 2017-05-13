@@ -56,7 +56,7 @@ corto_void _test_anyApi_tc_create(
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
     v = "Bar";
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -76,7 +76,7 @@ corto_void _test_anyApi_tc_createAuto(
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
     v = "Bar";
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -99,7 +99,7 @@ corto_void _test_anyApi_tc_createChild(
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -122,7 +122,7 @@ corto_void _test_anyApi_tc_createChildAuto(
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -138,7 +138,7 @@ corto_void _test_anyApi_tc_declare(
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -154,7 +154,7 @@ corto_void _test_anyApi_tc_declareAuto(
     test_assert(!corto_checkState(o, CORTO_DEFINED));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 
@@ -174,7 +174,7 @@ corto_void _test_anyApi_tc_declareChild(
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -193,7 +193,7 @@ corto_void _test_anyApi_tc_declareChildAuto(
     test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -215,7 +215,7 @@ corto_void _test_anyApi_tc_define(
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
-    test_assert(o->owner = TRUE);
+    test_assert(o->owner == TRUE);
 
     result = test_anyTypeDefine(o, corto_int32_o, &v);
     test_assert(result == 0);
@@ -240,7 +240,7 @@ corto_void _test_anyApi_tc_fromStr(
     test_assert(o.type == corto_type(corto_int32_o));
     test_assert(o.value != NULL);
     test_assert(*(corto_int32*)o.value == 10);
-    test_assert(o.owner = TRUE);
+    test_assert(o.owner == TRUE);
 
 /* $end */
 }

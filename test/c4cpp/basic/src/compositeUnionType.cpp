@@ -8,7 +8,7 @@
 
 #include <include/test.h>
 
-corto_int16 _test_compositeUnionType_init(
+int16_t _test_compositeUnionType_init(
     test_compositeUnionType* _this)
 {
 /* $begin(test/compositeUnionType/init) */

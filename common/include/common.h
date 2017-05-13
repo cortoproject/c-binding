@@ -102,6 +102,8 @@ int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *use
 /* Print function declaration to file */
 corto_int16 c_decl(g_generator g, g_file file, corto_function f, corto_bool isWrapper, corto_bool cpp);
 
+/* Include dependencies */
+void c_includeDependencies(g_generator g, g_file file, corto_string header);
 
 #ifdef __cplusplus
 }

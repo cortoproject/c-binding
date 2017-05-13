@@ -8,8 +8,6 @@
 
 #include "corto/corto.h"
 #include "corto/gen/c/common/common.h"
-#include "corto/lang/c/c.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +15,7 @@ extern "C" {
 
 typedef struct c_apiWalk_t {
     g_generator g;
+    g_file mainHeader;
     g_file header;
     g_file source;
     corto_string _this;

@@ -56,46 +56,6 @@ static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
         goto error;
     }
 
-    /* Generate _str function */
-    if (c_apiTypeStr(o, data)) {
-        goto error;
-    }
-
-    /* Generate _fromStr function */
-    if (c_apiTypeFromStr(o, data)) {
-        goto error;
-    }
-
-    /* Generate _copy function */
-    /* if (c_apiTypeCopy(o, data)) {
-        goto error;
-    } */
-
-    /* Generate _compare function */
-    if (c_apiTypeCompare(o, data)) {
-        goto error;
-    }
-
-    g_fileWrite(data->header, "\n");
-
-    return 0;
-error:
-    return -1;
-}
-
-/* Walk all types */
-static corto_int16 c_apiWalkNonReference(corto_type o, c_apiWalk_t* data) {
-
-    /* Generate _init function */
-    if (c_apiTypeInit(o, data)) {
-        goto error;
-    }
-
-    /* Generate _deinit function */
-    if (c_apiTypeDeinit(o, data)) {
-        goto error;
-    }
-
     g_fileWrite(data->header, "\n");
 
     return 0;
@@ -125,11 +85,6 @@ static int c_apiWalk(corto_object o, void* userData) {
             if (c_apiWalkNonVoid(corto_type(o), userData)) {
                 goto error;
             }
-            if (!corto_type(o)->reference) {
-                if (c_apiWalkNonReference(corto_type(o), userData)) {
-                    goto error;
-                }
-            }
         }
 
         /* Clear nameconflict cache */
@@ -155,16 +110,44 @@ error:
 }
 
 /* Open headerfile, write standard header. */
-static g_file c_apiHeaderOpen(g_generator g) {
+static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     g_file result;
+    corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
     corto_id headerFileName, path;
+    corto_id name = {0};
+    char *namePtr = g_getName(data->g), *ptr = name + 1;
+
+    if (!app && !local) {
+        corto_fullpath(name, g_getCurrent(data->g));
+
+        while (*namePtr == *ptr && *namePtr && *ptr) {
+            namePtr ++;
+            ptr ++;
+        }
+
+        if (ptr[0] == '/') {
+            ptr ++;
+        }
+    }
+
+    if (!ptr[0]) {
+        strcpy(name, "_api");
+        ptr = name;
+    }
 
     /* Create file */
-    sprintf(headerFileName, "_api.h");
-    result = g_fileOpen(g, headerFileName);
+    sprintf(headerFileName, "%s.h", ptr);
+
+    if (!local && !app) {
+        g_fileWrite(data->mainHeader, "#include <%s/c/%s>\n", g_getName(data->g), headerFileName);
+    }
+
+    /* Create file */
+    result = g_fileOpen(data->g, headerFileName);
 
     /* Obtain path for macro */
-    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_path(path, root_o, g_getCurrent(data->g), "_");
     corto_strupper(path);
 
     /* Print standard comments and includes */
@@ -176,11 +159,12 @@ static g_file c_apiHeaderOpen(g_generator g) {
     g_fileWrite(result, "#ifndef %s__API_H\n", path);
     g_fileWrite(result, "#define %s__API_H\n\n", path);
 
-    c_includeFrom(g, result, corto_o, "corto.h");
-    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
-        g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(g));
+    c_includeFrom(data->g, result, corto_o, "corto.h");
+    if (!strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
+        g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(data->g));
     } else {
-        c_includeFrom(g, result, g_getCurrent(g), "_project.h");
+        c_includeFrom(data->g, result, g_getCurrent(data->g), "_project.h");
+        c_includeFrom(data->g, result, g_getCurrent(data->g), "_type.h");
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
@@ -206,13 +190,43 @@ static g_file c_apiSourceOpen(g_generator g) {
     g_file result;
     corto_id sourceFileName;
     corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    corto_id name = {0};
+    char *namePtr = g_getName(g), *ptr = name + 1;
+    corto_bool hidden = FALSE;
+
+    if (!app && !local) {
+        corto_fullpath(name, g_getCurrent(g));
+
+        while (*namePtr == *ptr && *namePtr && *ptr) {
+            namePtr ++;
+            ptr ++;
+        }
+
+        if (ptr[0] == '/') {
+            ptr ++;
+        }
+    } else {
+        hidden = TRUE;
+    }
+
+    if (!ptr[0]) {
+        strcpy(name, "_api");
+        ptr = name;
+    }
 
     /* Create file */
-    sprintf(sourceFileName, "_api.%s", cpp ? "cpp" : "c");
-    if (!strcmp(g_getAttribute(g, "bootstrap"), "true")) {
-        result = g_fileOpen(g, sourceFileName);
+    sprintf(sourceFileName, "%s.%s", ptr, cpp ? "cpp" : "c");
+
+    if (hidden) {
+        result = g_hiddenFileOpen(g, "%s", sourceFileName);
     } else {
-        result = g_hiddenFileOpen(g, sourceFileName);
+        result = g_fileOpen(g, "%s", sourceFileName);
+    }
+
+    if (!result) {
+        goto error;
     }
 
     /* Print standard comments and includes */
@@ -222,14 +236,96 @@ static g_file c_apiSourceOpen(g_generator g) {
     g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(result, " */\n\n");
 
-    c_include(g, result, g_getCurrent(g));
+    if (!local && !app) {
+        g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
+        g_fileWrite(result, "#include <%s/_load.h>\n", g_getName(g));
+    } else {
+        g_fileWrite(result, "#include <include/_api.h>\n");
+        g_fileWrite(result, "#include <include/_load.h>\n", g_getName(g));
+    }
+    g_fileWrite(result, "\n");
 
     return result;
+error:
+    return NULL;
+}
+
+static int c_apiWalkPackages(corto_object o, void* userData) {
+    c_apiWalk_t *data = userData;
+
+    CORTO_UNUSED(o);
+
+    g_generator g = data->g;
+
+    data->header = c_apiHeaderOpen(data);
+    if (!data->header) {
+        goto error;
+    }
+
+    data->source = c_apiSourceOpen(g);
+    if (!data->source) {
+        goto error;
+    }
+
+    if (!g_walkRecursive(g, c_apiWalk, data)) {
+        goto error;
+    }
+
+    c_apiHeaderClose(data->header);
+
+    return 1;
+error:
+    return 0;
 }
 
 /* Generator main */
 corto_int16 corto_genMain(g_generator g) {
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
+
     c_apiWalk_t walkData;
+    memset(&walkData, 0, sizeof(walkData));
+    char *cwd = corto_strdup(corto_cwd());
+
+    /* Create project files */
+    if (!local && !app) {
+        if (!corto_fileTest("c/rakefile")) {
+            corto_int8 ret, sig;
+            corto_id cmd;
+            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent", g_getName(g));
+            sig = corto_proccmd(cmd, &ret);
+            if (sig || ret) {
+                corto_seterr("failed to setup project for '%s/c'", 
+                    g_getName(g));
+                goto error;
+            }
+
+            /* Overwrite rakefile */
+            g_file rakefile = g_fileOpen(g, "c/rakefile");
+            if (!rakefile) {
+                corto_seterr("failed to open c/rakefile: %s", corto_lasterr());
+                goto error;
+            }
+            g_fileWrite(rakefile, "PACKAGE = '%s/c'\n\n", g_getName(g));
+            g_fileWrite(rakefile, "NOCORTO = true\n");
+            g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
+            g_fileClose(rakefile);
+        }
+
+        corto_chdir("c");
+
+        walkData.mainHeader = g_fileOpen(g, "c.h");
+        if (!walkData.mainHeader) {
+            goto error;
+        }
+    } else {
+        walkData.mainHeader = NULL;
+    }
+    walkData.g = g;
+
+    walkData.collections = c_findType(g, corto_collection_o);
+    walkData.iterators = c_findType(g, corto_iterator_o);
+    walkData.args = NULL;
 
     /* Default prefixes for corto namespaces */
     g_parse(g, corto_o, FALSE, FALSE, "");
@@ -238,22 +334,22 @@ corto_int16 corto_genMain(g_generator g) {
     g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
-    walkData.g = g;
-    walkData.header = c_apiHeaderOpen(g);
-    walkData.source = c_apiSourceOpen(g);
-    walkData.collections = c_findType(g, corto_collection_o);
-    walkData.iterators = c_findType(g, corto_iterator_o);
-    walkData.args = NULL;
+    if (!g_walkNoScope(g, c_apiWalkPackages, &walkData)) {
+        goto error;
+    }
 
-    g_walkRecursive(g, c_apiWalk, &walkData);
+    corto_ll_walk(walkData.collections, c_apiCollectionWalk, &walkData);
+    corto_ll_walk(walkData.iterators, c_apiIteratorWalk, &walkData);
 
-    corto_llWalk(walkData.collections, c_apiCollectionWalk, &walkData);
-    corto_llWalk(walkData.iterators, c_apiIteratorWalk, &walkData);
+    corto_ll_free(walkData.collections);
+    corto_ll_free(walkData.iterators);
 
-    c_apiHeaderClose(walkData.header);
-
-    corto_llFree(walkData.collections);
-    corto_llFree(walkData.iterators);
+    if (!local) {
+        corto_chdir(cwd);
+        corto_dealloc(cwd);
+    }
 
     return 0;
+error:
+    return -1;
 }

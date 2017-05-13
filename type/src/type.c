@@ -15,7 +15,7 @@ typedef struct c_typeWalk_t {
 } c_typeWalk_t;
 
 /* Enumeration constant */
-static corto_int16 c_typeConstant(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeConstant(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id constantId;
 
@@ -47,7 +47,7 @@ error:
 }
 
 /* Member */
-static corto_int16 c_typeMember(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeMember(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_member m;
     corto_id specifier, postfix, memberId;
@@ -70,7 +70,7 @@ static corto_int16 c_typeMember(corto_serializer s, corto_value* v, void* userDa
               g_id(data->g, corto_idof(m), memberId),
               postfix);
         } else {
-            g_fileWrite(data->header, "%s _parent%s;\n", specifier, postfix);
+            g_fileWrite(data->header, "%s super%s;\n", specifier, postfix);
         }
     }
 
@@ -81,7 +81,7 @@ error:
 
 
 /* Enumeration object */
-static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typePrimitiveEnum(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_enum t;
     corto_id id;
@@ -89,14 +89,14 @@ static corto_int16 c_typePrimitiveEnum(corto_serializer s, corto_value* v, void*
     CORTO_UNUSED(s);
 
     data = userData;
-    t = corto_enum(corto_value_getType(v));
+    t = corto_enum(corto_value_typeof(v));
 
     /* Write enumeration */
     g_fileWrite(data->header, "typedef enum %s {\n", c_typeId(data->g, t, id));
     g_fileIndent(data->header);
 
     /* Write enumeration constants */
-    if (corto_serializeConstants(s, v, userData)) {
+    if (corto_walk_constants(s, v, userData)) {
         goto error;
     }
 
@@ -110,7 +110,7 @@ error:
 }
 
 /* Bitmask object */
-static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typePrimitiveBitmask(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_enum t;
     corto_id id;
@@ -118,13 +118,13 @@ static corto_int16 c_typePrimitiveBitmask(corto_serializer s, corto_value* v, vo
     CORTO_UNUSED(s);
 
     data = userData;
-    t = corto_enum(corto_value_getType(v));
+    t = corto_enum(corto_value_typeof(v));
 
-    g_fileWrite(data->header, "CORTO_BITMASK(%s);\n", c_typeId(data->g, t, id));
+    g_fileWrite(data->header, "typedef uint32_t %s;\n", c_typeId(data->g, t, id));
 
     /* Write enumeration constants */
     g_fileIndent(data->header);
-    if (corto_serializeConstants(s, v, userData)) {
+    if (corto_walk_constants(s, v, userData)) {
         goto error;
     }
     g_fileDedent(data->header);
@@ -135,14 +135,14 @@ error:
 }
 
 /* Void object */
-static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeVoid(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id;
 
     CORTO_UNUSED(s);
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
@@ -156,24 +156,26 @@ static corto_int16 c_typeVoid(corto_serializer s, corto_value* v, void* userData
 }
 
 /* Void object */
-static corto_int16 c_typeAny(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id;
 
     CORTO_UNUSED(s);
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     data = userData;
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-    g_fileWrite(data->header, "CORTO_ANY(%s);\n", c_typeId(data->g, t, id));
+    c_typeId(data->g, t, id);
+    g_fileWrite(data->header, 
+        "typedef struct %s {corto_type type; void *value; uint8_t owner;} %s;\n", id, id);
 
     return 0;
 }
 
 /* Primitive object */
-static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typePrimitive(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_char buff[16];
     corto_type t;
     corto_id id;
@@ -182,7 +184,7 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
     CORTO_UNUSED(s);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
 
     /* Obtain platform type-name for primitive */
     switch(corto_primitive(t)->kind) {
@@ -204,10 +206,8 @@ static corto_int16 c_typePrimitive(corto_serializer s, corto_value* v, void* use
         }
 
         /* Write typedef */
-        if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
-            g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
-            g_fileWrite(data->header, "typedef %s %s;\n", buff, c_typeId(data->g, t, id));
-        }
+        g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
+        g_fileWrite(data->header, "typedef %s %s;\n", buff, c_typeId(data->g, t, id));
         break;
     }
 
@@ -217,13 +217,13 @@ error:
 }
 
 /* Struct object */
-static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeStruct(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id id;
     corto_type t;
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
 
     /* Open struct */
     if (t->reference) {
@@ -238,13 +238,13 @@ static corto_int16 c_typeStruct(corto_serializer s, corto_value* v, void* userDa
     /* Write base */
     if (corto_interface(t)->base && corto_type(corto_interface(t)->base)->alignment) {
         if (corto_type(corto_interface(t)->base)->reference) {
-            g_fileWrite(data->header, "struct %s_s _parent;\n", c_typeId(data->g, corto_interface(t)->base, id));
+            g_fileWrite(data->header, "struct %s_s super;\n", c_typeId(data->g, corto_interface(t)->base, id));
         } else {
-            g_fileWrite(data->header, "%s _parent;\n", c_typeId(data->g, corto_interface(t)->base, id));
+            g_fileWrite(data->header, "%s super;\n", c_typeId(data->g, corto_interface(t)->base, id));
         }
     }
 
-    if (corto_serializeMembers(s, v, userData)) {
+    if (corto_walk_members(s, v, userData)) {
         goto error;
     }
     g_fileDedent(data->header);
@@ -258,13 +258,13 @@ error:
 }
 
 /* Union object */
-static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeUnion(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id id;
     corto_type t;
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
 
     /* Open struct */
     g_fileWrite(data->header, "struct %s {\n", c_typeId(data->g, t, id));
@@ -277,7 +277,7 @@ static corto_int16 c_typeUnion(corto_serializer s, corto_value* v, void* userDat
     g_fileWrite(data->header, "union {\n");
     g_fileIndent(data->header);
 
-    if (corto_serializeCases(s, v, userData)) {
+    if (corto_walk_cases(s, v, userData)) {
         goto error;
     }
 
@@ -295,7 +295,7 @@ error:
 }
 
 /* Abstract object */
-static corto_int16 c_typeAbstract(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeAbstract(corto_walk_opt* s, corto_value* v, void* userData) {
     CORTO_UNUSED(s);
     CORTO_UNUSED(v);
     CORTO_UNUSED(userData);
@@ -304,10 +304,10 @@ static corto_int16 c_typeAbstract(corto_serializer s, corto_value* v, void* user
 }
 
 /* Composite object */
-static corto_int16 c_typeComposite(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeComposite(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     switch(corto_interface(t)->kind) {
     case CORTO_UNION:
         if (c_typeUnion(s, v, userData)) {
@@ -335,7 +335,7 @@ error:
 }
 
 /* Array object */
-static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeArray(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, id3, postfix, postfix2;
@@ -344,7 +344,7 @@ static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userDat
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
     g_fileWrite(data->header, "typedef %s %s[%d];\n",
@@ -356,7 +356,7 @@ static corto_int16 c_typeArray(corto_serializer s, corto_value* v, void* userDat
 }
 
 /* Sequence object */
-static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, id3, postfix, postfix2;
@@ -365,20 +365,18 @@ static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* user
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
 
     if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
-        g_fileWrite(data->header, "CORTO_SEQUENCE(%s, %s,);\n",
-                id,
-                id3);
+        g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
+            id, id3, id);
     } else {
         g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
         g_fileWrite(data->header, "#define %s_DEFINED\n", id);
-        g_fileWrite(data->header, "CORTO_SEQUENCE(%s, %s,);\n",
-                id,
-                id3);
+        g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
+            id, id3, id);
         g_fileWrite(data->header, "#endif\n");
     }
 
@@ -386,7 +384,7 @@ static corto_int16 c_typeSequence(corto_serializer s, corto_value* v, void* user
 }
 
 /* List object */
-static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeList(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, postfix;
@@ -395,16 +393,19 @@ static corto_int16 c_typeList(corto_serializer s, corto_value* v, void* userData
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "CORTO_LIST(%s);\n",
+    g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
+    g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+    g_fileWrite(data->header, "typedef corto_ll %s;\n",
             id);
+    g_fileWrite(data->header, "#endif\n");
 
     return 0;
 }
 
 /* Map object */
-static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, postfix;
@@ -413,7 +414,7 @@ static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData)
     CORTO_UNUSED(v);
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     g_fileWrite(data->header, "CORTO_MAP(%s);\n",
             id);
@@ -422,10 +423,10 @@ static corto_int16 c_typeMap(corto_serializer s, corto_value* v, void* userData)
 }
 
 /* Collection object */
-static corto_int16 c_typeCollection(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeCollection(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     switch(corto_collection(t)->kind) {
     case CORTO_ARRAY:
         if (c_typeArray(s, v, userData)) {
@@ -455,7 +456,7 @@ error:
 }
 
 /* Iterator object */
-static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeIterator(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     CORTO_UNUSED(s);
@@ -465,22 +466,22 @@ static corto_int16 c_typeIterator(corto_serializer s, corto_value* v, void* user
     corto_id id, postfix;
 
     data = userData;
-    t = corto_value_getType(v);
+    t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "CORTO_ITERATOR(%s);\n",
+    g_fileWrite(data->header, "typedef corto_iter %s;\n",
             id);
 
     return 0;
 }
 
 /* Type object */
-static corto_int16 c_typeObject(corto_serializer s, corto_value* v, void* userData) {
+static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_type t;
     corto_int16 result;
 
     data = userData;
-    t = corto_type(corto_value_getType(v));
+    t = corto_type(corto_value_typeof(v));
 
     /* No type needs to be generated if type is a native type */
     if (corto_instanceof(corto_native_type_o, t)) {
@@ -523,20 +524,20 @@ error:
 }
 
 /* Metawalk-serializer for types */
-struct corto_serializer_s c_typeSerializer(void) {
-    struct corto_serializer_s s;
+corto_walk_opt c_typeSerializer(void) {
+    corto_walk_opt s;
 
     /* Initialize serializer */
-    corto_serializerInit(&s);
+    corto_walk_init(&s);
     s.metaprogram[CORTO_OBJECT] = c_typeObject;
     s.metaprogram[CORTO_BASE] = c_typeMember;
     s.metaprogram[CORTO_MEMBER] = c_typeMember;
     s.metaprogram[CORTO_CONSTANT] = c_typeConstant;
     s.access = CORTO_GLOBAL;
     s.accessKind = CORTO_XOR;
-    s.aliasAction = CORTO_SERIALIZER_ALIAS_IGNORE;
-    s.optionalAction = CORTO_SERIALIZER_OPTIONAL_ALWAYS;
-    s.traceKind = CORTO_SERIALIZER_TRACE_ON_FAIL;
+    s.aliasAction = CORTO_WALK_ALIAS_IGNORE;
+    s.optionalAction = CORTO_WALK_OPTIONAL_ALWAYS;
+    s.traceKind = CORTO_WALK_TRACE_ON_FAIL;
 
     return s;
 }
@@ -544,40 +545,55 @@ struct corto_serializer_s c_typeSerializer(void) {
 /* Print class-cast macro's */
 static int c_typeClassCastWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id id, ptr;
+    corto_id id, varId, ptr;
 
     data = userData;
 
     if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
-        corto_id postfix;
-        if (c_specifierId(data->g, o, id, NULL, postfix)) {
-            goto error;
-        }
+        c_typeId(data->g, o, id);
+        c_typeret(data->g, o, C_ByReference, ptr);
+        c_varId(data->g, o, varId);
 
         if (corto_type(o)->kind != CORTO_VOID) {
             g_fileWrite(data->header,
-                "#define %s(o) ((%s)corto_assertType((corto_type)%s_o, o))\n",
-                id, c_typeret(data->g, o, C_ByReference, ptr), id);
+                "#define %s(o) ((%s)corto_assertType((corto_type)%s, o))\n",
+                id, ptr, varId);
         } else {
             g_fileWrite(data->header,
                 "#define %s(o) ((%s)o)\n",
-                id, c_typeret(data->g, o, C_ByReference, ptr));
+                id, ptr);
         }
     }
 
     return 0;
-error:
-    return -1;
+}
+
+/* Print native type typedefs */
+static int c_typeNativeTypedefWalk(corto_object o, void* userData) {
+    c_typeWalk_t* data;
+
+    data = userData;
+
+    if (corto_instanceof(corto_native_type_o, o)) {
+        char *nativeName = corto_native_type(o)->name;
+        bool isPtr = nativeName[strlen(nativeName) - 1] == '*';
+        corto_id id;
+        strcpy(id, nativeName);
+        if (isPtr) {
+            id[strlen(id) - 1] = '\0';
+        }
+
+        g_fileWrite(data->header, "typedef void* %s;\n", id);
+    }
+
+    return 0;
 }
 
 /* Open headerfile, write standard header. */
 static g_file c_typeHeaderFileOpen(g_generator g) {
     g_file result;
     corto_id headerFileName, path;
-    corto_iter importIter;
-    corto_object import;
-    corto_string headerSnippet;
-    corto_string bootstrap = g_getAttribute(g, "bootstrap");
+    corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     /* Get & write prefix */
     g_object *go = g_findObjectInclusive(g, g_getCurrent(g), NULL);
@@ -615,29 +631,22 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     g_fileWrite(result, "#define %s__TYPE_H\n\n", path);
 
     /* Don't include this file when generating for the bootstrap */
-    if (!bootstrap || strcmp(bootstrap, "true")) {
-        c_includeFrom(g, result, corto_o, "corto.h");
-    } else {
+    if (bootstrap) {
         if (g_getCurrent(g) == corto_lang_o) {
-            c_includeFrom(g, result, corto_o, "def.h");
+            c_includeFrom(g, result, corto_o, "base.h");
         } else {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
-    }
-
-    /* Include imports */
-    if (g->imports) {
-        importIter = corto_llIter(g->imports);
-        while(corto_iterHasNext(&importIter)) {
-            import = corto_iterNext(&importIter);
-            c_include(g, result, import);
-        }
+    } else {
+        /* Dynamically determine dependencies of metadata so we know which _type
+         * headers to include. This cannot be derived from the list of imports
+         * because it can contain packages that don't have a _type header.
+         *
+         * We also don't want to include the main header of the import packages
+         * here because that would potentially include headers to which this
+         * package does not have include paths for. */
+        c_includeDependencies(g, result, "_type.h");
         g_fileWrite(result, "\n");
-    }
-
-    headerSnippet = g_fileLookupHeader(result, "");
-    if (headerSnippet) {
-        g_fileWrite(result, "\n/* $header()%s$end */\n\n", headerSnippet);
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
@@ -685,7 +694,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
             }
             break;
         case CORTO_INTERFACE:
-            g_fileWrite(data->header, "CORTO_INTERFACE(%s);\n\n", id);
+            g_fileWrite(data->header, "typedef void *%s;\n\n", id);
             break;
         }
         break;
@@ -701,7 +710,7 @@ error:
 }
 
 static int c_typeDefine(corto_object o, void* userData) {
-    struct corto_serializer_s s;
+    corto_walk_opt s;
     int result;
 
     result = 0;
@@ -710,10 +719,7 @@ static int c_typeDefine(corto_object o, void* userData) {
     s = c_typeSerializer();
 
     /* Do metawalk on type */
-    result = corto_metaWalk(&s, corto_type(o), userData);
-
-    /* TODO: Print cast macro */
-    /* c_typeClassCastWalk(o, userData); */
+    result = corto_metawalk(&s, corto_type(o), userData);
 
     return result;
 }
@@ -746,6 +752,18 @@ corto_int16 corto_genMain(g_generator g) {
             goto error;
         }
     }
+
+    /* Define native types as void* if _type.h is used by itself */
+    corto_id path;
+    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_strupper(path);
+    g_fileWrite(walkData.header, "\n");
+    g_fileWrite(walkData.header, "/* Native types */\n");
+    g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
+    if (corto_genTypeDepWalk(g, NULL, c_typeNativeTypedefWalk, &walkData)) {
+        goto error;
+    }    
+    g_fileWrite(walkData.header, "#endif\n");
 
     g_fileWrite(walkData.header, "\n");
     g_fileWrite(walkData.header, "/* Type definitions */\n");

@@ -154,6 +154,8 @@ corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
 
     switch(t->kind) {
     case CORTO_BOOLEAN:
+        strcpy(buff, "bool");
+        break;
     case CORTO_CHARACTER:
         switch(t->width) {
         case CORTO_WIDTH_8:
@@ -352,21 +354,34 @@ corto_int16 c_specifierId(
 
     /* Check if object is scoped */
     if (corto_checkAttr(t, CORTO_ATTR_SCOPED) && corto_childof(root_o, t)) {
-        g_fullOid(g, t, specifier);
+        if (t->kind == CORTO_PRIMITIVE &&
+            corto_primitive(t)->kind != CORTO_ENUM &&
+            corto_primitive(t)->kind != CORTO_BITMASK &&
+            corto_primitive(t)->kind != CORTO_TEXT) 
+        {
+            if (!c_primitiveId(g, corto_primitive(t), specifier)) {
+                goto error;
+            }
+        } else if (t->kind == CORTO_VOID && !t->reference) {
+            strcpy(specifier, "void");
+        } else {
+            g_fullOid(g, t, specifier);
+        }
     } else {
         switch(corto_type(t)->kind) {
-        case CORTO_PRIMITIVE:
-            c_primitiveId(g, corto_primitive(t), specifier);
-            break;
         case CORTO_COLLECTION: {
             corto_id _specifier, _postfix;
             corto_type elementType = corto_collection(t)->elementType;
+
+            /* Get specifier of elementType */
+            if (elementType->kind == CORTO_PRIMITIVE && corto_checkAttr(elementType, CORTO_ATTR_SCOPED)) {
+                g_fullOid(g, elementType, _specifier);
+            } else if (c_specifierId(g, elementType, _specifier, NULL, _postfix)) {
+                goto error;
+            }
+
             switch(corto_collection(t)->kind) {
             case CORTO_ARRAY:
-                /* Get specifier of elementType */
-                if (c_specifierId(g, corto_collection(t)->elementType, _specifier, NULL, _postfix)) {
-                    goto error;
-                }
                 if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_ARRAY)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
@@ -374,10 +389,6 @@ corto_int16 c_specifierId(
                 }
                 break;
             case CORTO_SEQUENCE:
-                /* Get specifier of elementType */
-                if (c_specifierId(g, corto_collection(t)->elementType, _specifier, NULL, _postfix)) {
-                    goto error;
-                }
                 if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_SEQUENCE)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
@@ -389,9 +400,6 @@ corto_int16 c_specifierId(
                 }
                 break;
             case CORTO_LIST:
-                if (c_specifierId(g, corto_collection(t)->elementType, _specifier, NULL, _postfix)) {
-                    goto error;
-                }
                 if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_LIST)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
@@ -409,31 +417,7 @@ corto_int16 c_specifierId(
             break;
         }
         default: {
-            static corto_ll anonymousTypes = NULL;
-            corto_uint32 count = 0;
-            if (!anonymousTypes) {
-                anonymousTypes = corto_llNew();
-            }
-            corto_iter it = corto_llIter(anonymousTypes);
-            while (corto_iterHasNext(&it)) {
-                corto_object o = corto_iterNext(&it);
-                if (o == t) {
-                    break;
-                }
-                count ++;
-            }
-            if (count == corto_llSize(anonymousTypes)) {
-                corto_llAppend(anonymousTypes, t);
-            }
-
-            corto_object cur = g_getCurrent(g);
-            if (corto_instanceof(corto_package_o, cur)) {
-                corto_id packageId;
-                g_fullOid(g, cur, packageId);
-                sprintf(specifier, "anonymous_%s_%u", packageId, count);
-            } else {
-                sprintf(specifier, "anonymous_%u", count);
-            }
+            g_fullOid(g, t, specifier);
             break;
         }
         }
@@ -446,7 +430,13 @@ error:
 
 corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier) {
     corto_id postfix;
-    c_specifierId(g, t, specifier, NULL, postfix);
+
+    if (!corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
+        c_specifierId(g, t, specifier, NULL, postfix);
+    } else {
+        g_fullOid(g, t, specifier);
+    }
+
     return specifier;
 }
 
@@ -459,7 +449,7 @@ corto_char* c_escapeString(corto_string str) {
 
 corto_bool c_procedureHasThis(corto_function o) {
     corto_procedure t = corto_procedure(corto_typeof(o));
-    return t->kind == CORTO_METHOD || t->kind == CORTO_OBSERVER || t->kind == CORTO_METAPROCEDURE;
+    return t->hasThis;
 }
 
 corto_string c_paramName(corto_string name, corto_string buffer) {
@@ -587,9 +577,9 @@ corto_object c_findPackage(g_generator g, corto_object o) {
     if (g_getCurrent(g)) {
         ptr = NULL;
         if (g->imports) {
-            corto_iter it = corto_llIter(g->imports);
-            while (corto_iterHasNext(&it)) {
-                corto_object o = corto_iterNext(&it);
+            corto_iter it = corto_ll_iter(g->imports);
+            while (corto_iter_hasNext(&it)) {
+                corto_object o = corto_iter_next(&it);
                 if (o == package) {
                     ptr = package;
                 }
@@ -675,6 +665,18 @@ void c_includeFrom(
     }
 }
 
+void c_includeDependencies(g_generator g, g_file file, corto_string header) {
+    corto_ll dependencies = g_getDependencies(g);
+    if (dependencies) {
+        corto_iter it = corto_ll_iter(dependencies);
+        while (corto_iter_hasNext(&it)) {
+            corto_object o = corto_iter_next(&it);
+            c_includeFrom(g, file, o, header);
+        }
+        corto_ll_free(dependencies);
+    }
+}
+
 void c_include(g_generator g, g_file file, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(g, o);
@@ -731,8 +733,8 @@ static int c_findTypeWalk(corto_object o, void* userData) {
     c_findTypeWalk_t* data = userData;
 
     if (corto_instanceof(data->t, o)) {
-        if (!corto_llSize(data->result) || corto_llWalk(data->result, c_checkDuplicates, o)) {
-            corto_llAppend(data->result, o);
+        if (!corto_ll_size(data->result) || corto_ll_walk(data->result, c_checkDuplicates, o)) {
+            corto_ll_append(data->result, o);
         }
     }
 
@@ -742,11 +744,11 @@ static int c_findTypeWalk(corto_object o, void* userData) {
 corto_ll c_findType(g_generator g, corto_class t) {
     c_findTypeWalk_t walkData;
 
-    walkData.result = corto_llNew();
+    walkData.result = corto_ll_new();
     walkData.t = t;
 
     if (corto_genDepWalk(g, c_findTypeWalk, NULL, &walkData)) {
-        corto_seterr("generation of api-routines failed while resolving %s.",
+        corto_seterr("failed to resolve instances of '%s'",
             corto_fullpath(NULL, t));
         goto error;
     }
@@ -781,10 +783,8 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
 
 char* c_functionName(g_generator g, corto_function o, corto_id id) {
     g_fullOid(g, o, id);
-    if (corto_instanceof(corto_type(corto_method_o), o)) {
-        if (corto_method(o)->_virtual) {
-            strcat(id, "_v");
-        }
+    if (o->overridable) {
+        strcat(id, "_v");
     }
     return id;
 }
@@ -916,7 +916,8 @@ corto_int16 c_decl(
 
     /* Add 'this' parameter to methods */
     if (c_procedureHasThis(o)) {
-        if (corto_procedure(corto_typeof(o))->kind != CORTO_METAPROCEDURE) {
+        corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
+        if (!thisType || thisType->reference) {
             c_paramThis(g, file, cpp, corto_parentof(o));
         } else {
             if (!cpp) {
@@ -971,3 +972,5 @@ char* c_mainheader(g_generator g, corto_id header) {
 
     return header;
 }
+
+
