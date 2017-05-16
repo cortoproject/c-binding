@@ -43,7 +43,7 @@ corto_void _test_OptionalStringApi_tc_createChild(
         root_o, "a", Set("Foo"), "Bar");
 
     test_assert(o != NULL);
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "a");
     test_assert(corto_parentof(o) == root_o);
     test_assert(o->a != NULL);
@@ -61,7 +61,7 @@ corto_void _test_OptionalStringApi_tc_createChildNotSet(
         root_o, "a", NotSet, "Bar");
 
     test_assert(o != NULL);
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "a");
     test_assert(corto_parentof(o) == root_o);
     test_assert(o->a == NULL);
@@ -105,7 +105,7 @@ corto_void _test_OptionalStringApi_tc_declareChild(
 
     test_assert(o != NULL);
     test_assert(!corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "a");
     test_assert(corto_parentof(o) == root_o);
     test_assert(o->a == NULL);

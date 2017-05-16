@@ -369,7 +369,7 @@ static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userD
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
 
-    if (corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
+    if (corto_checkAttr(t, CORTO_ATTR_NAMED)) {
         g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
             id, id3, id);
     } else {

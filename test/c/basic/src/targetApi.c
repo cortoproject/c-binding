@@ -73,7 +73,7 @@ corto_void _test_targetApi_tc_createChild(
     test_intTarget o = test_intTargetCreateChild(root_o, "o", 10, 20, 20);
     test_assert(o != NULL);
     test_assert(corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->actual == 10);
@@ -90,7 +90,7 @@ corto_void _test_targetApi_tc_createChildAuto(
     test_intTargetCreateChild_auto(root_o, o, 10, 20, 20);
     test_assert(o != NULL);
     test_assert(corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->actual == 10);

@@ -353,7 +353,7 @@ corto_int16 c_specifierId(
     }
 
     /* Check if object is scoped */
-    if (corto_checkAttr(t, CORTO_ATTR_SCOPED) && corto_childof(root_o, t)) {
+    if (corto_checkAttr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
         if (t->kind == CORTO_PRIMITIVE &&
             corto_primitive(t)->kind != CORTO_ENUM &&
             corto_primitive(t)->kind != CORTO_BITMASK &&
@@ -374,7 +374,7 @@ corto_int16 c_specifierId(
             corto_type elementType = corto_collection(t)->elementType;
 
             /* Get specifier of elementType */
-            if (elementType->kind == CORTO_PRIMITIVE && corto_checkAttr(elementType, CORTO_ATTR_SCOPED)) {
+            if (elementType->kind == CORTO_PRIMITIVE && corto_checkAttr(elementType, CORTO_ATTR_NAMED)) {
                 g_fullOid(g, elementType, _specifier);
             } else if (c_specifierId(g, elementType, _specifier, NULL, _postfix)) {
                 goto error;
@@ -431,7 +431,7 @@ error:
 corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier) {
     corto_id postfix;
 
-    if (!corto_checkAttr(t, CORTO_ATTR_SCOPED)) {
+    if (!corto_checkAttr(t, CORTO_ATTR_NAMED)) {
         c_specifierId(g, t, specifier, NULL, postfix);
     } else {
         g_fullOid(g, t, specifier);
@@ -708,7 +708,7 @@ static corto_equalityKind c_compareCollections(corto_collection c1, corto_collec
 }
 
 static int c_checkDuplicates(void* o, void* userData) {
-    if (corto_checkAttr(o, CORTO_ATTR_SCOPED)) {
+    if (corto_checkAttr(o, CORTO_ATTR_NAMED)) {
         return 1;
     } else {
         if (corto_instanceof(corto_collection_o, o)) {
@@ -767,7 +767,7 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
             corto_path(out, root_o, o, "_");
         } else {
             corto_id postfix;
-            if (corto_instanceof(corto_type_o, o) && (!corto_checkAttr(o, CORTO_ATTR_SCOPED) || !corto_childof(root_o, o))) {
+            if (corto_instanceof(corto_type_o, o) && (!corto_checkAttr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
                 c_specifierId(g, o, out, NULL, postfix);
             } else {
                 g_fullOid(g, o, out);

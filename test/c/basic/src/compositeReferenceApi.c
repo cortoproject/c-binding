@@ -80,7 +80,7 @@ corto_void _test_compositeReferenceApi_tc_createChild(
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
     test_assert(corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->x == 10);
@@ -100,7 +100,7 @@ corto_void _test_compositeReferenceApi_tc_createChildAuto(
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
     test_assert(corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->x == 10);
@@ -152,7 +152,7 @@ corto_void _test_compositeReferenceApi_tc_declareChild(
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->x == 1);
@@ -171,7 +171,7 @@ corto_void _test_compositeReferenceApi_tc_declareChildAuto(
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->x == 1);
@@ -192,7 +192,7 @@ corto_void _test_compositeReferenceApi_tc_define(
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
     test_assert(!corto_checkState(o, CORTO_DEFINED));
-    test_assert(corto_checkAttr(o, CORTO_ATTR_SCOPED));
+    test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(o->x == 1);
