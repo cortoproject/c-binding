@@ -82,7 +82,7 @@ static int c_interfaceParamCastDef(corto_parameter *o, void *userData) {
 static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isReference, corto_inout inout) {
     if ((isReference || t->reference) &&
         (t->kind != CORTO_VOID) && (t->kind != CORTO_ANY) &&
-        (corto_checkAttr(t, CORTO_ATTR_SCOPED)) &&
+        (corto_checkAttr(t, CORTO_ATTR_NAMED)) &&
         (!inout)) 
     {
         return TRUE;

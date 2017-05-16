@@ -428,8 +428,7 @@ static corto_int16 c_apiParamMember(corto_walk_opt* s, corto_value* v, void* use
         m = v->is.member.t;
         data = userData;
         corto_bool isOptional = m->modifiers & CORTO_OPTIONAL;
-        corto_bool requiresPtr =
-            c_typeRequiresPtr(m->type) || isOptional;
+        corto_bool requiresPtr = isOptional;
 
         if (data->parameterCount) {
             g_fileWrite(data->header, ", ");
@@ -439,8 +438,10 @@ static corto_int16 c_apiParamMember(corto_walk_opt* s, corto_value* v, void* use
         /* Get type-specifier */
         if (corto_typeof(m->type) != corto_type(corto_target_o)) {
             c_specifierId(data->g, m->type, typeSpec, NULL, typePostfix);
+            requiresPtr |= c_typeRequiresPtr(m->type);
         } else {
             c_specifierId(data->g, corto_target(m->type)->type, typeSpec, NULL, typePostfix);
+            requiresPtr |= c_typeRequiresPtr(corto_target(m->type)->type);
         }
         corto_genMemberName(data->g, data->memberCache, m, memberIdTmp);
 
