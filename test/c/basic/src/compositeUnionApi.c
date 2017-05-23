@@ -8,11 +8,8 @@
 
 #include <include/test.h>
 
-corto_void _test_compositeUnionApi_onUpdate(
-    test_compositeUnionApi this,
-    corto_eventMask event,
-    corto_object object,
-    corto_observer observer)
+void _test_compositeUnionApi_onUpdate(
+    corto_observerEvent *e)
 {
 /* $begin(test/compositeUnionApi/onUpdate) */
 
@@ -21,7 +18,7 @@ corto_void _test_compositeUnionApi_onUpdate(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_compare(
+void _test_compositeUnionApi_tc_compare(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_compare) */
@@ -40,7 +37,7 @@ corto_void _test_compositeUnionApi_tc_compare(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_compareDefault(
+void _test_compositeUnionApi_tc_compareDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_compareDefault) */
@@ -65,7 +62,7 @@ corto_void _test_compositeUnionApi_tc_compareDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_compareDiscriminator(
+void _test_compositeUnionApi_tc_compareDiscriminator(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_compareDiscriminator) */
@@ -78,7 +75,7 @@ corto_void _test_compositeUnionApi_tc_compareDiscriminator(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_create(
+void _test_compositeUnionApi_tc_create(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_create) */
@@ -94,7 +91,7 @@ corto_void _test_compositeUnionApi_tc_create(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createAuto(
+void _test_compositeUnionApi_tc_createAuto(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createAuto) */
@@ -110,7 +107,7 @@ corto_void _test_compositeUnionApi_tc_createAuto(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createAutoDefault(
+void _test_compositeUnionApi_tc_createAutoDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createAutoDefault) */
@@ -126,7 +123,7 @@ corto_void _test_compositeUnionApi_tc_createAutoDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createChild(
+void _test_compositeUnionApi_tc_createChild(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createChild) */
@@ -150,7 +147,7 @@ corto_void _test_compositeUnionApi_tc_createChild(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createChildAuto(
+void _test_compositeUnionApi_tc_createChildAuto(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createChildAuto) */
@@ -174,7 +171,7 @@ corto_void _test_compositeUnionApi_tc_createChildAuto(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createChildAutoDefault(
+void _test_compositeUnionApi_tc_createChildAutoDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createChildAutoDefault) */
@@ -198,7 +195,7 @@ corto_void _test_compositeUnionApi_tc_createChildAutoDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createChildDefault(
+void _test_compositeUnionApi_tc_createChildDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createChildDefault) */
@@ -219,7 +216,7 @@ corto_void _test_compositeUnionApi_tc_createChildDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_createDefault(
+void _test_compositeUnionApi_tc_createDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_createDefault) */
@@ -238,7 +235,7 @@ corto_void _test_compositeUnionApi_tc_createDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_declare(
+void _test_compositeUnionApi_tc_declare(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_declare) */
@@ -254,7 +251,7 @@ corto_void _test_compositeUnionApi_tc_declare(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_declareAuto(
+void _test_compositeUnionApi_tc_declareAuto(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_declareAuto) */
@@ -270,7 +267,7 @@ corto_void _test_compositeUnionApi_tc_declareAuto(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_declareChild(
+void _test_compositeUnionApi_tc_declareChild(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_declareChild) */
@@ -289,7 +286,7 @@ corto_void _test_compositeUnionApi_tc_declareChild(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_declareChildAuto(
+void _test_compositeUnionApi_tc_declareChildAuto(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_declareChildAuto) */
@@ -308,7 +305,7 @@ corto_void _test_compositeUnionApi_tc_declareChildAuto(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_define(
+void _test_compositeUnionApi_tc_define(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_define) */
@@ -335,7 +332,7 @@ corto_void _test_compositeUnionApi_tc_define(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_defineDefault(
+void _test_compositeUnionApi_tc_defineDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_defineDefault) */
@@ -362,7 +359,7 @@ corto_void _test_compositeUnionApi_tc_defineDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_fromStr(
+void _test_compositeUnionApi_tc_fromStr(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_fromStr) */
@@ -375,7 +372,7 @@ corto_void _test_compositeUnionApi_tc_fromStr(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_fromStrDefault(
+void _test_compositeUnionApi_tc_fromStrDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_fromStrDefault) */
@@ -388,7 +385,7 @@ corto_void _test_compositeUnionApi_tc_fromStrDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_set(
+void _test_compositeUnionApi_tc_set(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_set) */
@@ -401,7 +398,7 @@ corto_void _test_compositeUnionApi_tc_set(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_setDefault(
+void _test_compositeUnionApi_tc_setDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_setDefault) */
@@ -414,7 +411,7 @@ corto_void _test_compositeUnionApi_tc_setDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_str(
+void _test_compositeUnionApi_tc_str(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_str) */
@@ -427,7 +424,7 @@ corto_void _test_compositeUnionApi_tc_str(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_strDefault(
+void _test_compositeUnionApi_tc_strDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_strDefault) */
@@ -440,7 +437,7 @@ corto_void _test_compositeUnionApi_tc_strDefault(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_update(
+void _test_compositeUnionApi_tc_update(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_update) */
@@ -466,7 +463,7 @@ corto_void _test_compositeUnionApi_tc_update(
 /* $end */
 }
 
-corto_void _test_compositeUnionApi_tc_updateDefault(
+void _test_compositeUnionApi_tc_updateDefault(
     test_compositeUnionApi this)
 {
 /* $begin(test/compositeUnionApi/tc_updateDefault) */

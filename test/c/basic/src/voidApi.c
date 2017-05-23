@@ -8,18 +8,15 @@
 
 #include <include/test.h>
 
-corto_void _test_voidApi_onUpdate(
-    test_voidApi this,
-    corto_eventMask event,
-    corto_object object,
-    corto_observer observer)
+void _test_voidApi_onUpdate(
+    corto_observerEvent *e)
 {
 /* $begin(test/voidApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_voidApi_tc_create(
+void _test_voidApi_tc_create(
     test_voidApi this)
 {
 /* $begin(test/voidApi/tc_create) */
@@ -33,7 +30,7 @@ corto_void _test_voidApi_tc_create(
 /* $end */
 }
 
-corto_void _test_voidApi_tc_createAuto(
+void _test_voidApi_tc_createAuto(
     test_voidApi this)
 {
 /* $begin(test/voidApi/tc_createAuto) */
@@ -47,7 +44,7 @@ corto_void _test_voidApi_tc_createAuto(
 /* $end */
 }
 
-corto_void _test_voidApi_tc_createChild(
+void _test_voidApi_tc_createChild(
     test_voidApi this)
 {
 /* $begin(test/voidApi/tc_createChild) */
@@ -64,7 +61,7 @@ corto_void _test_voidApi_tc_createChild(
 /* $end */
 }
 
-corto_void _test_voidApi_tc_createChildAuto(
+void _test_voidApi_tc_createChildAuto(
     test_voidApi this)
 {
 /* $begin(test/voidApi/tc_createChildAuto) */
@@ -81,7 +78,7 @@ corto_void _test_voidApi_tc_createChildAuto(
 /* $end */
 }
 
-corto_void _test_voidApi_tc_update(
+void _test_voidApi_tc_update(
     test_voidApi this)
 {
 /* $begin(test/voidApi/tc_update) */

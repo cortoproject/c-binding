@@ -8,7 +8,7 @@
 
 #include <include/test.h>
 
-corto_void _test_targetApi_setup(
+void _test_targetApi_setup(
     test_targetApi this)
 {
 /* $begin(test/targetApi/setup) */
@@ -18,7 +18,7 @@ corto_void _test_targetApi_setup(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_compare(
+void _test_targetApi_tc_compare(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_compare) */
@@ -38,7 +38,7 @@ corto_void _test_targetApi_tc_compare(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_create(
+void _test_targetApi_tc_create(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_create) */
@@ -52,7 +52,7 @@ corto_void _test_targetApi_tc_create(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_createAuto(
+void _test_targetApi_tc_createAuto(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_createAuto) */
@@ -66,7 +66,7 @@ corto_void _test_targetApi_tc_createAuto(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_createChild(
+void _test_targetApi_tc_createChild(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_createChild) */
@@ -83,7 +83,7 @@ corto_void _test_targetApi_tc_createChild(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_createChildAuto(
+void _test_targetApi_tc_createChildAuto(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_createChildAuto) */
@@ -100,7 +100,7 @@ corto_void _test_targetApi_tc_createChildAuto(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_fromStr(
+void _test_targetApi_tc_fromStr(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_fromStr) */
@@ -125,7 +125,7 @@ corto_void _test_targetApi_tc_fromStr(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_fromStrOwnedByMount(
+void _test_targetApi_tc_fromStrOwnedByMount(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_fromStrOwnedByMount) */
@@ -154,7 +154,7 @@ corto_void _test_targetApi_tc_fromStrOwnedByMount(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_set(
+void _test_targetApi_tc_set(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_set) */
@@ -169,7 +169,7 @@ corto_void _test_targetApi_tc_set(
 /* $end */
 }
 
-corto_void _test_targetApi_tc_str(
+void _test_targetApi_tc_str(
     test_targetApi this)
 {
 /* $begin(test/targetApi/tc_str) */

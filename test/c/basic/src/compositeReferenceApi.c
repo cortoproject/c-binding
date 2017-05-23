@@ -8,18 +8,15 @@
 
 #include <include/test.h>
 
-corto_void _test_compositeReferenceApi_onUpdate(
-    test_compositeReferenceApi this,
-    corto_eventMask event,
-    corto_object object,
-    corto_observer observer)
+void _test_compositeReferenceApi_onUpdate(
+    corto_observerEvent *e)
 {
 /* $begin(test/compositeReferenceApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_compare(
+void _test_compositeReferenceApi_tc_compare(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_compare) */
@@ -38,7 +35,7 @@ corto_void _test_compositeReferenceApi_tc_compare(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_create(
+void _test_compositeReferenceApi_tc_create(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_create) */
@@ -54,7 +51,7 @@ corto_void _test_compositeReferenceApi_tc_create(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_createAuto(
+void _test_compositeReferenceApi_tc_createAuto(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_createAuto) */
@@ -70,7 +67,7 @@ corto_void _test_compositeReferenceApi_tc_createAuto(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_createChild(
+void _test_compositeReferenceApi_tc_createChild(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_createChild) */
@@ -90,7 +87,7 @@ corto_void _test_compositeReferenceApi_tc_createChild(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_createChildAuto(
+void _test_compositeReferenceApi_tc_createChildAuto(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_createChildAuto) */
@@ -110,7 +107,7 @@ corto_void _test_compositeReferenceApi_tc_createChildAuto(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_declare(
+void _test_compositeReferenceApi_tc_declare(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_declare) */
@@ -126,7 +123,7 @@ corto_void _test_compositeReferenceApi_tc_declare(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_declareAuto(
+void _test_compositeReferenceApi_tc_declareAuto(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_declareAuto) */
@@ -142,7 +139,7 @@ corto_void _test_compositeReferenceApi_tc_declareAuto(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_declareChild(
+void _test_compositeReferenceApi_tc_declareChild(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_declareChild) */
@@ -162,7 +159,7 @@ corto_void _test_compositeReferenceApi_tc_declareChild(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_declareChildAuto(
+void _test_compositeReferenceApi_tc_declareChildAuto(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_declareChildAuto) */
@@ -181,7 +178,7 @@ corto_void _test_compositeReferenceApi_tc_declareChildAuto(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_define(
+void _test_compositeReferenceApi_tc_define(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_define) */
@@ -209,7 +206,7 @@ corto_void _test_compositeReferenceApi_tc_define(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_fromStr(
+void _test_compositeReferenceApi_tc_fromStr(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_fromStr) */
@@ -224,7 +221,7 @@ corto_void _test_compositeReferenceApi_tc_fromStr(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_set(
+void _test_compositeReferenceApi_tc_set(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_set) */
@@ -239,7 +236,7 @@ corto_void _test_compositeReferenceApi_tc_set(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_str(
+void _test_compositeReferenceApi_tc_str(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_str) */
@@ -253,7 +250,7 @@ corto_void _test_compositeReferenceApi_tc_str(
 /* $end */
 }
 
-corto_void _test_compositeReferenceApi_tc_update(
+void _test_compositeReferenceApi_tc_update(
     test_compositeReferenceApi this)
 {
 /* $begin(test/compositeReferenceApi/tc_update) */

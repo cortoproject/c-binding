@@ -25,13 +25,20 @@ static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type ty
     }
 }
 
-static void c_apiCastMacroAddThis(corto_ll args, corto_string name, corto_type type, corto_bool optional, corto_bool isobject) {
+static void c_apiCastMacroAddThis(corto_ll args, corto_string name, corto_type type, corto_bool optional, corto_bool isobject, g_generator g) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
         arg->name = corto_strdup(name);
         arg->type = type;
         arg->move = FALSE;
-        arg->nativeCast = NULL;
+        if (!isobject && (type->kind == CORTO_COLLECTION && corto_collection(type)->kind == CORTO_ARRAY)) {
+            corto_id elemId;
+            c_typeId(g, corto_collection(type)->elementType, elemId);
+            strcat(elemId, "*");
+            arg->nativeCast = corto_strdup(elemId);
+        } else {
+            arg->nativeCast = NULL;
+        }
         arg->optional = optional;
         arg->isobject = isobject;
         corto_ll_append(args, arg);
@@ -973,9 +980,9 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
 
         if (strcmp(func, "Assign")) {
-            c_apiCastMacroAddThis(data->args, "_this", t, FALSE, TRUE);
+            c_apiCastMacroAddThis(data->args, "_this", t, FALSE, TRUE, g);
         } else {
-            c_apiCastMacroAddThis(data->args, "_this", t, FALSE, FALSE);
+            c_apiCastMacroAddThis(data->args, "_this", t, FALSE, FALSE, g);
         }
 
         c_apiTypeInitArgs(t, member, data);

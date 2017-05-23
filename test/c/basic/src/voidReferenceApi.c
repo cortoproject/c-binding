@@ -8,18 +8,15 @@
 
 #include <include/test.h>
 
-corto_void _test_voidReferenceApi_onUpdate(
-    test_voidReferenceApi this,
-    corto_eventMask event,
-    corto_object object,
-    corto_observer observer)
+void _test_voidReferenceApi_onUpdate(
+    corto_observerEvent *e)
 {
 /* $begin(test/voidReferenceApi/onUpdate) */
     this->updated = TRUE;
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_create(
+void _test_voidReferenceApi_tc_create(
     test_voidReferenceApi this)
 {
 /* $begin(test/voidReferenceApi/tc_create) */
@@ -33,7 +30,7 @@ corto_void _test_voidReferenceApi_tc_create(
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_createAuto(
+void _test_voidReferenceApi_tc_createAuto(
     test_voidReferenceApi this)
 {
 /* $begin(test/voidReferenceApi/tc_createAuto) */
@@ -47,7 +44,7 @@ corto_void _test_voidReferenceApi_tc_createAuto(
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_createChild(
+void _test_voidReferenceApi_tc_createChild(
     test_voidReferenceApi this)
 {
 /* $begin(test/voidReferenceApi/tc_createChild) */
@@ -64,7 +61,7 @@ corto_void _test_voidReferenceApi_tc_createChild(
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_createChildAuto(
+void _test_voidReferenceApi_tc_createChildAuto(
     test_voidReferenceApi this)
 {
 /* $begin(test/voidReferenceApi/tc_createChildAuto) */
@@ -81,7 +78,7 @@ corto_void _test_voidReferenceApi_tc_createChildAuto(
 /* $end */
 }
 
-corto_void _test_voidReferenceApi_tc_update(
+void _test_voidReferenceApi_tc_update(
     test_voidReferenceApi this)
 {
 /* $begin(test/voidReferenceApi/tc_update) */
