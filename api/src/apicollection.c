@@ -302,12 +302,22 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
         g_fileWrite(data->source, "corto_ptr_copy(result, %s, %selement);\n", varId, ptr ? "" : "&");
     } else {
         if ((elementType->kind == CORTO_PRIMITIVE) && (corto_primitive(elementType)->kind == CORTO_TEXT)) {
+            g_fileWrite(data->source, "if (element) {\n");
+            g_fileIndent(data->source);
             g_fileWrite(data->source, "%s(list, (void*)corto_strdup(element));\n", corto_operationToApi(operation, api));
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "} else {\n");
+            g_fileWrite(data->source, "%s(list, (void*)element);\n", corto_operationToApi(operation, api));
+            g_fileWrite(data->source, "}\n");
         } else {
             g_fileWrite(data->source, "%s(list, (void*)(corto_word)element);\n", corto_operationToApi(operation, api));
         }
         if (elementType->reference) {
+            g_fileWrite(data->source, "if (element) {\n");
+            g_fileIndent(data->source);
             g_fileWrite(data->source, "corto_claim(element);\n");
+            g_fileDedent(data->source);
+            g_fileWrite(data->source, "}\n");
         }
     }
 

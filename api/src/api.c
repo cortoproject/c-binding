@@ -238,7 +238,9 @@ static g_file c_apiSourceOpen(g_generator g) {
 
     if (!local && !app) {
         g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
-        g_fileWrite(result, "#include <%s/_load.h>\n", g_getName(g));
+        corto_id path;
+        corto_path(path, root_o, g_getCurrent(g), "/");
+        g_fileWrite(result, "#include <%s/_load.h>\n", path);
     } else {
         g_fileWrite(result, "#include <include/_api.h>\n");
         g_fileWrite(result, "#include <include/_load.h>\n", g_getName(g));
