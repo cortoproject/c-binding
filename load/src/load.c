@@ -804,8 +804,13 @@ static corto_int16 c_loadFwdDeclProcedure(corto_function f, c_typeWalk_t* data) 
     g_fileWrite(data->source, "\n#ifdef __cplusplus\n");
     g_fileWrite(data->source, "extern \"C\"\n");
     g_fileWrite(data->source, "#endif\n");
-    c_decl(data->g, data->source, f, FALSE, TRUE);
-    g_fileWrite(data->source, ";\n");
+
+    corto_buffer declBuffer = CORTO_BUFFER_INIT;
+    c_decl(data->g, &declBuffer, f, FALSE, TRUE, FALSE);
+    char *decl = corto_buffer_str(&declBuffer);
+    g_fileWrite(data->source, "%s;\n", decl);
+    free(decl);
+
     return 0;
 }
 static int c_walkProcedures(corto_object o, void *userData) {

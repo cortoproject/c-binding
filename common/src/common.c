@@ -546,6 +546,26 @@ corto_char* c_usingConstant(g_generator g, corto_id id) {
     return id;
 }
 
+/* Generate BUILDING macro */
+char* c_buildingMacro(g_generator g, corto_id buffer) {
+    corto_id buff;
+    strcpy(buffer, "BUILDING_");
+    char *ptr = &buffer[9];
+
+    if (strcmp(g_getAttribute(g, "bootstrap"), "true") && g_getCurrent(g)) {
+        corto_path(buff, root_o, g_getCurrent(g), "_");
+    } else {
+        strcpy(buff, g_getName(g));
+        char *ptr, ch;
+        for (ptr = buff; (ch = *ptr); ptr++) {
+            if (ch == '/') *ptr = '_';
+        }
+    }
+    corto_strupper(buff);
+    strcpy(ptr, buff);
+    return buffer; 
+}
+
 void c_writeExport(g_generator g, g_file file) {
     corto_id upperName;
     if (!strcmp(g_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
@@ -624,24 +644,21 @@ char* c_filename(
     return fileName;
 }
 
-void c_includeFrom(
+void c_includeFrom_toBufferv(
     g_generator g,
-    g_file file,
+    corto_buffer *buffer,
     corto_object o,
     corto_string include,
-    ...)
+    va_list list)
 {
     corto_id path, filebuff;
-    va_list list;
     corto_object package = NULL;
 
     if (o) {
         package = c_findPackage(g, o);
     }
 
-    va_start(list, include);
     vsprintf(filebuff, include, list);
-    va_end(list);
 
     /* If an app or local project and the object to include is from this project
      * there is no need to prefix the header with a path */
@@ -652,17 +669,54 @@ void c_includeFrom(
         /* Never include headers by just their names, as this could potentially
          * conflict with system headers, for example when a user creates a class
          * called "time". */
-        g_fileWrite(file, "#include <include/%s>\n", filebuff);
+        corto_buffer_append(buffer, "#include <include/%s>\n", filebuff);
     } else {
         if (package) {
             corto_path(path, root_o, package, "/");
         } else {
             strcpy(path, g_getName(g));
         }
-        g_fileWrite(file, "#include <%s/%s>\n",
+        corto_buffer_append(buffer, "#include <%s/%s>\n",
           path,
           filebuff);
     }
+}
+
+void c_includeFrom_toBuffer(
+    g_generator g,
+    corto_buffer *buffer,
+    corto_object o,
+    corto_string include,
+    ...)
+{
+    va_list args;
+    va_start(args, include);
+    c_includeFrom_toBufferv(g, buffer, o, include, args);
+    va_end(args);
+}
+
+void c_includeFrom(
+    g_generator g,
+    g_file file,
+    corto_object o,
+    corto_string include,
+    ...)
+{
+    corto_buffer buffer = CORTO_BUFFER_INIT;
+
+    va_list args;
+    va_start(args, include);
+    c_includeFrom_toBuffer(
+        g,
+        &buffer,
+        o,
+        include,
+        args);
+    va_end(args);
+    
+    char *str = corto_buffer_str(&buffer);
+    g_fileWrite(file, str);
+    free(str);
 }
 
 void c_includeDependencies(g_generator g, g_file file, corto_string header) {
@@ -677,6 +731,16 @@ void c_includeDependencies(g_generator g, g_file file, corto_string header) {
     }
 }
 
+void c_include_toBuffer(g_generator g, corto_buffer *buffer, corto_object o) {
+    corto_id name;
+    corto_object package = c_findPackage(g, o);
+
+    corto_assert (package != NULL, "can't include '%s' from non-package scopes",
+        corto_fullpath(NULL, o));
+
+    c_includeFrom_toBuffer(g, buffer, package, c_filename(g, name, o, "h"));
+}
+
 void c_include(g_generator g, g_file file, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(g, o);
@@ -684,11 +748,7 @@ void c_include(g_generator g, g_file file, corto_object o) {
     corto_assert (package != NULL, "can't include '%s' from non-package scopes",
         corto_fullpath(NULL, o));
 
-    c_includeFrom(
-      g,
-      file,
-      package,
-      c_filename(g, name, o, "h"));
+    c_includeFrom(g, file, package, c_filename(g, name, o, "h"));
 }
 
 static corto_equalityKind c_compareCollections(corto_collection c1, corto_collection c2) {
@@ -792,7 +852,7 @@ char* c_functionName(g_generator g, corto_function o, corto_id id) {
 typedef struct c_paramWalk_t {
     g_generator g;
     corto_bool firstComma;
-    g_file file;
+    corto_buffer *buffer;
 } c_paramWalk_t;
 
 /* Generate parameters for method */
@@ -804,23 +864,23 @@ static int c_param(corto_parameter *o, void *userData) {
 
     /* Write comma */
     if (data->firstComma) {
-        g_fileWrite(data->file, ",\n    ");
+        corto_buffer_appendstr(data->buffer, ",\n    ");
     } else {
-        g_fileWrite(data->file, "\n    ");
+        corto_buffer_appendstr(data->buffer, "\n    ");
     }
 
     if (c_specifierId(data->g, o->type, specifier, NULL, postfix)) {
         goto error;
     }
 
-    g_fileWrite(data->file, "%s ", specifier);
+    corto_buffer_append(data->buffer, "%s ", specifier);
 
     if (c_paramRequiresPtr(o)) {
-        g_fileWrite(data->file, "*");
+        corto_buffer_appendstrn(data->buffer, "*", 1);
     }
 
     /* Write to source */
-    g_fileWrite(data->file, "%s%s", c_paramName(o->name, name), postfix);
+    corto_buffer_append(data->buffer, "%s%s", c_paramName(o->name, name), postfix);
 
     data->firstComma++;
 
@@ -832,7 +892,7 @@ error:
 /* Add this to parameter-list */
 void c_paramThis(
     g_generator g,
-    g_file file,
+    corto_buffer *buffer,
     corto_bool cpp,
     corto_type parentType)
 {
@@ -843,11 +903,11 @@ void c_paramThis(
     /* If 'cpp' is enabled, the code will be compiled with a C++ compiler.
      * Therefore, avoid using the 'this' keyword */
     if (!cpp) {
-        g_fileWrite(file,
+        corto_buffer_append(buffer,
             "\n    %s this",
             c_typeptr(g, parentType, classId));
     } else {
-        g_fileWrite(file,
+        corto_buffer_append(buffer,
             "\n    %s _this",
             c_typeptr(g, parentType, classId));
     }
@@ -875,10 +935,11 @@ int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *use
 
 corto_int16 c_decl(
     g_generator g,
-    g_file file,
+    corto_buffer *buffer,
     corto_function o,
     corto_bool isWrapper,
-    corto_bool cpp)
+    corto_bool cpp,
+    corto_bool impl)
 {
     corto_id fullname, functionName, signatureName, returnSpec;
     corto_type returnType;
@@ -886,7 +947,7 @@ corto_int16 c_decl(
 
     walkData.g = g;
     walkData.firstComma = 0;
-    walkData.file = file;
+    walkData.buffer = buffer;
 
     /* Generate function-return type string */
     returnType = ((corto_function)o)->returnType;
@@ -912,20 +973,25 @@ corto_int16 c_decl(
     }
 
     /* Start of function */
-    g_fileWrite(file, "%s _%s(", returnSpec, functionName);
+    if (impl) {
+        corto_buffer_append(buffer, "%s %s(", returnSpec, functionName);
+    } else {
+        corto_buffer_append(buffer, "%s _%s(", returnSpec, functionName);
+    }
 
     /* Add 'this' parameter to methods */
     if (c_procedureHasThis(o)) {
         corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
         if (!thisType || thisType->reference) {
-            c_paramThis(g, file, cpp, corto_parentof(o));
+            c_paramThis(g, buffer, cpp, corto_parentof(o));
         } else {
             if (!cpp) {
-                g_fileWrite(file, "corto_any this");
+                corto_buffer_appendstr(buffer, "corto_any this");
             } else {
-                g_fileWrite(file, "corto_any _this");
+                corto_buffer_appendstr(buffer, "corto_any _this");
             }
         }
+
         walkData.firstComma = 1;
     } else {
         walkData.firstComma = 0;
@@ -938,11 +1004,11 @@ corto_int16 c_decl(
 
     /* Append void if the argumentlist was empty */
     if (!walkData.firstComma) {
-        g_fileWrite(file, "void");
+        corto_buffer_appendstr(buffer, "void");
     }
 
     /* Begin of function */
-    g_fileWrite(file, ")");
+    corto_buffer_appendstr(buffer, ")");
 
     return 0;
 error:
@@ -973,4 +1039,14 @@ char* c_mainheader(g_generator g, corto_id header) {
     return header;
 }
 
+/* Get filename of mainheader */
+char* c_mainheaderImpl(g_generator g, corto_id header) {
 
+    if (g_getCurrent(g)) {
+        sprintf(header, "src/%s.h", g_getProjectName(g));
+    } else {
+        c_mainheader(g, header);
+    }
+
+    return header;
+}

@@ -62,8 +62,8 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_fileWrite(file, "extern \"C\"\n");
     g_fileWrite(file, "#endif\n");
     if (g_getCurrent(g)) {
-      c_writeExport(g, file);
-      g_fileWrite(file, " ");
+        c_writeExport(g, file);
+        g_fileWrite(file, " ");
     }
 
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
@@ -99,7 +99,7 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
         strcpy(upperName, g_getName(g));
         corto_strupper(upperName);
 
-        corto_id upperFullName;
+        corto_id upperFullName, buildingMacro;
         if (g_getCurrent(g)) {
             corto_path(upperFullName, root_o, g_getCurrent(g), "_");
         } else {
@@ -111,16 +111,18 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
         }
         corto_strupper(upperFullName);
 
+        c_buildingMacro(g, buildingMacro);
+
         g_fileWrite(interfaceHeader, "/* %s\n", interfaceHeaderName);
         g_fileWrite(interfaceHeader, " *\n");
         g_fileWrite(interfaceHeader, " * This file contains generated code. Do not modify!\n");
         g_fileWrite(interfaceHeader, " */\n\n");
 
-        g_fileWrite(interfaceHeader, "#if BUILDING_%s && defined _MSC_VER\n", upperFullName);
+        g_fileWrite(interfaceHeader, "#if %s && defined _MSC_VER\n", buildingMacro);
         g_fileWrite(interfaceHeader, "#define ");
         c_writeExport(g, interfaceHeader);
         g_fileWrite(interfaceHeader, " __declspec(dllexport)\n", upperFullName);
-        g_fileWrite(interfaceHeader, "#elif BUILDING_%s\n", upperFullName);
+        g_fileWrite(interfaceHeader, "#elif %s\n", buildingMacro);
         g_fileWrite(interfaceHeader, "#define ");
         c_writeExport(g, interfaceHeader);
         g_fileWrite(interfaceHeader, " __attribute__((__visibility__(\"default\")))\n");
