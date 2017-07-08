@@ -518,7 +518,7 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
 
     g_fileWrite(data->header, "\n");
 
-    if (corto_checkAttr(t, CORTO_ATTR_NAMED)) {
+    if (corto_checkAttr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
         corto_id id, localId, postfix, buildingMacro;
         c_buildingMacro(data->g, buildingMacro);
         g_localOid(data->g, t, localId);
