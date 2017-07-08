@@ -16,6 +16,7 @@ static int c_typeKeywordEscape(corto_string inputName, corto_string buffer) {
         !strcmp(inputName, "and") ||
         !strcmp(inputName, "and_eq") ||
         !strcmp(inputName, "asm") ||
+        !strcmp(inputName, "assert") ||
         !strcmp(inputName, "auto") ||
         !strcmp(inputName, "bitand") ||
         !strcmp(inputName, "bitor") ||
@@ -93,7 +94,8 @@ static int c_typeKeywordEscape(corto_string inputName, corto_string buffer) {
         !strcmp(inputName, "volatile") ||
         !strcmp(inputName, "wchar_t") ||
         !strcmp(inputName, "xor") ||
-        !strcmp(inputName, "while")) {
+        !strcmp(inputName, "while")) 
+    {
         memmove(buffer + 1, inputName, strlen(inputName) + 1);
         *buffer = '_';
     } else {
