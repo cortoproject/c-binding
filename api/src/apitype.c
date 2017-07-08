@@ -816,6 +816,18 @@ corto_int16 c_apiTypeInitAssign(corto_type t, corto_string _this, corto_member m
     return result;
 }
 
+void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id) {
+    corto_id localId, buildingMacro;
+
+    c_buildingMacro(data->g, buildingMacro);
+    g_localOid(data->g, t, localId);
+
+    g_fileWrite(data->header, "\n");
+    g_fileWrite(data->header, "#ifdef %s\n", buildingMacro);
+    g_fileWrite(data->header, "#define %s%s %s%s\n", localId, func, id, func);
+    g_fileWrite(data->header, "#endif\n");
+}
+
 corto_int16 c_apiTypeCreateIntern(
     corto_type t,
     c_apiWalk_t *data,
@@ -846,6 +858,8 @@ corto_int16 c_apiTypeCreateIntern(
         data->parameterCount = 0;
 
         /* Function declaration */
+        c_apiLocalDefinition(t, data, func, id);
+
         c_writeExport(data->g, data->header);
         g_fileWrite(data->header, " %s _%s%s%s%s(",
           ret, id, func, member ? "_" : "", member ? corto_idof(member) : "");
@@ -963,6 +977,8 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         data->args = corto_ll_new();
         data->parameterCount = 1;
         c_typeId(data->g, t, id);
+
+        c_apiLocalDefinition(t, data, func, id);
 
         c_writeExport(data->g, data->header);
 

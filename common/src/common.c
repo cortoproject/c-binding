@@ -849,6 +849,14 @@ char* c_functionName(g_generator g, corto_function o, corto_id id) {
     return id;
 }
 
+char* c_functionLocalName(g_generator g, corto_function o, corto_id id) {
+    g_localOid(g, o, id);
+    if (o->overridable) {
+        strcat(id, "_v");
+    }
+    return id;  
+}
+
 typedef struct c_paramWalk_t {
     g_generator g;
     corto_bool firstComma;

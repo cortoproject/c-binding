@@ -99,6 +99,9 @@ char* c_varId(g_generator g, corto_object o, char* out);
 
 char* c_functionName(g_generator g, corto_function o, corto_id id);
 
+/* Function name without package prefix (only used inside of package) */
+char* c_functionLocalName(g_generator g, corto_function o, corto_id id);
+
 /* Write this parameter to file */
 void c_paramThis(
     g_generator g,

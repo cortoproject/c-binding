@@ -6,7 +6,7 @@
  */
 
 #include "type.h"
-#include "corto/gen/c/common/common.h"
+#include <corto/gen/c/common/common.h>
 
 typedef struct c_typeWalk_t {
     g_generator g;
@@ -517,6 +517,17 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
     }
 
     g_fileWrite(data->header, "\n");
+
+    if (corto_checkAttr(t, CORTO_ATTR_NAMED)) {
+        corto_id id, localId, postfix, buildingMacro;
+        c_buildingMacro(data->g, buildingMacro);
+        g_localOid(data->g, t, localId);
+        c_specifierId(data->g, corto_type(t), id, NULL, postfix);
+        g_fileWrite(data->header, "#ifdef %s\n", buildingMacro);
+        g_fileWrite(data->header, "typedef %s %s;\n", id, localId);
+        g_fileWrite(data->header, "#endif\n");
+        g_fileWrite(data->header, "\n");
+    }
 
     return result;
 error:

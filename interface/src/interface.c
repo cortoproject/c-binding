@@ -125,13 +125,13 @@ error:
     return 0;
 }
 
-static int c_interfaceCastMacro(corto_function o, char *functionName, char *prefix, c_typeWalk_t *data) {
+static int c_interfaceCastMacro(corto_function o, char *macroName, char *functionName, char *prefix, c_typeWalk_t *data) {
     data->firstComma = FALSE;
 
     if (prefix) {
-        g_fileWrite(data->interfaceHeader, "#define %s%s(", prefix, functionName, functionName);
+        g_fileWrite(data->interfaceHeader, "#define %s%s(", prefix, macroName);
     } else {
-        g_fileWrite(data->interfaceHeader, "#define %s(", functionName, functionName);
+        g_fileWrite(data->interfaceHeader, "#define %s(", macroName);
     }
 
     if (c_procedureHasThis(o)) {
@@ -183,7 +183,8 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
 
     /* Write casting macro to header */
     g_fileWrite(data->interfaceHeader, "\n");
-    c_interfaceCastMacro(corto_function(o), g_fullOid(data->g, o, id), NULL, data);
+    g_fullOid(data->g, o, id);
+    c_interfaceCastMacro(corto_function(o), id, id, NULL, data);
 
     c_writeExport(data->g, data->interfaceHeader);
     g_fileWrite(data->interfaceHeader, "\n");
@@ -336,18 +337,21 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->interfaceHeader, "\n");
         g_fileWrite(data->interfaceHeader, "/* implicit type-safe macro (not available for project implementation) */\n");
         g_fileWrite(data->interfaceHeader, "#ifndef %s\n", c_buildingMacro(data->g, macro));
-        c_interfaceCastMacro(o, functionName, NULL, data);
+        c_interfaceCastMacro(o, functionName, functionName, NULL, data);
 
         /* When building the project, casting macro's are explicit. This is done
          * so that the function names don't have to start with '_' */
         g_fileWrite(data->interfaceHeader, "#else\n");
         g_fileWrite(data->interfaceHeader, "#define %s _%s\n", functionName, functionName);
-        g_fileWrite(data->interfaceHeader, "#endif\n", corto_path(NULL, root_o, corto_parentof(o), "_"));
+        corto_id localName;
+        c_functionLocalName(data->g, o, localName);
+        c_interfaceCastMacro(o, localName, functionName, NULL, data);
+        g_fileWrite(data->interfaceHeader, "#endif\n");
 
         /* Write explicit casting macro */
         g_fileWrite(data->interfaceHeader, "\n");
         g_fileWrite(data->interfaceHeader, "/* explicit type-safe macro */\n");
-        c_interfaceCastMacro(o, functionName, "safe_", data);
+        c_interfaceCastMacro(o, functionName, functionName, "safe_", data);
 
         /* Write to sourcefile */
         cdiff_file_write(data->source, "\n");
