@@ -345,7 +345,12 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         g_fileWrite(data->interfaceHeader, "#define %s _%s\n", functionName, functionName);
         corto_id localName;
         c_functionLocalName(data->g, o, localName);
+        g_fileWrite(data->interfaceHeader, "\n");
+        g_fileWrite(data->interfaceHeader, "/* Allow for type-safe, shorthand version to be used within project. In\n");
+        g_fileWrite(data->interfaceHeader, " * C++ the name clash risk is too big because '::' is used for scoping */\n");
+        g_fileWrite(data->interfaceHeader, "#ifndef __cplusplus\n");
         c_interfaceCastMacro(o, localName, functionName, NULL, data);
+        g_fileWrite(data->interfaceHeader, "#endif\n");
         g_fileWrite(data->interfaceHeader, "#endif\n");
 
         /* Write explicit casting macro */
@@ -475,7 +480,14 @@ static corto_int16 c_interfaceHeaderWrite(
 
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
-    g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
+    if (mainHeader) {
+        g_fileWrite(result, " * This is the main package file. Include this file in other projects.\n");
+        g_fileWrite(result, " * Only modify inside the header-end and body-end sections.\n");
+    } else {
+        g_fileWrite(result, " * This file contains generated package function and method declarations.\n");
+        g_fileWrite(result, " * You should not manually modify the contents of this file.\n");
+    }
+
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n\n", path);
@@ -529,7 +541,7 @@ static corto_int16 c_interfaceHeaderWrite(
             g_fileWrite(result, "$end */\n");
         } else {
             g_fileWrite(result, "/* $header() */\n");
-            g_fileWrite(result, "/* Enter additional code here. */\n");
+            g_fileWrite(result, "/* Definitions that are required by package headers (native types) go here. */\n");
             g_fileWrite(result, "/* $end */\n");
         }
     }
@@ -559,7 +571,7 @@ static corto_int16 c_interfaceHeaderWrite(
             g_fileWrite(result, "$end */\n");
         } else {
             g_fileWrite(result, "/* $body() */\n");
-            g_fileWrite(result, "/* Enter code that requires types here */\n", snippet);
+            g_fileWrite(result, "/* Definitions here that need your package headers go here. */\n", snippet);
             g_fileWrite(result, "/* $end */\n");
         }
     }

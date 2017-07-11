@@ -240,11 +240,30 @@ static g_file c_apiSourceOpen(g_generator g) {
         g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
         corto_id path;
         corto_path(path, root_o, g_getCurrent(g), "/");
-        g_fileWrite(result, "#include <%s/_load.h>\n", path);
+        
+        /* Add header files for dependent packages */
+        if (g->imports) {
+            corto_iter iter = corto_ll_iter(g->imports);
+            while (corto_iter_hasNext(&iter)) {
+                corto_object import = corto_iter_next(&iter);
+                corto_string str = corto_path(NULL, NULL, import, "/");
+                corto_string package = corto_locate(str, NULL, CORTO_LOCATION_FULLNAME);
+                if (!package) {
+                    corto_seterr("project configuration contains unresolved package '%s'", str);
+                    goto error;
+                } else {
+                    corto_string name = corto_locate(str, NULL, CORTO_LOCATION_NAME);
+                    g_fileWrite(result, "#include <%s/%s.h>\n", package, name);
+                    corto_dealloc(name);
+                    corto_dealloc(package);
+                }
+            }
+        }
     } else {
         g_fileWrite(result, "#include <include/_api.h>\n");
         g_fileWrite(result, "#include <include/_load.h>\n", g_getName(g));
     }
+
     g_fileWrite(result, "\n");
 
     return result;
@@ -257,19 +276,7 @@ static int c_apiWalkPackages(corto_object o, void* userData) {
 
     CORTO_UNUSED(o);
 
-    g_generator g = data->g;
-
-    data->header = c_apiHeaderOpen(data);
-    if (!data->header) {
-        goto error;
-    }
-
-    data->source = c_apiSourceOpen(g);
-    if (!data->source) {
-        goto error;
-    }
-
-    if (!g_walkRecursive(g, c_apiWalk, data)) {
+    if (!g_walkRecursive(data->g, c_apiWalk, data)) {
         goto error;
     }
 
@@ -278,6 +285,22 @@ static int c_apiWalkPackages(corto_object o, void* userData) {
     return 1;
 error:
     return 0;
+}
+
+static int c_apiVariableWalk(void *o, void *userData) {
+    c_apiWalk_t *data = userData;
+    corto_id varId, typeId, packageId;
+    corto_fullpath(packageId, g_getCurrent(data->g));
+    c_varId(data->g, o, varId);
+    c_typeret(data->g, corto_typeof(o), C_ByReference, typeId);
+    g_fileWrite(data->source, "corto_type _%s;\n", varId);
+    g_fileWrite(
+        data->source,
+        "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n", 
+        varId, varId, varId, varId, packageId, varId);
+    g_fileWrite(data->source, "\n");
+
+    return 1;
 }
 
 /* Generator main */
@@ -325,6 +348,7 @@ corto_int16 corto_genMain(g_generator g) {
     }
     walkData.g = g;
 
+    walkData.types = c_findType(g, corto_type_o);
     walkData.collections = c_findType(g, corto_collection_o);
     walkData.iterators = c_findType(g, corto_iterator_o);
     walkData.args = NULL;
@@ -335,6 +359,25 @@ corto_int16 corto_genMain(g_generator g) {
     g_parse(g, corto_core_o, FALSE, FALSE, "corto");
     g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
+
+    /* Open API header */
+    walkData.header = c_apiHeaderOpen(&walkData);
+    if (!walkData.header) {
+        goto error;
+    }
+
+    /* Open API source file */
+    walkData.source = c_apiSourceOpen(g);
+    if (!walkData.source) {
+        goto error;
+    }
+
+    /* Define local variables for package objects if functions are generated in
+     * a separate package (to prevent cyclic dependencies between libs) */
+    if (!app && !local && corto_ll_size(walkData.types)) {
+        g_fileWrite(walkData.source, "static corto_dl _package;\n");
+        corto_ll_walk(walkData.types, c_apiVariableWalk, &walkData);
+    }
 
     if (!g_walkNoScope(g, c_apiWalkPackages, &walkData)) {
         goto error;

@@ -773,13 +773,15 @@ static int c_checkDuplicates(void* o, void* userData) {
     if (corto_checkAttr(o, CORTO_ATTR_NAMED)) {
         return 1;
     } else {
-        if (corto_instanceof(corto_collection_o, o)) {
+        if (corto_instanceof(corto_collection_o, o) && corto_instanceof(corto_collection_o, userData)) {
             return c_compareCollections(
                 corto_collection(o),
                 corto_collection(userData)) != CORTO_EQ;
-        } else if (corto_instanceof(corto_iterator_o, o)) {
+        } else if (corto_instanceof(corto_iterator_o, o) && corto_instanceof(corto_iterator_o, userData)) {
             return corto_iterator(o)->elementType ==
                 corto_iterator(userData)->elementType;
+        } else {
+            return 1;
         }
     }
 

@@ -25,6 +25,7 @@ typedef struct c_apiWalk_t {
     corto_ll memberCache;
     corto_ll collections;
     corto_ll iterators;
+    corto_ll types;
     corto_ll args;
 } c_apiWalk_t;
 

@@ -635,8 +635,8 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
-    g_fileWrite(result, " * Type definitions for C-language.\n");
-    g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
+    g_fileWrite(result, " * This file contains generated C type definitions.\n");
+    g_fileWrite(result, " * You should not manually modify the contents of this file.\n");
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s__TYPE_H\n", path);
     g_fileWrite(result, "#define %s__TYPE_H\n\n", path);

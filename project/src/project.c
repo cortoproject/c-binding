@@ -34,7 +34,9 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
 
     g_fileWrite(file, "/* %s\n", filename);
     g_fileWrite(file, " *\n");
-    g_fileWrite(file, " * This file is generated. Do not modify.\n");
+    g_fileWrite(file, " * This file contains the project entry function. Here, we\n");
+    g_fileWrite(file, " * start/stop corto and load all dependencies, before and after\n");
+    g_fileWrite(file, " * invoking the main function of your project.\n");
     g_fileWrite(file, " */\n\n");
 
     corto_id header;
@@ -68,7 +70,7 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
 
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
     g_fileIndent(file);
-    if (app) g_fileWrite(file, "corto_start(argv[0]);\n");
+    if (app) g_fileWrite(file, "corto_start(argv[0]); /* Pass application name for logging framework */\n");
     c_projectLoadPackages(g, file);
     if (g_getCurrent(g)) {
         g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));

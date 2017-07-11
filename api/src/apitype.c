@@ -823,7 +823,7 @@ void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id)
     g_localOid(data->g, t, localId);
 
     g_fileWrite(data->header, "\n");
-    g_fileWrite(data->header, "#ifdef %s\n", buildingMacro);
+    g_fileWrite(data->header, "#if defined(%s) && !defined(__cplusplus)\n", buildingMacro);
     g_fileWrite(data->header, "#define %s%s %s%s\n", localId, func, id, func);
     g_fileWrite(data->header, "#endif\n");
 }
@@ -899,11 +899,11 @@ corto_int16 c_apiTypeCreateIntern(
         if (scoped) {
             g_fileWrite(
               data->source,
-              "_this = %s(corto_declareChild(_parent, _id, %s_o));\n", id, id);
+              "_this = (%s)corto_declareChild(_parent, _id, %s_o);\n", ret, id);
         } else {
             g_fileWrite(
               data->source,
-              "_this = %s(corto_declare(%s_o));\n", id, id);
+              "_this = (%s)corto_declare(%s_o);\n", ret, id);
         }
 
         g_fileWrite(data->source, "if (!_this) {\n");

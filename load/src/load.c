@@ -290,8 +290,8 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
     g_fileWrite(result, " *\n");
-    g_fileWrite(result, " * Loads objects in object store.\n");
-    g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
+    g_fileWrite(result, " * This file contains variables for objects/type definitions in the package.\n");
+    g_fileWrite(result, " * You should not manually modify the contents of this file.\n");
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_LOAD_H\n", path);
     g_fileWrite(result, "#define %s_LOAD_H\n\n", path);
@@ -338,8 +338,8 @@ static g_file c_loadSourceFileOpen(g_generator g) {
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", fileName);
     g_fileWrite(result, " *\n");
-    g_fileWrite(result, " * Loads objects in object store.\n");
-    g_fileWrite(result, " * This file contains generated code. Do not modify!\n");
+    g_fileWrite(result, " * This file contains generated code to insert objects/type definitions.\n");
+    g_fileWrite(result, " * You should not manually change the contents of this file.\n");
     g_fileWrite(result, " */\n\n");
 
     corto_id header;
