@@ -271,22 +271,6 @@ error:
     return NULL;
 }
 
-static int c_apiWalkPackages(corto_object o, void* userData) {
-    c_apiWalk_t *data = userData;
-
-    CORTO_UNUSED(o);
-
-    if (!g_walkRecursive(data->g, c_apiWalk, data)) {
-        goto error;
-    }
-
-    c_apiHeaderClose(data->header);
-
-    return 1;
-error:
-    return 0;
-}
-
 static int c_apiVariableWalk(void *o, void *userData) {
     c_apiWalk_t *data = userData;
     corto_id varId, typeId, packageId;
@@ -301,6 +285,58 @@ static int c_apiVariableWalk(void *o, void *userData) {
     g_fileWrite(data->source, "\n");
 
     return 1;
+}
+
+static int c_apiWalkPackages(corto_object o, void* userData) {
+    c_apiWalk_t *data = userData;
+    corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
+    corto_bool bootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
+
+    CORTO_UNUSED(o);
+
+    /* Open API header */
+    data->header = c_apiHeaderOpen(data);
+    if (!data->header) {
+        goto error;
+    }
+
+    /* Open API source file */
+    data->source = c_apiSourceOpen(data->g);
+    if (!data->source) {
+        goto error;
+    }
+
+    data->collections = c_findType(data->g, corto_collection_o);
+    data->iterators = c_findType(data->g, corto_iterator_o);
+    data->args = NULL;
+
+    /* Define local variables for package objects if functions are generated in
+     * a separate package (to prevent cyclic dependencies between libs) */
+    if (!app && !local && !bootstrap) {
+        data->types = c_findType(data->g, corto_type_o);
+        if (data->types && corto_ll_size(data->types)) {
+            g_fileWrite(data->source, "static corto_dl _package;\n");
+            corto_ll_walk(data->types, c_apiVariableWalk, data);
+            corto_ll_free(data->types);
+        }
+    }
+
+    if (!g_walkRecursive(data->g, c_apiWalk, data)) {
+        goto error;
+    }
+
+    corto_ll_walk(data->collections, c_apiCollectionWalk, data);
+    corto_ll_walk(data->iterators, c_apiIteratorWalk, data);
+
+    corto_ll_free(data->collections);
+    corto_ll_free(data->iterators);
+
+    c_apiHeaderClose(data->header);
+
+    return 1;
+error:
+    return 0;
 }
 
 /* Generator main */
@@ -333,6 +369,24 @@ corto_int16 corto_genMain(g_generator g) {
             }
             g_fileWrite(rakefile, "PACKAGE = '%s/c'\n\n", g_getName(g));
             g_fileWrite(rakefile, "NOCORTO = true\n");
+            g_fileWrite(rakefile, "LANGUAGE = '%s'\n", strcmp(g_getAttribute(g, "c4cpp"), "true") ? "c" : "c4cpp");
+
+            if (g->imports) {
+                int count = 0;
+                g_fileWrite(rakefile, "USE_PACKAGE = [");
+                corto_iter iter = corto_ll_iter(g->imports);
+                while (corto_iter_hasNext(&iter)) {
+                    corto_object import = corto_iter_next(&iter);
+                    corto_string str = corto_path(NULL, NULL, import, "/");
+                    if (count) g_fileWrite(rakefile, ", ");
+                    g_fileWrite(rakefile, "'%s'", str);
+                    count ++;
+
+                }
+                g_fileWrite(rakefile, "]\n");
+            }
+
+
             g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
             g_fileClose(rakefile);
         }
@@ -343,15 +397,11 @@ corto_int16 corto_genMain(g_generator g) {
         if (!walkData.mainHeader) {
             goto error;
         }
+
     } else {
         walkData.mainHeader = NULL;
     }
     walkData.g = g;
-
-    walkData.types = c_findType(g, corto_type_o);
-    walkData.collections = c_findType(g, corto_collection_o);
-    walkData.iterators = c_findType(g, corto_iterator_o);
-    walkData.args = NULL;
 
     /* Default prefixes for corto namespaces */
     g_parse(g, corto_o, FALSE, FALSE, "");
@@ -360,34 +410,9 @@ corto_int16 corto_genMain(g_generator g) {
     g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
-    /* Open API header */
-    walkData.header = c_apiHeaderOpen(&walkData);
-    if (!walkData.header) {
-        goto error;
-    }
-
-    /* Open API source file */
-    walkData.source = c_apiSourceOpen(g);
-    if (!walkData.source) {
-        goto error;
-    }
-
-    /* Define local variables for package objects if functions are generated in
-     * a separate package (to prevent cyclic dependencies between libs) */
-    if (!app && !local && corto_ll_size(walkData.types)) {
-        g_fileWrite(walkData.source, "static corto_dl _package;\n");
-        corto_ll_walk(walkData.types, c_apiVariableWalk, &walkData);
-    }
-
     if (!g_walkNoScope(g, c_apiWalkPackages, &walkData)) {
         goto error;
     }
-
-    corto_ll_walk(walkData.collections, c_apiCollectionWalk, &walkData);
-    corto_ll_walk(walkData.iterators, c_apiIteratorWalk, &walkData);
-
-    corto_ll_free(walkData.collections);
-    corto_ll_free(walkData.iterators);
 
     if (!local) {
         corto_chdir(cwd);
@@ -396,5 +421,6 @@ corto_int16 corto_genMain(g_generator g) {
 
     return 0;
 error:
+    printf("error\n");
     return -1;
 }

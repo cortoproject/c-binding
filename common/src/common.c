@@ -802,7 +802,7 @@ static int c_findTypeWalk(corto_object o, void* userData) {
         }
     }
 
-    return 0;
+    return 1;
 }
 
 corto_ll c_findType(g_generator g, corto_class t) {

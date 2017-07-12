@@ -343,14 +343,17 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
          * so that the function names don't have to start with '_' */
         g_fileWrite(data->interfaceHeader, "#else\n");
         g_fileWrite(data->interfaceHeader, "#define %s _%s\n", functionName, functionName);
-        corto_id localName;
-        c_functionLocalName(data->g, o, localName);
-        g_fileWrite(data->interfaceHeader, "\n");
-        g_fileWrite(data->interfaceHeader, "/* Allow for type-safe, shorthand version to be used within project. In\n");
-        g_fileWrite(data->interfaceHeader, " * C++ the name clash risk is too big because '::' is used for scoping */\n");
-        g_fileWrite(data->interfaceHeader, "#ifndef __cplusplus\n");
-        c_interfaceCastMacro(o, localName, functionName, NULL, data);
-        g_fileWrite(data->interfaceHeader, "#endif\n");
+        
+        if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
+            corto_id localName;
+            c_functionLocalName(data->g, o, localName);
+            g_fileWrite(data->interfaceHeader, "\n");
+            g_fileWrite(data->interfaceHeader, "/* Allow for type-safe, shorthand version to be used within project. In\n");
+            g_fileWrite(data->interfaceHeader, " * C++ the name clash risk is too big because '::' is used for scoping */\n");
+            g_fileWrite(data->interfaceHeader, "#ifndef __cplusplus\n");
+            c_interfaceCastMacro(o, localName, functionName, NULL, data);
+            g_fileWrite(data->interfaceHeader, "#endif\n");
+        }
         g_fileWrite(data->interfaceHeader, "#endif\n");
 
         /* Write explicit casting macro */
