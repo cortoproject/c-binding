@@ -97,6 +97,10 @@ corto_ll c_findType(g_generator g, corto_class type);
 /* Obtain ID for meta object */
 char* c_varId(g_generator g, corto_object o, char* out);
 
+/* Object name without package prefix (only used inside of package) */
+char* c_varLocalId(g_generator g, corto_object o, char* out);
+
+/* Function name */
 char* c_functionName(g_generator g, corto_function o, corto_id id);
 
 /* Function name without package prefix (only used inside of package) */

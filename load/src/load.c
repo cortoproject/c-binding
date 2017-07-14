@@ -239,7 +239,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 /* Walk types */
 static int c_loadDeclareWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id specifier, objectId;
+    corto_id specifier, objectId, localId, building;
     corto_type t;
     corto_object parent;
 
@@ -265,11 +265,17 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     c_typeret(data->g, t, C_ByReference, specifier);
 
     c_varId(data->g, o, objectId);
+    c_varLocalId(data->g, o, localId);
 
     c_writeExport(data->g, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
     g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);
+    if (strcmp(objectId, localId)) {
+        g_fileWrite(data->header, "#ifdef %s\n", c_buildingMacro(data->g, building));
+        g_fileWrite(data->header, "#define %s %s\n", localId, objectId);
+        g_fileWrite(data->header, "#endif\n");
+    }
     g_fileWrite(data->source, "%s %s;\n", specifier, objectId);
 
     return 1;

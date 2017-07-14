@@ -347,12 +347,15 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
             corto_id localName;
             c_functionLocalName(data->g, o, localName);
-            g_fileWrite(data->interfaceHeader, "\n");
-            g_fileWrite(data->interfaceHeader, "/* Allow for type-safe, shorthand version to be used within project. In\n");
-            g_fileWrite(data->interfaceHeader, " * C++ the name clash risk is too big because '::' is used for scoping */\n");
-            g_fileWrite(data->interfaceHeader, "#ifndef __cplusplus\n");
-            c_interfaceCastMacro(o, localName, functionName, NULL, data);
-            g_fileWrite(data->interfaceHeader, "#endif\n");
+
+            if (strcmp(functionName, localName)) {
+                g_fileWrite(data->interfaceHeader, "\n");
+                g_fileWrite(data->interfaceHeader, "/* Allow for type-safe, shorthand version to be used within project. In\n");
+                g_fileWrite(data->interfaceHeader, " * C++ the name clash risk is too big because '::' is used for scoping */\n");
+                g_fileWrite(data->interfaceHeader, "#ifndef __cplusplus\n");
+                c_interfaceCastMacro(o, localName, functionName, NULL, data);
+                g_fileWrite(data->interfaceHeader, "#endif\n");
+            }
         }
         g_fileWrite(data->interfaceHeader, "#endif\n");
 

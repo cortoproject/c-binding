@@ -845,6 +845,29 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
     return out;
 }
 
+corto_char* c_varLocalId(g_generator g, corto_object o, corto_char* out) {
+
+    if (o != root_o) {
+        /* Using fully scoped name for package variables allows using
+         * packages with the same name */
+        if (corto_instanceof(corto_package_o, o)) {
+            corto_path(out, root_o, o, "_");
+        } else {
+            corto_id postfix;
+            if (corto_instanceof(corto_type_o, o) && (!corto_checkAttr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
+                c_specifierId(g, o, out, NULL, postfix);
+            } else {
+                g_localOid(g, o, out);
+            }
+        }
+        strcat(out, "_o");
+    } else {
+        strcpy(out, "root_o");
+    }
+
+    return out;
+}
+
 char* c_functionName(g_generator g, corto_function o, corto_id id) {
     g_fullOid(g, o, id);
     if (o->overridable) {
