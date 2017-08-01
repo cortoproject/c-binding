@@ -310,7 +310,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
             g_fileWrite(data->source, "%s(list, (void*)element);\n", corto_operationToApi(operation, api));
             g_fileWrite(data->source, "}\n");
         } else {
-            if (elementType->kind == CORTO_PRIMITIVE) {
+            if (elementType->kind == CORTO_PRIMITIVE || elementType->reference) {
                 g_fileWrite(data->source, "%s(list, (void*)(corto_word)element);\n", corto_operationToApi(operation, api));
             } else {
                 g_fileWrite(data->source, "%s%s result;\n", elementId, ptr ? "*" : "");
