@@ -308,7 +308,6 @@ static corto_int16 c_apiCastMacroSet(
     return 0;
 }
 
-
 /* Assign primitive value */
 static corto_int16 c_apiAssign(
     corto_type t,
@@ -575,6 +574,7 @@ corto_int16 c_apiTypeInitCompositeMember(
 
 corto_int16 c_apiTypeInitCollection(corto_type t, c_apiWalk_t *data) {
     corto_id elementId;
+    bool prefix;
 
     if (data->parameterCount) {
         g_fileWrite(data->header, ", ");
@@ -583,7 +583,8 @@ corto_int16 c_apiTypeInitCollection(corto_type t, c_apiWalk_t *data) {
         data->parameterCount += 2;
     }
 
-    g_fullOid(data->g, corto_collection(t)->elementType, elementId);
+    c_specifierId(data->g, corto_collection(t)->elementType, elementId, &prefix, NULL);
+    
     g_fileWrite(data->header, "corto_uint32 length, %s* elements", elementId);
     g_fileWrite(data->source, "corto_uint32 length, %s* elements", elementId);
     c_apiCastMacroAddArg(data->args, "length", NULL, FALSE);
