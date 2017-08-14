@@ -1,6 +1,6 @@
 
 #include "api.h"
-#include "corto/gen/c/common/common.h"
+#include "driver/gen/c/common/common.h"
 
 corto_int16 c_apiIteratorForeach(corto_iterator o, c_apiWalk_t *data) {
     corto_id id, elementId;

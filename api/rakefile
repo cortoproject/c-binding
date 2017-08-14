@@ -1,7 +1,7 @@
-PACKAGE = "corto/gen/c/api"
+PACKAGE = "driver/gen/c/api"
 
 NOCORTO = true
-USE_PACKAGE= ["corto", "corto/gen/c/common", "corto/g"]
+USE_PACKAGE= ["corto", "driver/gen/c/common", "corto/g"]
 CFLAGS = ["-Wunused-parameter"]
 
 require "#{ENV['CORTO_BUILD']}/package"

@@ -6,7 +6,7 @@
  */
 
 #include "corto/corto.h"
-#include "corto/gen/c/common/common.h"
+#include "driver/gen/c/common/common.h"
 
 typedef struct c_typeWalk_t {
     g_generator g;

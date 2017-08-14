@@ -1,6 +1,6 @@
 
 #include "corto/corto.h"
-#include "corto/gen/c/common/common.h"
+#include "driver/gen/c/common/common.h"
 
 /* Load dependencies */
 static void c_projectLoadPackages(g_generator g, g_file file) {

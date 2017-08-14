@@ -1,6 +1,6 @@
 
 #include "api.h"
-#include "corto/gen/c/common/common.h"
+#include "driver/gen/c/common/common.h"
 #include "ctype.h"
 
 typedef struct c_arg {

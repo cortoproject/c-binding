@@ -1,4 +1,4 @@
-PACKAGE = "corto/gen/c/common"
+PACKAGE = "driver/gen/c/common"
 
 NOCORTO = true
 CFLAGS = ["-Wunused-parameter"]
