@@ -6,7 +6,7 @@
 #ifndef corto_api_H
 #define corto_api_H
 
-#include "corto/corto.h"
+#include <corto/corto.h>
 #include "driver/gen/c/common/common.h"
 
 #ifdef __cplusplus

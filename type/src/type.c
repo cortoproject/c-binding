@@ -753,7 +753,7 @@ corto_int16 corto_genMain(g_generator g) {
     /* Default prefixes for corto namespaces */
     g_parse(g, corto_o, FALSE, FALSE, "");
     g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_vstore_o, FALSE, FALSE, "corto");
     g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 

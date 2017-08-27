@@ -8,7 +8,7 @@
 #ifndef C_COMMON_H_
 #define C_COMMON_H_
 
-#include "corto/corto.h"
+#include <corto/corto.h>
 #include "corto/g/g.h"
 
 #ifdef __cplusplus

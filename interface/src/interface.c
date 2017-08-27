@@ -5,7 +5,7 @@
  *      Author: sander
  */
 
-#include "corto/corto.h"
+#include <corto/corto.h>
 #include "driver/gen/c/common/common.h"
 #include <corto/cdiff/cdiff.h>
 
@@ -908,7 +908,7 @@ int corto_genMain(g_generator g) {
     /* Default prefixes for corto namespaces */
     g_parse(g, corto_o, FALSE, FALSE, "");
     g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_core_o, FALSE, FALSE, "corto");
+    g_parse(g, corto_vstore_o, FALSE, FALSE, "corto");
     g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
