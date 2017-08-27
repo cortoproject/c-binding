@@ -27,7 +27,7 @@ corto_void _test_ObservableTargetApi_tc_create(
 /* $begin(test/ObservableTargetApi/tc_create) */
     test_ObservableTarget *o = test_ObservableTargetCreate(10, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->a->actual == 10);
     test_assert(o->a->target == 0);
     test_assert(o->b == 20);
@@ -42,7 +42,7 @@ corto_void _test_ObservableTargetApi_tc_createChild(
 /* $begin(test/ObservableTargetApi/tc_createChild) */
     test_ObservableTarget *o = test_ObservableTargetCreateChild(root_o, "o", 10, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "o");
     test_assert(corto_parentof(o) == root_o);
@@ -60,7 +60,7 @@ corto_void _test_ObservableTargetApi_tc_declare(
 /* $begin(test/ObservableTargetApi/tc_declare) */
     test_ObservableTarget *o = test_ObservableTargetDeclare();
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a != NULL);
     test_assert(o->a->actual == 0);
     test_assert(o->a->target == 0);
@@ -76,7 +76,7 @@ corto_void _test_ObservableTargetApi_tc_declareChild(
 /* $begin(test/ObservableTargetApi/tc_declareChild) */
     test_ObservableTarget *o = test_ObservableTargetDeclareChild(root_o, "o");
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "o");
     test_assert(corto_parentof(o) == root_o);
@@ -95,7 +95,7 @@ corto_void _test_ObservableTargetApi_tc_define(
 /* $begin(test/ObservableTargetApi/tc_define) */
     test_ObservableTarget *o = test_ObservableTargetDeclareChild(root_o, "o");
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "o");
     test_assert(corto_parentof(o) == root_o);
@@ -149,7 +149,7 @@ corto_void _test_ObservableTargetApi_tc_set(
 /* $begin(test/ObservableTargetApi/tc_set) */
     test_ObservableTarget *o = test_ObservableTargetCreate(10, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->a->actual == 10);
     test_assert(o->a->target == 0);
     test_assert(o->b == 20);

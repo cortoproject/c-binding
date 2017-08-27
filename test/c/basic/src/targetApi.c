@@ -1,27 +1,18 @@
-/* $CORTO_GENERATED
- *
- * targetApi.c
- *
- * Only code written between the begin and end tags will be preserved
- * when the file is regenerated.
- */
+/* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
 
-void _test_targetApi_setup(
+void test_targetApi_setup(
     test_targetApi this)
 {
-/* $begin(test/targetApi/setup) */
 
     /* << Insert implementation >> */
 
-/* $end */
 }
 
-void _test_targetApi_tc_compare(
+void test_targetApi_tc_compare(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_compare) */
     corto_equalityKind eq;
     test_intTarget a = test_intTargetCreate(10, 20, 20);
     test_intTarget b = test_intTargetCreate(20, 30, 30);
@@ -35,44 +26,38 @@ void _test_targetApi_tc_compare(
     eq = test_intTargetCompare(a, a);
     test_assert(eq == CORTO_EQ);
 
-/* $end */
 }
 
-void _test_targetApi_tc_create(
+void test_targetApi_tc_create(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_create) */
     test_intTarget o = test_intTargetCreate(10, 20, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->actual == 10);
     test_assert(o->target == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_targetApi_tc_createAuto(
+void test_targetApi_tc_createAuto(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_createAuto) */
     test_intTargetCreate_auto(o, 10, 20, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->actual == 10);
     test_assert(o->target == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_targetApi_tc_createChild(
+void test_targetApi_tc_createChild(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_createChild) */
     test_intTarget o = test_intTargetCreateChild(root_o, "o", 10, 20, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -80,16 +65,14 @@ void _test_targetApi_tc_createChild(
     test_assert(o->target == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_targetApi_tc_createChildAuto(
+void test_targetApi_tc_createChildAuto(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_createChildAuto) */
     test_intTargetCreateChild_auto(root_o, o, 10, 20, 20);
     test_assert(o != NULL);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -97,13 +80,11 @@ void _test_targetApi_tc_createChildAuto(
     test_assert(o->target == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_targetApi_tc_fromStr(
+void test_targetApi_tc_fromStr(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_fromStr) */
     test_intTarget o = test_intTargetCreate(10, 20, 20);
     test_assert(o != NULL);
 
@@ -122,13 +103,11 @@ void _test_targetApi_tc_fromStr(
     test_assert(!corto_delete(m));
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_targetApi_tc_fromStrOwnedByMount(
+void test_targetApi_tc_fromStrOwnedByMount(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_fromStrOwnedByMount) */
     corto_mount m = corto_create(corto_mount_o);
     corto_setOwner(m);
     corto_setAttr(CORTO_ATTR_PERSISTENT);
@@ -151,13 +130,11 @@ void _test_targetApi_tc_fromStrOwnedByMount(
     corto_setOwner(NULL);
     test_assert(!corto_delete(m));
 
-/* $end */
 }
 
-void _test_targetApi_tc_set(
+void test_targetApi_tc_set(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_set) */
     test_intTarget o = test_intTargetCreate(10, 20, 20);
     test_assert(o != NULL);
 
@@ -166,13 +143,11 @@ void _test_targetApi_tc_set(
     test_assert(o->target == 30);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_targetApi_tc_str(
+void test_targetApi_tc_str(
     test_targetApi this)
 {
-/* $begin(test/targetApi/tc_str) */
     test_intTarget o = test_intTargetCreate(10, 20, 20);
     test_assert(o != NULL);
 
@@ -180,5 +155,5 @@ void _test_targetApi_tc_str(
     test_assertstr(str, "{10,20,20}");
     corto_dealloc(str);
 
-/* $end */
 }
+

@@ -90,7 +90,7 @@ corto_void _test_OptionalStringApi_tc_declare(
     test_OptionalString *o = test_OptionalStringDeclare();
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a == NULL);
     test_assert(o->b == NULL);
 
@@ -104,7 +104,7 @@ corto_void _test_OptionalStringApi_tc_declareChild(
     test_OptionalString *o = test_OptionalStringDeclareChild(root_o, "a");
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "a");
     test_assert(corto_parentof(o) == root_o);
@@ -121,7 +121,7 @@ corto_void _test_OptionalStringApi_tc_define(
     test_OptionalString *o = test_OptionalStringDeclare();
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a == NULL);
     test_assert(o->b == NULL);
 
@@ -140,7 +140,7 @@ corto_void _test_OptionalStringApi_tc_defineNotSet(
     test_OptionalString *o = test_OptionalStringDeclare();
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a == NULL);
     test_assert(o->b == NULL);
 

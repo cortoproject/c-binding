@@ -45,7 +45,7 @@ corto_void _test_primitiveApi_tc_create(
     test_primitiveType *o = test_primitiveTypeCreate(10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(*o == 10);
     test_assert(!corto_delete(o));
 
@@ -60,7 +60,7 @@ corto_void _test_primitiveApi_tc_createAuto(
     test_primitiveTypeCreate_auto(o, 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(*o == 10);
     test_assert(!corto_delete(o));
 
@@ -75,7 +75,7 @@ corto_void _test_primitiveApi_tc_createChild(
     test_primitiveType *o = test_primitiveTypeCreateChild(root_o, "o", 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -93,7 +93,7 @@ corto_void _test_primitiveApi_tc_createChildAuto(
     test_primitiveTypeCreateChild_auto(root_o, o, 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -111,7 +111,7 @@ corto_void _test_primitiveApi_tc_declare(
     test_primitiveType *o = test_primitiveTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(*o == 5);
     test_assert(!corto_delete(o));
 
@@ -126,7 +126,7 @@ corto_void _test_primitiveApi_tc_declareAuto(
     test_primitiveTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(*o == 5);
     test_assert(!corto_delete(o));
 
@@ -141,7 +141,7 @@ corto_void _test_primitiveApi_tc_declareChild(
     test_primitiveType *o = test_primitiveTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -159,7 +159,7 @@ corto_void _test_primitiveApi_tc_declareChildAuto(
     test_primitiveTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -178,7 +178,7 @@ corto_void _test_primitiveApi_tc_define(
     test_primitiveType *o = test_primitiveTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -186,7 +186,7 @@ corto_void _test_primitiveApi_tc_define(
 
     result = test_primitiveTypeDefine(o, 10);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(*o == 10);
 
     test_assert(!corto_delete(o));

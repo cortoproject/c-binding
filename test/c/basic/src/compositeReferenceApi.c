@@ -1,25 +1,16 @@
-/* $CORTO_GENERATED
- *
- * compositeReferenceApi.c
- *
- * Only code written between the begin and end tags will be preserved
- * when the file is regenerated.
- */
+/* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
 
-void _test_compositeReferenceApi_onUpdate(
+void test_compositeReferenceApi_onUpdate(
     corto_observerEvent *e)
 {
-/* $begin(test/compositeReferenceApi/onUpdate) */
     this->updated = TRUE;
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_compare(
+void test_compositeReferenceApi_tc_compare(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_compare) */
     corto_equalityKind eq;
     test_compositeReferenceType a = test_compositeReferenceTypeCreate(10, 20);
     test_compositeReferenceType b = test_compositeReferenceTypeCreate(20, 30);
@@ -32,51 +23,45 @@ void _test_compositeReferenceApi_tc_compare(
 
     eq = test_compositeReferenceTypeCompare(a, a);
     test_assert(eq == CORTO_EQ);
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_create(
+void test_compositeReferenceApi_tc_create(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_create) */
 
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 10);
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_createAuto(
+void test_compositeReferenceApi_tc_createAuto(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_createAuto) */
 
     test_compositeReferenceTypeCreate_auto(o, 10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 10);
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_createChild(
+void test_compositeReferenceApi_tc_createChild(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_createChild) */
 
     test_compositeReferenceType o =
       test_compositeReferenceTypeCreateChild(root_o, "o", 10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -84,19 +69,17 @@ void _test_compositeReferenceApi_tc_createChild(
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_createChildAuto(
+void test_compositeReferenceApi_tc_createChildAuto(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_createChildAuto) */
 
     test_compositeReferenceType o =
       test_compositeReferenceTypeCreateChild(root_o, "o", 10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -104,51 +87,45 @@ void _test_compositeReferenceApi_tc_createChildAuto(
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_declare(
+void test_compositeReferenceApi_tc_declare(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_declare) */
 
     test_compositeReferenceType o = test_compositeReferenceTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 1);
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_declareAuto(
+void test_compositeReferenceApi_tc_declareAuto(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_declareAuto) */
 
     test_compositeReferenceTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 1);
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_declareChild(
+void test_compositeReferenceApi_tc_declareChild(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_declareChild) */
 
     test_compositeReferenceType o =
         test_compositeReferenceTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -156,18 +133,16 @@ void _test_compositeReferenceApi_tc_declareChild(
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_declareChildAuto(
+void test_compositeReferenceApi_tc_declareChildAuto(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_declareChildAuto) */
 
     test_compositeReferenceTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -175,20 +150,18 @@ void _test_compositeReferenceApi_tc_declareChildAuto(
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_define(
+void test_compositeReferenceApi_tc_define(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_define) */
     corto_int16 result;
 
     test_compositeReferenceType o =
         test_compositeReferenceTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeReferenceType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -197,19 +170,17 @@ void _test_compositeReferenceApi_tc_define(
 
     result = test_compositeReferenceTypeDefine(o, 10, 20);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 10);
     test_assert(o->y == 20);
 
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_fromStr(
+void test_compositeReferenceApi_tc_fromStr(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_fromStr) */
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
 
     test_compositeReferenceTypeFromStr(o, "{20, 30}");
@@ -218,13 +189,11 @@ void _test_compositeReferenceApi_tc_fromStr(
 
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_set(
+void test_compositeReferenceApi_tc_set(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_set) */
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
 
     test_compositeReferenceTypeAssign(o, 20, 30);
@@ -233,13 +202,11 @@ void _test_compositeReferenceApi_tc_set(
 
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_str(
+void test_compositeReferenceApi_tc_str(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_str) */
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
 
     corto_string str = test_compositeReferenceTypeStr(o);
@@ -247,13 +214,11 @@ void _test_compositeReferenceApi_tc_str(
     corto_dealloc(str);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeReferenceApi_tc_update(
+void test_compositeReferenceApi_tc_update(
     test_compositeReferenceApi this)
 {
-/* $begin(test/compositeReferenceApi/tc_update) */
     corto_int16 result;
 
     test_compositeReferenceType o = test_compositeReferenceTypeCreate(10, 20);
@@ -273,5 +238,5 @@ void _test_compositeReferenceApi_tc_update(
 
     corto_delete(o);
 
-/* $end */
 }
+

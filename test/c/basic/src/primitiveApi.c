@@ -1,25 +1,16 @@
-/* $CORTO_GENERATED
- *
- * primitiveApi.c
- *
- * Only code written between the begin and end tags will be preserved
- * when the file is regenerated.
- */
+/* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
 
-void _test_primitiveApi_onUpdate(
+void test_primitiveApi_onUpdate(
     corto_observerEvent *e)
 {
-/* $begin(test/primitiveApi/onUpdate) */
     this->updated = TRUE;
-/* $end */
 }
 
-void _test_primitiveApi_tc_compare(
+void test_primitiveApi_tc_compare(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_compare) */
     corto_equalityKind eq;
 
     eq = test_primitiveTypeCompare(10, 20);
@@ -31,151 +22,133 @@ void _test_primitiveApi_tc_compare(
     eq = test_primitiveTypeCompare(10, 10);
     test_assert(eq == CORTO_EQ);
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_create(
+void test_primitiveApi_tc_create(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_create) */
 
     test_primitiveType *o = test_primitiveTypeCreate(10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(*o == 10);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_createAuto(
+void test_primitiveApi_tc_createAuto(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_createAuto) */
 
     test_primitiveTypeCreate_auto(o, 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(*o == 10);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_createChild(
+void test_primitiveApi_tc_createChild(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_createChild) */
 
     test_primitiveType *o = test_primitiveTypeCreateChild(root_o, "o", 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(*o == 10);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_createChildAuto(
+void test_primitiveApi_tc_createChildAuto(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_createChildAuto) */
 
     test_primitiveTypeCreateChild_auto(root_o, o, 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(*o == 10);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_declare(
+void test_primitiveApi_tc_declare(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_declare) */
 
     test_primitiveType *o = test_primitiveTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(*o == 5);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_declareAuto(
+void test_primitiveApi_tc_declareAuto(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_declareAuto) */
 
     test_primitiveTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(*o == 5);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_declareChild(
+void test_primitiveApi_tc_declareChild(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_declareChild) */
 
     test_primitiveType *o = test_primitiveTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(*o == 5);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_declareChildAuto(
+void test_primitiveApi_tc_declareChildAuto(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_declareChildAuto) */
 
     test_primitiveTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(*o == 5);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_define(
+void test_primitiveApi_tc_define(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_define) */
     corto_int16 result;
 
     test_primitiveType *o = test_primitiveTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_primitiveType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -183,18 +156,16 @@ void _test_primitiveApi_tc_define(
 
     result = test_primitiveTypeDefine(o, 10);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(*o == 10);
 
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_fromStr(
+void test_primitiveApi_tc_fromStr(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_fromStr) */
 
     test_primitiveType *o = test_primitiveTypeCreate(10);
     test_assert(o != NULL);
@@ -202,13 +173,11 @@ void _test_primitiveApi_tc_fromStr(
     test_assert(*o == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_set(
+void test_primitiveApi_tc_set(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_set) */
 
     test_primitiveType *o = test_primitiveTypeCreate(10);
     test_assert(o != NULL);
@@ -216,13 +185,11 @@ void _test_primitiveApi_tc_set(
     test_assert(*o == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_str(
+void test_primitiveApi_tc_str(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_str) */
 
     test_primitiveType *o = test_primitiveTypeCreate(10);
     test_assert(o != NULL);
@@ -231,13 +198,11 @@ void _test_primitiveApi_tc_str(
     corto_dealloc(str);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_primitiveApi_tc_update(
+void test_primitiveApi_tc_update(
     test_primitiveApi this)
 {
-/* $begin(test/primitiveApi/tc_update) */
     corto_int16 result;
 
     test_primitiveType *o = test_primitiveTypeCreate(10);
@@ -256,5 +221,5 @@ void _test_primitiveApi_tc_update(
 
     corto_delete(o);
 
-/* $end */
 }
+

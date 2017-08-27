@@ -1,25 +1,16 @@
-/* $CORTO_GENERATED
- *
- * compositeApi.c
- *
- * Only code written between the begin and end tags will be preserved
- * when the file is regenerated.
- */
+/* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
 
-void _test_compositeApi_onUpdate(
+void test_compositeApi_onUpdate(
     corto_observerEvent *e)
 {
-/* $begin(test/compositeApi/onUpdate) */
     this->updated = TRUE;
-/* $end */
 }
 
-void _test_compositeApi_tc_compare(
+void test_compositeApi_tc_compare(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_compare) */
     corto_equalityKind eq;
     test_compositeType a = {10, 20}, b = {20, 30};
 
@@ -32,50 +23,44 @@ void _test_compositeApi_tc_compare(
     eq = test_compositeTypeCompare(&a, &a);
     test_assert(eq == CORTO_EQ);
 
-/* $end */
 }
 
-void _test_compositeApi_tc_create(
+void test_compositeApi_tc_create(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_create) */
 
     test_compositeType *o = test_compositeTypeCreate(10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 10);
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_createAuto(
+void test_compositeApi_tc_createAuto(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_createAuto) */
 
     test_compositeTypeCreate_auto(o, 10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 10);
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_createChild(
+void test_compositeApi_tc_createChild(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_createChild) */
 
     test_compositeType *o = test_compositeTypeCreateChild(root_o, "o", 10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -83,18 +68,16 @@ void _test_compositeApi_tc_createChild(
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_createChildAuto(
+void test_compositeApi_tc_createChildAuto(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_createChildAuto) */
 
     test_compositeTypeCreateChild_auto(root_o, o, 10, 20);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -102,50 +85,44 @@ void _test_compositeApi_tc_createChildAuto(
     test_assert(o->y == 20);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_declare(
+void test_compositeApi_tc_declare(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_declare) */
 
     test_compositeType *o = test_compositeTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 1);
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_declareAuto(
+void test_compositeApi_tc_declareAuto(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_declareAuto) */
 
     test_compositeTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 1);
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_declareChild(
+void test_compositeApi_tc_declareChild(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_declareChild) */
 
     test_compositeType *o = test_compositeTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -153,18 +130,16 @@ void _test_compositeApi_tc_declareChild(
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_declareChildAuto(
+void test_compositeApi_tc_declareChildAuto(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_declareChildAuto) */
 
     test_compositeTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -172,19 +147,17 @@ void _test_compositeApi_tc_declareChildAuto(
     test_assert(o->y == 2);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_define(
+void test_compositeApi_tc_define(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_define) */
     corto_int16 result;
 
     test_compositeType *o = test_compositeTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -193,58 +166,50 @@ void _test_compositeApi_tc_define(
 
     result = test_compositeTypeDefine(o, 10, 20);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->x == 10);
     test_assert(o->y == 20);
 
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_compositeApi_tc_fromStr(
+void test_compositeApi_tc_fromStr(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_fromStr) */
     test_compositeType o = {10, 20};
 
     test_compositeTypeFromStr(&o, "{20, 30}");
     test_assert(o.x == 20);
     test_assert(o.y == 30);
 
-/* $end */
 }
 
-void _test_compositeApi_tc_set(
+void test_compositeApi_tc_set(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_set) */
     test_compositeType o = {10, 20};
 
     test_compositeTypeAssign(&o, 20, 30);
     test_assert(o.x == 20);
     test_assert(o.y == 30);
 
-/* $end */
 }
 
-void _test_compositeApi_tc_str(
+void test_compositeApi_tc_str(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_str) */
     test_compositeType o = {10, 20};
 
     corto_string str = test_compositeTypeStr(&o);
     test_assert(!strcmp(str, "{10,20}"));
     corto_dealloc(str);
 
-/* $end */
 }
 
-void _test_compositeApi_tc_update(
+void test_compositeApi_tc_update(
     test_compositeApi this)
 {
-/* $begin(test/compositeApi/tc_update) */
     corto_int16 result;
 
     test_compositeType *o = test_compositeTypeCreate(10, 20);
@@ -264,5 +229,5 @@ void _test_compositeApi_tc_update(
 
     corto_delete(o);
 
-/* $end */
 }
+

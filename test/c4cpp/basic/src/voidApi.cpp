@@ -27,7 +27,7 @@ corto_void _test_voidApi_tc_create(
     test_voidType *o = test_voidTypeCreate();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -41,7 +41,7 @@ corto_void _test_voidApi_tc_createAuto(
     test_voidTypeCreate_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(!corto_delete(o));
 
 /* $end */
@@ -55,7 +55,7 @@ corto_void _test_voidApi_tc_createChild(
     test_voidType *o = test_voidTypeCreateChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -72,7 +72,7 @@ corto_void _test_voidApi_tc_createChildAuto(
     test_voidTypeCreateChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));

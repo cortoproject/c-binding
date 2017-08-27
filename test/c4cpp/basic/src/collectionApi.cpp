@@ -47,7 +47,7 @@ corto_void _test_collectionApi_tc_create(
         test_collectionTypeCreate(2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
     test_assert(!corto_delete(o));
@@ -63,7 +63,7 @@ corto_void _test_collectionApi_tc_createAuto(
     test_collectionTypeCreate_auto(o, 2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
     test_assert(!corto_delete(o));
@@ -80,7 +80,7 @@ corto_void _test_collectionApi_tc_createChild(
       test_collectionTypeCreateChild(root_o, "o", 2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -99,7 +99,7 @@ corto_void _test_collectionApi_tc_createChildAuto(
     test_collectionTypeCreateChild_auto(root_o, o, 2, ((corto_int32[]){10, 20}));
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -118,7 +118,7 @@ corto_void _test_collectionApi_tc_declare(
     corto_int32 *o = test_collectionTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
     test_assert(!corto_delete(o));
@@ -134,7 +134,7 @@ corto_void _test_collectionApi_tc_declareAuto(
     test_collectionTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o[0] == 1);
     test_assert(o[1] == 2);
     test_assert(!corto_delete(o));
@@ -150,7 +150,7 @@ corto_void _test_collectionApi_tc_declareChild(
     corto_int32 *o = test_collectionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -169,7 +169,7 @@ corto_void _test_collectionApi_tc_declareChildAuto(
     test_collectionTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -189,7 +189,7 @@ corto_void _test_collectionApi_tc_define(
     corto_int32 *o = test_collectionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_collectionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -198,7 +198,7 @@ corto_void _test_collectionApi_tc_define(
 
     result = test_collectionTypeDefine(o, 2, ((corto_int32[]){10, 20}));
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o[0] == 10);
     test_assert(o[1] == 20);
 

@@ -1,27 +1,18 @@
-/* $CORTO_GENERATED
- *
- * anyApi.c
- *
- * Only code written between the begin and end tags will be preserved
- * when the file is regenerated.
- */
+/* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
 
-void _test_anyApi_onUpdate(
+void test_anyApi_onUpdate(
     corto_observerEvent *e)
 {
-/* $begin(test/anyApi/onUpdate) */
 
     this->updated = TRUE;
 
-/* $end */
 }
 
-void _test_anyApi_tc_compare(
+void test_anyApi_tc_compare(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_compare) */
     corto_int32 i1 = 10, i2 = 20;
     test_anyType a = {corto_type(corto_int32_o), &i1, FALSE};
     test_anyType b = {corto_type(corto_int32_o), &i2, FALSE};
@@ -36,18 +27,16 @@ void _test_anyApi_tc_compare(
     eq = test_anyTypeCompare(a, a);
     test_assert(eq == CORTO_EQ);
 
-/* $end */
 }
 
-void _test_anyApi_tc_create(
+void test_anyApi_tc_create(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_create) */
     corto_string v = "Foo";
     test_anyType *o = test_anyTypeCreate(corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -56,18 +45,16 @@ void _test_anyApi_tc_create(
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_createAuto(
+void test_anyApi_tc_createAuto(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_createAuto) */
     corto_string v = "Foo";
     test_anyTypeCreate_auto(o, corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -76,18 +63,16 @@ void _test_anyApi_tc_createAuto(
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_createChild(
+void test_anyApi_tc_createChild(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_createChild) */
     corto_string v = "Foo";
     test_anyType *o = test_anyTypeCreateChild(root_o, "o", corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -99,18 +84,16 @@ void _test_anyApi_tc_createChild(
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_createChildAuto(
+void test_anyApi_tc_createChildAuto(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_createChildAuto) */
     corto_string v = "Foo";
     test_anyTypeCreateChild_auto(root_o, o, corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -122,50 +105,44 @@ void _test_anyApi_tc_createChildAuto(
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_declare(
+void test_anyApi_tc_declare(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_declare) */
     test_anyType *o = test_anyTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_declareAuto(
+void test_anyApi_tc_declareAuto(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_declareAuto) */
     test_anyTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
 
-/* $end */
 }
 
-void _test_anyApi_tc_declareChild(
+void test_anyApi_tc_declareChild(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_declareChild) */
     test_anyType *o = test_anyTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
@@ -174,17 +151,15 @@ void _test_anyApi_tc_declareChild(
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_declareChildAuto(
+void test_anyApi_tc_declareChildAuto(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_declareChildAuto) */
     test_anyTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
@@ -193,20 +168,18 @@ void _test_anyApi_tc_declareChildAuto(
     test_assert(o->owner == TRUE);
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_define(
+void test_anyApi_tc_define(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_define) */
     corto_int16 result;
     corto_int32 v = 10;
 
     test_anyType *o = test_anyTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -216,20 +189,18 @@ void _test_anyApi_tc_define(
 
     result = test_anyTypeDefine(o, corto_int32_o, &v);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_int32_o));
     test_assert(o->value != NULL);
     test_assert(*(corto_int32*)o->value == 10);
 
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_anyApi_tc_fromStr(
+void test_anyApi_tc_fromStr(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_fromStr) */
     corto_string v = "Foo";
     test_anyType o = {corto_type(corto_string_o), &v, FALSE};
 
@@ -239,13 +210,11 @@ void _test_anyApi_tc_fromStr(
     test_assert(*(corto_int32*)o.value == 10);
     test_assert(o.owner = TRUE);
 
-/* $end */
 }
 
-void _test_anyApi_tc_set(
+void test_anyApi_tc_set(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_set) */
     corto_int32 v1 = 10;
     corto_string v2 = "Foo";
     test_anyType o = {corto_type(corto_int32_o), &v1, FALSE};
@@ -257,13 +226,11 @@ void _test_anyApi_tc_set(
     test_assert(!strcmp(*(corto_string*)o.value, "Foo"));
     test_assert(o.owner == TRUE);
 
-/* $end */
 }
 
-void _test_anyApi_tc_str(
+void test_anyApi_tc_str(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_str) */
     corto_int32 v1 = 10;
     test_anyType o = {corto_type(corto_int32_o), &v1, FALSE};
 
@@ -271,13 +238,11 @@ void _test_anyApi_tc_str(
     test_assert(!strcmp(str, "{int32,10}"));
     corto_dealloc(str);
 
-/* $end */
 }
 
-void _test_anyApi_tc_update(
+void test_anyApi_tc_update(
     test_anyApi this)
 {
-/* $begin(test/anyApi/tc_update) */
     corto_int16 result;
 
     corto_string v = "Foo";
@@ -299,5 +264,5 @@ void _test_anyApi_tc_update(
 
     corto_delete(o);
 
-/* $end */
 }
+

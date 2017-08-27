@@ -92,7 +92,7 @@ corto_void _test_compositeUnionApi_tc_create(
     test_compositeUnionType *o = test_compositeUnionTypeCreate_flt(1, 10.5);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 1);
     test_assert(o->is.flt == 10.5);
     test_assert(!corto_delete(o));
@@ -108,7 +108,7 @@ corto_void _test_compositeUnionApi_tc_createAuto(
     test_compositeUnionTypeCreate_flt_auto(o, 1, 10.5);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 1);
     test_assert(o->is.flt == 10.5);
     test_assert(!corto_delete(o));
@@ -124,7 +124,7 @@ corto_void _test_compositeUnionApi_tc_createAutoDefault(
     test_compositeUnionTypeCreate_other_auto(o, 4, 10);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 4);
     test_assert(o->is.other == 10);
     test_assert(!corto_delete(o));
@@ -145,7 +145,7 @@ corto_void _test_compositeUnionApi_tc_createChild(
 
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -169,7 +169,7 @@ corto_void _test_compositeUnionApi_tc_createChildAuto(
 
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -193,7 +193,7 @@ corto_void _test_compositeUnionApi_tc_createChildAutoDefault(
 
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -217,7 +217,7 @@ corto_void _test_compositeUnionApi_tc_createChildDefault(
 
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 4);
     test_assert(o->is.other == 10);
     test_assert(!corto_delete(o));
@@ -236,7 +236,7 @@ corto_void _test_compositeUnionApi_tc_createDefault(
 
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 4);
     test_assert(o->is.other == 10);
     test_assert(!corto_delete(o));
@@ -252,7 +252,7 @@ corto_void _test_compositeUnionApi_tc_declare(
     test_compositeUnionType *o = test_compositeUnionTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 2);
     test_assertstr(o->is.str, "foo");
     test_assert(!corto_delete(o));
@@ -268,7 +268,7 @@ corto_void _test_compositeUnionApi_tc_declareAuto(
     test_compositeUnionTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 2);
     test_assertstr(o->is.str, "foo");
     test_assert(!corto_delete(o));
@@ -284,7 +284,7 @@ corto_void _test_compositeUnionApi_tc_declareChild(
     test_compositeUnionType *o = test_compositeUnionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -303,7 +303,7 @@ corto_void _test_compositeUnionApi_tc_declareChildAuto(
     test_compositeUnionTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -323,7 +323,7 @@ corto_void _test_compositeUnionApi_tc_define(
     test_compositeUnionType *o = test_compositeUnionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -332,7 +332,7 @@ corto_void _test_compositeUnionApi_tc_define(
 
     result = test_compositeUnionTypeDefine_flt(o, 1, 10.5);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 1);
     test_assert(o->is.flt == 10.5);
 
@@ -350,7 +350,7 @@ corto_void _test_compositeUnionApi_tc_defineDefault(
     test_compositeUnionType *o = test_compositeUnionTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_compositeUnionType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -359,7 +359,7 @@ corto_void _test_compositeUnionApi_tc_defineDefault(
 
     result = test_compositeUnionTypeDefine_other(o, 4, 10);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->d == 4);
     test_assert(o->is.other == 10);
 

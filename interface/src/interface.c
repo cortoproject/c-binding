@@ -305,7 +305,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_fullpath(fullname, o);
         c_functionName(data->g, o, functionName);
 
-        defined = corto_checkState(o, CORTO_DEFINED) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
+        defined = corto_checkState(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
 
         /* Check whether generation of stubs must be forced */
         if (doStubs) {

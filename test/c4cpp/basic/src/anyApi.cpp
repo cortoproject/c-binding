@@ -50,7 +50,7 @@ corto_void _test_anyApi_tc_create(
     test_anyType *o = test_anyTypeCreate(corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -70,7 +70,7 @@ corto_void _test_anyApi_tc_createAuto(
     test_anyTypeCreate_auto(o, corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -90,7 +90,7 @@ corto_void _test_anyApi_tc_createChild(
     test_anyType *o = test_anyTypeCreateChild(root_o, "o", corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -113,7 +113,7 @@ corto_void _test_anyApi_tc_createChildAuto(
     test_anyTypeCreateChild_auto(root_o, o, corto_string_o, &v);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_string_o));
     test_assert(o->value != NULL);
     test_assert(!strcmp(*(corto_string*)o->value, "Foo"));
@@ -135,7 +135,7 @@ corto_void _test_anyApi_tc_declare(
     test_anyType *o = test_anyTypeDeclare();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(o->owner == TRUE);
@@ -151,7 +151,7 @@ corto_void _test_anyApi_tc_declareAuto(
     test_anyTypeDeclare_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(o->owner == TRUE);
@@ -168,7 +168,7 @@ corto_void _test_anyApi_tc_declareChild(
     test_anyType *o = test_anyTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
@@ -187,7 +187,7 @@ corto_void _test_anyApi_tc_declareChildAuto(
     test_anyTypeDeclareChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->type == NULL);
     test_assert(o->value == NULL);
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
@@ -209,7 +209,7 @@ corto_void _test_anyApi_tc_define(
     test_anyType *o = test_anyTypeDeclareChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == corto_type(test_anyType_o));
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
@@ -219,7 +219,7 @@ corto_void _test_anyApi_tc_define(
 
     result = test_anyTypeDefine(o, corto_int32_o, &v);
     test_assert(result == 0);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(o->type == corto_type(corto_int32_o));
     test_assert(o->value != NULL);
     test_assert(*(corto_int32*)o->value == 10);

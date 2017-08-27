@@ -844,7 +844,7 @@ static int c_loadDefine(corto_object o, void* userData) {
 
     c_varId(data->g, o, varId);
 
-    g_fileWrite(data->source, "if (!corto_checkState(%s, CORTO_DEFINED)) {\n", varId);
+    g_fileWrite(data->source, "if (!corto_checkState(%s, CORTO_VALID)) {\n", varId);
     g_fileIndent(data->source);
 
     /* Serialize object if object is not a primitive */

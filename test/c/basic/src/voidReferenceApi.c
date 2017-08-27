@@ -1,87 +1,70 @@
-/* $CORTO_GENERATED
- *
- * voidReferenceApi.c
- *
- * Only code written between the begin and end tags will be preserved
- * when the file is regenerated.
- */
+/* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
 
-void _test_voidReferenceApi_onUpdate(
+void test_voidReferenceApi_onUpdate(
     corto_observerEvent *e)
 {
-/* $begin(test/voidReferenceApi/onUpdate) */
     this->updated = TRUE;
-/* $end */
 }
 
-void _test_voidReferenceApi_tc_create(
+void test_voidReferenceApi_tc_create(
     test_voidReferenceApi this)
 {
-/* $begin(test/voidReferenceApi/tc_create) */
 
     test_voidReferenceType o = test_voidReferenceTypeCreate();
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidReferenceType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_voidReferenceApi_tc_createAuto(
+void test_voidReferenceApi_tc_createAuto(
     test_voidReferenceApi this)
 {
-/* $begin(test/voidReferenceApi/tc_createAuto) */
 
     test_voidReferenceTypeCreate_auto(o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidReferenceType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_voidReferenceApi_tc_createChild(
+void test_voidReferenceApi_tc_createChild(
     test_voidReferenceApi this)
 {
-/* $begin(test/voidReferenceApi/tc_createChild) */
 
     test_voidReferenceType o = test_voidReferenceTypeCreateChild(root_o, "o");
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidReferenceType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_voidReferenceApi_tc_createChildAuto(
+void test_voidReferenceApi_tc_createChildAuto(
     test_voidReferenceApi this)
 {
-/* $begin(test/voidReferenceApi/tc_createChildAuto) */
 
     test_voidReferenceTypeCreateChild_auto(root_o, o);
     test_assert(o != NULL);
     test_assert(corto_typeof(o) == test_voidReferenceType_o);
-    test_assert(corto_checkState(o, CORTO_DEFINED));
+    test_assert(corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assert(corto_parentof(o) == root_o);
     test_assert(!strcmp(corto_idof(o), "o"));
     test_assert(!corto_delete(o));
 
-/* $end */
 }
 
-void _test_voidReferenceApi_tc_update(
+void test_voidReferenceApi_tc_update(
     test_voidReferenceApi this)
 {
-/* $begin(test/voidReferenceApi/tc_update) */
     corto_int16 result;
 
     test_voidReferenceType o = test_voidReferenceTypeCreate();
@@ -99,5 +82,5 @@ void _test_voidReferenceApi_tc_update(
 
     corto_delete(o);
 
-/* $end */
 }
+

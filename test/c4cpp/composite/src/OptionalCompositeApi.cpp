@@ -102,7 +102,7 @@ corto_void _test_OptionalCompositeApi_tc_declare(
     test_OptionalComposite *o = test_OptionalCompositeDeclare();
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a == NULL);
     test_assertint(o->b.x, 0);
     test_assertint(o->b.y, 0);
@@ -117,7 +117,7 @@ corto_void _test_OptionalCompositeApi_tc_declareChild(
     test_OptionalComposite *o = test_OptionalCompositeDeclareChild(root_o, "a");
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(corto_checkAttr(o, CORTO_ATTR_NAMED));
     test_assertstr(corto_idof(o), "a");
     test_assert(corto_parentof(o) == root_o);
@@ -135,7 +135,7 @@ corto_void _test_OptionalCompositeApi_tc_define(
     test_OptionalComposite *o = test_OptionalCompositeDeclare();
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a == NULL);
     test_assertint(o->b.x, 0);
     test_assertint(o->b.y, 0);
@@ -157,7 +157,7 @@ corto_void _test_OptionalCompositeApi_tc_defineNotSet(
     test_OptionalComposite *o = test_OptionalCompositeDeclare();
 
     test_assert(o != NULL);
-    test_assert(!corto_checkState(o, CORTO_DEFINED));
+    test_assert(!corto_checkState(o, CORTO_VALID));
     test_assert(o->a == NULL);
     test_assertint(o->b.x, 0);
     test_assertint(o->b.y, 0);
