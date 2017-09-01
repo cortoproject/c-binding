@@ -1022,7 +1022,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         data->args = NULL;
 
         if (isUpdate && doUpdate && (t->kind != CORTO_VOID)) {
-            g_fileWrite(data->source, "if (!corto_updateBegin(_this)) {\n");
+            g_fileWrite(data->source, "if (!corto_update_begin(_this)) {\n");
             g_fileIndent(data->source);
 
             g_fileWrite(data->source, "if ((corto_typeof(corto_typeof(_this)) == (corto_type)corto_target_o) && !corto_owned(_this)) {\n");
@@ -1047,7 +1047,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         /* Define object */
         if (isUpdate && doUpdate) {
             if (t->kind != CORTO_VOID) {
-                g_fileWrite(data->source, "corto_updateEnd(_this);\n");
+                g_fileWrite(data->source, "corto_update_end(_this);\n");
                 g_fileDedent(data->source);
                 g_fileWrite(data->source, "} else {\n");
                 g_fileIndent(data->source);
