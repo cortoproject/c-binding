@@ -70,7 +70,10 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
 
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
     g_fileIndent(file);
-    if (app) g_fileWrite(file, "corto_start(argv[0]); /* Pass application name for logging framework */\n");
+    if (app) g_fileWrite(
+        file, 
+        "corto_start(\"%s\"); /* Pass application name for logging framework */\n",
+        g_getName(g));
     c_projectLoadPackages(g, file);
     if (g_getCurrent(g)) {
         g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));
