@@ -272,7 +272,8 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
     /* Declare objects in headerfile and define in sourcefile */
     g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);
     if (strcmp(objectId, localId)) {
-        g_fileWrite(data->header, "#ifdef %s\n", c_buildingMacro(data->g, building));
+        c_buildingMacro(data->g, building);
+        g_fileWrite(data->header, "#if !defined(__cplusplus) && defined(%s)\n", building);
         g_fileWrite(data->header, "#define %s %s\n", localId, objectId);
         g_fileWrite(data->header, "#endif\n");
     }
