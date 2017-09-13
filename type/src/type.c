@@ -524,7 +524,7 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
             c_buildingMacro(data->g, buildingMacro);
             g_localOid(data->g, t, localId);
             c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-            g_fileWrite(data->header, "#ifdef %s\n", buildingMacro);
+            g_fileWrite(data->header, "#if !defined(__cplusplus) && defined(%s)\n", buildingMacro);
             g_fileWrite(data->header, "typedef %s %s;\n", id, localId);
             g_fileWrite(data->header, "#endif\n");
             g_fileWrite(data->header, "\n");
