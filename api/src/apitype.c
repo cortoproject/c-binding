@@ -1113,7 +1113,7 @@ corto_int16 c_apiDelegateInitCallback(
     corto_bool instance,
     c_apiWalk_t *data)
 {
-    corto_id returnId, id, paramId;
+    corto_id returnId, id, paramId, returnVarId;
     int i, firstComma = 0;
 
     if (c_apiDelegateInitCallbackAuto(t, instance, data)) {
@@ -1122,6 +1122,7 @@ corto_int16 c_apiDelegateInitCallback(
 
     g_fullOid(data->g, t, id);
     g_fullOid(data->g, t->returnType, returnId);
+    c_varId(data->g, t->returnType, returnVarId);
 
     c_writeExport(data->g, data->header);
     if (!instance) {
@@ -1180,6 +1181,7 @@ corto_int16 c_apiDelegateInitCallback(
     }
     g_fileWrite(data->source, "d->super.procedure = corto_declare(corto_function_o);\n");
     g_fileWrite(data->source, "d->super.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
+    g_fileWrite(data->source, "corto_ptr_setref(&d->super.procedure->returnType, %s);\n", returnVarId);
     g_fileWrite(
         data->source, "corto_function_parseParamString(d->super.procedure, \"(");
 
