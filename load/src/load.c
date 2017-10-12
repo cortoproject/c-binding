@@ -883,19 +883,22 @@ static int c_loadDefine(corto_object o, void* userData) {
         corto_id typeId;
         c_specifierId(data->g, o, typeId, NULL, postfix);
 
-        if ((corto_type(o)->kind == CORTO_COMPOSITE) && corto_type(o)->reference && (corto_interface(o)->kind != CORTO_INTERFACE)) {
-            g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
-                varId,
-                typeId);
-            g_fileIndent(data->source);
-            g_fileWrite(data->source,
-                "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
-                g_getProjectName(data->g),
-                varId,
-                varId,
-                typeId);
-            g_fileDedent(data->source);
-            g_fileWrite(data->source, "}\n\n");
+        if ((corto_type(o)->kind == CORTO_COMPOSITE) && corto_type(o)->reference) {
+            /* Interface types have no size */
+            if (corto_interface(o)->kind != CORTO_INTERFACE) {
+                g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(struct %s_s)) {\n",
+                    varId,
+                    typeId);
+                g_fileIndent(data->source);
+                g_fileWrite(data->source,
+                    "corto_error(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
+                    g_getProjectName(data->g),
+                    varId,
+                    varId,
+                    typeId);
+                g_fileDedent(data->source);
+                g_fileWrite(data->source, "}\n\n");
+            }
         } else if (corto_type(o)->reference || (corto_type(o)->kind != CORTO_VOID)) {
             g_fileWrite(data->source, "if (corto_type(%s)->size != sizeof(%s)) {\n",
                 varId,
