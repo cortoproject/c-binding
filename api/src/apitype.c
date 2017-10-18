@@ -272,7 +272,7 @@ static corto_int16 c_apiCastMacroSet(
       id);
     c_apiPrintArgs(data->args, 0, 1, data->header);
 
-    g_fileWrite(data->header, " %sAssign((%s*)corto_ptr_new(%s))", id, id, typeId);
+    g_fileWrite(data->header, " %sAssign((%s*)corto_ptr_new(%s)", id, id, typeId);
     c_apiPrintArgs(data->args, 1, 1, data->header);
     g_fileWrite(data->header, "\n");
 
