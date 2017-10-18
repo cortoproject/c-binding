@@ -228,7 +228,11 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->wrapper, "/* Determine methodId once, then cache it for subsequent calls. */\n");
     g_fileWrite(data->wrapper, "if (!_methodId) {\n");
     g_fileIndent(data->wrapper);
-    g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
+    if (!isInterface) {
+        g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
+    } else {
+        g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(%s, \"%s\");\n", typeVarId, nameString);
+    }
     g_fileDedent(data->wrapper);
     g_fileWrite(data->wrapper, "}\n");
     g_fileWrite(
