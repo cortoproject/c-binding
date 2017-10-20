@@ -353,7 +353,7 @@ corto_int16 corto_genMain(g_generator g) {
         if (!corto_fileTest("c/rakefile")) {
             corto_int8 ret, sig;
             corto_id cmd;
-            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent", g_getName(g));
+            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent -o c", g_getName(g));
             sig = corto_proccmd(cmd, &ret);
             if (sig || ret) {
                 corto_seterr("failed to setup project for '%s/c'", 
