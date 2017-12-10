@@ -1,7 +1,0 @@
-
-COMPONENTS = %w(
-    c
-    c4cpp
-)
-
-require "#{ENV['CORTO_BUILD']}/forward"

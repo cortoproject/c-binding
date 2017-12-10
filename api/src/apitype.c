@@ -584,7 +584,7 @@ corto_int16 c_apiTypeInitCollection(corto_type t, c_apiWalk_t *data) {
     }
 
     c_specifierId(data->g, corto_collection(t)->elementType, elementId, &prefix, NULL);
-    
+
     g_fileWrite(data->header, "corto_uint32 length, %s* elements", elementId);
     g_fileWrite(data->source, "corto_uint32 length, %s* elements", elementId);
     c_apiCastMacroAddArg(data->args, "length", NULL, FALSE);
@@ -748,7 +748,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
     switch(corto_collection(t)->kind) {
     case CORTO_SEQUENCE:
         strcat(cVar, "->buffer");
-        g_fileWrite(data->source, "%sSize(%s, length);\n", id, _this);
+        g_fileWrite(data->source, "%sResize(%s, length);\n", id, _this);
     case CORTO_ARRAY:
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");

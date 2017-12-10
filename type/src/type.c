@@ -36,7 +36,7 @@ static corto_int16 c_typeConstant(corto_walk_opt* s, corto_value* v, void* userD
         g_fileWrite(data->header, "#define %s (0x%x)\n", c_constantId(data->g, v->is.constant.t, constantId), *v->is.constant.t);
         break;
     default:
-        corto_seterr("c_typeConstant: invalid constant parent-type.");
+        corto_throw("c_typeConstant: invalid constant parent-type.");
         goto error;
         break;
     }
@@ -512,7 +512,7 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
         result = c_typeIterator(s, v, userData);
         break;
     default:
-        corto_seterr("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant(corto_typeKind_o, t->kind)));
+        corto_throw("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant(corto_typeKind_o, t->kind)));
         goto error;
     }
 
@@ -619,7 +619,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
             g_fileWrite(prefixFile, go->prefix);
             g_fileClose(prefixFile);
         } else {
-            corto_seterr("failed to create include/.prefix");
+            corto_throw("failed to create include/.prefix");
             goto error;
         }
     }
@@ -632,7 +632,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     }
 
     corto_path(path, root_o, g_getCurrent(g), "_");
-    corto_strupper(path);
+    strupper(path);
 
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
@@ -712,7 +712,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
         }
         break;
     default:
-        corto_seterr("c_typeDeclare: only composite types can be forward declared.");
+        corto_throw("c_typeDeclare: only composite types can be forward declared.");
         goto error;
         break;
     }
@@ -738,7 +738,7 @@ static int c_typeDefine(corto_object o, void* userData) {
 }
 
 /* Generator main */
-corto_int16 corto_genMain(g_generator g) {
+corto_int16 genmain(g_generator g) {
     c_typeWalk_t walkData;
 
     /* Prepare walkdata, open headerfile */
@@ -769,7 +769,7 @@ corto_int16 corto_genMain(g_generator g) {
     /* Define native types as void* if _type.h is used by itself */
     corto_id path;
     corto_path(path, root_o, g_getCurrent(g), "_");
-    corto_strupper(path);
+    strupper(path);
     g_fileWrite(walkData.header, "\n");
     g_fileWrite(walkData.header, "/* Native types */\n");
     g_fileWrite(walkData.header, "#ifndef %s_H\n", path);

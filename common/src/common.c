@@ -116,7 +116,7 @@ corto_string corto_genId(corto_string str, corto_id id) {
             ptr += 1;
         }
 
-        /* Replace '::' with '_' */
+        /* Replace '/' with '_' */
         while((ch = *ptr)) {
             switch(ch) {
             case '/':
@@ -168,7 +168,7 @@ corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
             appendT = TRUE;
             break;
         default: {
-            corto_seterr("unsupported width for primitive type '%s'.",
+            corto_throw("unsupported width for primitive type '%s'.",
                 corto_fullpath(NULL, t));
             goto error;
             break;
@@ -195,7 +195,7 @@ corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
             strcpy(buff, "double");
             break;
         default: {
-            corto_seterr("unsupported width for floating point type '%s'",
+            corto_throw("unsupported width for floating point type '%s'",
                 corto_fullpath(NULL, t));
             goto error;
             break;
@@ -204,7 +204,7 @@ corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
         break;
     case CORTO_ENUM:
     case CORTO_BITMASK:
-        corto_seterr(
+        corto_throw(
           "use c_specifierId instead of c_primitiveId for enums and bitmasks");
         goto error;
         g_fullOid(g, t, buff);
@@ -413,7 +413,7 @@ corto_int16 c_specifierId(
                 }
                 break;
             case CORTO_MAP:
-                strcpy(specifier, "corto_rbtree");
+                strcpy(specifier, "corto_rb");
                 break;
             }
             break;
@@ -563,7 +563,7 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
             if (ch == '/') *ptr = '_';
         }
     }
-    corto_strupper(buff);
+    strupper(buff);
     strcpy(ptr, buff);
     return buffer; 
 }
@@ -580,7 +580,7 @@ void c_writeExport(g_generator g, g_file file) {
     } else {
         corto_path(upperName, root_o, g_getCurrent(g), "_");
     }
-    corto_strupper(upperName);
+    strupper(upperName);
     g_fileWrite(file, "%s_EXPORT", upperName);
 }
 
@@ -797,7 +797,7 @@ static int c_findTypeWalk(corto_object o, void* userData) {
     c_findTypeWalk_t* data = userData;
 
     if (corto_instanceof(data->t, o)) {
-        if (!corto_ll_size(data->result) || corto_ll_walk(data->result, c_checkDuplicates, o)) {
+        if (!corto_ll_count(data->result) || corto_ll_walk(data->result, c_checkDuplicates, o)) {
             corto_ll_append(data->result, o);
         }
     }
@@ -812,7 +812,7 @@ corto_ll c_findType(g_generator g, corto_class t) {
     walkData.t = t;
 
     if (corto_genDepWalk(g, c_findTypeWalk, NULL, &walkData)) {
-        corto_seterr("failed to resolve instances of '%s'",
+        corto_throw("failed to resolve instances of '%s'",
             corto_fullpath(NULL, t));
         goto error;
     }

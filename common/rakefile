@@ -1,7 +1,0 @@
-PACKAGE = "driver/gen/c/common"
-
-NOCORTO = true
-CFLAGS = ["-Wunused-parameter"]
-USE_PACKAGE = ["corto", "corto/g"]
-
-require "#{ENV['CORTO_BUILD']}/package"

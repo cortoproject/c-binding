@@ -1,0 +1,10 @@
+{
+    "id": "driver/gen/c/load",
+    "type": "package",
+    "value": {
+        "author": "Sander Mertens",
+        "description": "Generate code that loads model into object store",
+        "managed": false,
+        "use": ["corto", "corto/g", "driver/gen/c/common"]
+    }
+}

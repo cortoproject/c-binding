@@ -6,14 +6,26 @@
 static void c_projectLoadPackages(g_generator g, g_file file) {
 
     if (g->imports) {
+        corto_id id;
+        if (g_getCurrent(g)) {
+            corto_path(id, root_o, g_getCurrent(g), "_");
+        } else {
+            strcpy(id, g_getProjectName(g));
+        }
+        g_fileWrite(file, "corto_log_push(\"load-deps:%s\");\n", id);
         corto_iter iter = corto_ll_iter(g->imports);
         while (corto_iter_hasNext(&iter)) {
             corto_object o = corto_iter_next(&iter);
-            g_fileWrite(
-                file, 
-                "if (corto_load(\"%s\", 0, NULL)) return -1;\n", 
-                corto_path(NULL, NULL, o, "/"));
+
+            /* Filter out generated language packages */
+            if (strcmp(corto_idof(o), "c")) {
+                g_fileWrite(
+                    file,
+                    "if (corto_load(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
+                    corto_path(NULL, NULL, o, "/"));
+            }
         }
+        g_fileWrite(file, "corto_log_pop();\n");
     }
 }
 
@@ -51,12 +63,8 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
         c_includeFrom(g, file, g_getCurrent(g), "_project.h");
     }
 
-    g_fileWrite(file, "\n");
-    g_fileWrite(file, "int %sMain(int argc, char* argv[]);\n", g_getProjectName(g));
-    g_fileWrite(file, "\n");
-
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "int %s_load(void);\n", g_getProjectName(g));
+        g_fileWrite(file, "int %s_load(void);\n", corto_path(NULL, root_o, g_getCurrent(g), "_"));
         g_fileWrite(file, "\n");
     }
 
@@ -68,18 +76,25 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
         g_fileWrite(file, " ");
     }
 
-    g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortomain");
+    g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortoinit");
     g_fileIndent(file);
     if (app) g_fileWrite(
-        file, 
+        file,
         "corto_start(\"%s\"); /* Pass application name for logging framework */\n",
         g_getName(g));
     c_projectLoadPackages(g, file);
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "if (%s_load()) return -1;\n", g_getProjectName(g));
+        corto_id id;
+        corto_path(id, root_o, g_getCurrent(g), "_");
+        g_fileWrite(file, "corto_log_push(\"load-model:%s\");\n", id);
+        g_fileWrite(file, "if (%s_load()) { corto_log_pop(); return -1;}\n", id);
+        g_fileWrite(file, "corto_log_pop();\n");
     }
-    g_fileWrite(file, "if (%sMain(argc, argv)) return -1;\n", g_getProjectName(g));
-    if (app) g_fileWrite(file, "corto_stop();\n");
+    if (app) {
+        g_fileWrite(file, "int cortomain(int argc, char *argv[]);\n");
+        g_fileWrite(file, "if (cortomain(argc, argv)) return -1;\n");
+        g_fileWrite(file, "corto_stop();\n");
+    }
     g_fileWrite(file, "return 0;\n");
     g_fileDedent(file);
     g_fileWrite(file, "}\n\n");
@@ -102,7 +117,7 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
     } else {
         corto_id upperName;
         strcpy(upperName, g_getName(g));
-        corto_strupper(upperName);
+        strupper(upperName);
 
         corto_id upperFullName, buildingMacro;
         if (g_getCurrent(g)) {
@@ -114,7 +129,7 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
                 if (ch == '/') *ptr = '_';
             }
         }
-        corto_strupper(upperFullName);
+        strupper(upperFullName);
 
         c_buildingMacro(g, buildingMacro);
 
@@ -148,7 +163,7 @@ error:
 }
 
 /* Generator main */
-corto_int16 corto_genMain(g_generator g) {
+corto_int16 genmain(g_generator g) {
 
     /* Create source and include directories */
     corto_mkdir("include");
@@ -157,14 +172,14 @@ corto_int16 corto_genMain(g_generator g) {
 
     if (c_projectGenerateMainFile(g)) {
         if (!corto_lasterr()) {
-            corto_seterr("failed to create main sourcefile");
+            corto_throw("failed to create main sourcefile");
         }
         goto error;
     }
 
     if (c_genInterfaceHeader(g)) {
         if (!corto_lasterr()) {
-            corto_seterr("failed to create interface header");
+            corto_throw("failed to create interface header");
         }
         goto error;
     }

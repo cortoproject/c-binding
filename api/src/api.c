@@ -148,7 +148,7 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
 
     /* Obtain path for macro */
     corto_path(path, root_o, g_getCurrent(data->g), "_");
-    corto_strupper(path);
+    strupper(path);
 
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
@@ -240,7 +240,7 @@ static g_file c_apiSourceOpen(g_generator g) {
         g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
         corto_id path;
         corto_path(path, root_o, g_getCurrent(g), "/");
-        
+
         /* Add header files for dependent packages */
         if (g->imports) {
             corto_iter iter = corto_ll_iter(g->imports);
@@ -249,7 +249,7 @@ static g_file c_apiSourceOpen(g_generator g) {
                 corto_string str = corto_path(NULL, NULL, import, "/");
                 corto_string package = corto_locate(str, NULL, CORTO_LOCATION_FULLNAME);
                 if (!package) {
-                    corto_seterr("project configuration contains unresolved package '%s'", str);
+                    corto_throw("project configuration contains unresolved package '%s'", str);
                     goto error;
                 } else {
                     corto_string name = corto_locate(str, NULL, CORTO_LOCATION_NAME);
@@ -280,7 +280,7 @@ static int c_apiVariableWalk(void *o, void *userData) {
     g_fileWrite(data->source, "corto_type _%s;\n", varId);
     g_fileWrite(
         data->source,
-        "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n", 
+        "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n",
         varId, varId, varId, varId, packageId, varId);
     g_fileWrite(data->source, "\n");
 
@@ -315,7 +315,7 @@ static int c_apiWalkPackages(corto_object o, void* userData) {
      * a separate package (to prevent cyclic dependencies between libs) */
     if (!app && !local && !bootstrap) {
         data->types = c_findType(data->g, corto_type_o);
-        if (data->types && corto_ll_size(data->types)) {
+        if (data->types && corto_ll_count(data->types)) {
             g_fileWrite(data->source, "static corto_dl _package;\n");
             corto_ll_walk(data->types, c_apiVariableWalk, data);
             corto_ll_free(data->types);
@@ -340,7 +340,7 @@ error:
 }
 
 /* Generator main */
-corto_int16 corto_genMain(g_generator g) {
+corto_int16 genmain(g_generator g) {
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
 
@@ -350,44 +350,51 @@ corto_int16 corto_genMain(g_generator g) {
 
     /* Create project files */
     if (!local && !app) {
-        if (!corto_fileTest("c/rakefile")) {
+        if (!corto_file_test("c/project.json")) {
             corto_int8 ret, sig;
             corto_id cmd;
-            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent", g_getName(g));
-            sig = corto_proccmd(cmd, &ret);
+            sprintf(cmd, "corto create package %s/c -o c --unmanaged --notest --nobuild --silent", g_getName(g));
+            sig = corto_proc_cmd(cmd, &ret);
             if (sig || ret) {
-                corto_seterr("failed to setup project for '%s/c'", 
-                    g_getName(g));
+                corto_throw("failed to setup project for '%s/c'", g_getName(g));
                 goto error;
             }
 
             /* Overwrite rakefile */
-            g_file rakefile = g_fileOpen(g, "c/rakefile");
+            g_file rakefile = g_fileOpen(g, "c/project.json");
             if (!rakefile) {
-                corto_seterr("failed to open c/rakefile: %s", corto_lasterr());
+                corto_throw("failed to open c/project.json");
                 goto error;
             }
-            g_fileWrite(rakefile, "PACKAGE = '%s/c'\n\n", g_getName(g));
-            g_fileWrite(rakefile, "NOCORTO = true\n");
-            g_fileWrite(rakefile, "LANGUAGE = '%s'\n", strcmp(g_getAttribute(g, "c4cpp"), "true") ? "c" : "c4cpp");
+            g_fileWrite(rakefile, "{\n");
+            g_fileWrite(rakefile, "    \"id\": \"%s/c\",\n", g_getName(g));
+            g_fileWrite(rakefile, "    \"type\": \"package\",\n");
+            g_fileWrite(rakefile, "    \"value\": {\n");
 
+            g_fileWrite(rakefile, "        \"use\": [\"corto\"");
             if (g->imports) {
-                int count = 0;
-                g_fileWrite(rakefile, "USE_PACKAGE = [");
                 corto_iter iter = corto_ll_iter(g->imports);
                 while (corto_iter_hasNext(&iter)) {
                     corto_object import = corto_iter_next(&iter);
                     corto_string str = corto_path(NULL, NULL, import, "/");
-                    if (count) g_fileWrite(rakefile, ", ");
-                    g_fileWrite(rakefile, "'%s'", str);
-                    count ++;
 
+                    /* Do not use /c packages in /c package */
+                    char *lastElem = strrchr(str, '/');
+                    if (lastElem) {
+                        if (!strcmp(lastElem, "/c")) {
+                            continue;
+                        }
+                    }
+
+                    g_fileWrite(rakefile, ", \"%s\"", str);
                 }
-                g_fileWrite(rakefile, "]\n");
             }
+            g_fileWrite(rakefile, "],\n");
 
-
-            g_fileWrite(rakefile, "require \"#{ENV['CORTO_BUILD']}/package\"\n");
+            g_fileWrite(rakefile, "        \"language\": \"%s\",\n", strcmp(g_getAttribute(g, "c4cpp"), "true") ? "c" : "c4cpp");
+            g_fileWrite(rakefile, "        \"managed\": false\n");
+            g_fileWrite(rakefile, "    }\n");
+            g_fileWrite(rakefile, "}\n");
             g_fileClose(rakefile);
         }
 
@@ -421,6 +428,5 @@ corto_int16 corto_genMain(g_generator g) {
 
     return 0;
 error:
-    printf("error\n");
     return -1;
 }

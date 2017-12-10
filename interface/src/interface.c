@@ -28,11 +28,13 @@ typedef struct c_typeWalk_t {
     corto_id sizeExpr;
     corto_ll generated;
     corto_bool mainWritten;
+    corto_ll existedBeforeGenerating;
 } c_typeWalk_t;
 
 static cdiff_file c_interfaceOpenFile(corto_string name, c_typeWalk_t *data) {
     corto_id filepath;
-    cdiff_file result = cdiff_file_open(g_filePath(data->g, filepath, name));
+    char *filename = g_filePath(data->g, filepath, "%s", name);
+    cdiff_file result = cdiff_file_open(filename);
     if (result) {
         corto_ll_append(data->generated, corto_strdup(name));
         cdiff_file_write(result, "/* %s */\n\n", GENERATED_MARKER);
@@ -81,7 +83,7 @@ static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isRefere
     if ((isReference || t->reference) &&
         (t->kind != CORTO_VOID) && (t->kind != CORTO_ANY) &&
         (corto_checkAttr(t, CORTO_ATTR_NAMED)) &&
-        (!inout)) 
+        (!inout))
     {
         return TRUE;
     } else {
@@ -301,7 +303,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_type returnType = corto_function(o)->returnType;
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
-        
+
         corto_fullpath(fullname, o);
         c_functionName(data->g, o, functionName);
 
@@ -343,7 +345,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
          * so that the function names don't have to start with '_' */
         g_fileWrite(data->interfaceHeader, "#else\n");
         g_fileWrite(data->interfaceHeader, "#define %s _%s\n", functionName, functionName);
-        
+
         if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
             corto_id localName;
             c_functionLocalName(data->g, o, localName);
@@ -480,7 +482,7 @@ static corto_int16 c_interfaceHeaderWrite(
     CORTO_UNUSED(data);
 
     strcpy(path, name);
-    corto_strupper(path);
+    strupper(path);
     char *ptr, ch;
     for (ptr = path; (ch = *ptr); ptr++) if (ch == '/') *ptr = '_';
 
@@ -519,7 +521,7 @@ static corto_int16 c_interfaceHeaderWrite(
                 corto_string str = corto_path(NULL, NULL, import, "/");
                 corto_string package = corto_locate(str, NULL, CORTO_LOCATION_FULLNAME);
                 if (!package) {
-                    corto_seterr("project configuration contains unresolved package '%s'", str);
+                    corto_throw("project configuration contains unresolved package '%s'", str);
 
                     /* Don't break out of generation here, as this will mess up the
                      * file's code snippet */
@@ -560,7 +562,7 @@ static corto_int16 c_interfaceHeaderWrite(
 
         if (!bootstrap) {
             if (local || app) {
-                c_includeFrom(g, result, g_getCurrent(g), "_api.h");   
+                c_includeFrom(g, result, g_getCurrent(g), "_api.h");
             } else {
                 c_includeFrom(g, result, g_getCurrent(g), "c/_api.h");
             }
@@ -685,9 +687,9 @@ static corto_int16 c_interfaceWriteMain(cdiff_file source, corto_string id, c_ty
 
     cdiff_file_write(source, "\n");
 
-    cdiff_file_elemBegin(source, "%sMain", id);
+    cdiff_file_elemBegin(source, "cortomain");
     cdiff_file_headerBegin(source);
-    cdiff_file_write(source, "int %sMain(int argc, char *argv[]) {", id);
+    cdiff_file_write(source, "int cortomain(int argc, char *argv[]) {", id);
     cdiff_file_headerEnd(source);
 
     if (!cdiff_file_bodyBegin(source)) {
@@ -751,7 +753,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
 
         if (isTopLevelObject && hasProcedures) {
             /* put newline between procedures and headers */
-            g_fileWrite(data->interfaceHeader, "\n"); 
+            g_fileWrite(data->interfaceHeader, "\n");
         }
 
         /* If top level file, generate main function */
@@ -762,7 +764,10 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
             }
         }
 
-        cdiff_file_close(data->source);
+        if (cdiff_file_close(data->source)) {
+            corto_throw(NULL);
+            goto error;
+        }
     }
 
     return 0;
@@ -800,7 +805,7 @@ error:
 }
 
 static corto_bool c_interfaceIsGenerated(corto_string file) {
-    corto_string content = corto_fileLoad(file);
+    corto_string content = corto_file_load(file);
     corto_bool result = FALSE;
 
     if (content) {
@@ -834,6 +839,22 @@ static corto_bool c_interfaceWasGeneratedNow(
     return FALSE;
 }
 
+static corto_bool c_interfaceFileExistedBeforeGenerating(
+    corto_string name,
+    c_typeWalk_t *data)
+{
+    corto_iter iter = corto_ll_iter(data->existedBeforeGenerating);
+
+    while(corto_iter_hasNext(&iter)) {
+        corto_string file = corto_iter_next(&iter);
+        if (!strcmp(file, name)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 /* Mark files that haven't been regenerated */
 static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
     corto_ll files = corto_opendir("./src");
@@ -849,16 +870,28 @@ static int c_interfaceMarkUnusedFiles(c_typeWalk_t *data) {
                     corto_id newname;
                     sprintf(newname, "src/%s.old", file);
                     corto_rename (id, newname);
-                    printf("c_interface: %s: stale file, please remove (renamed to %s.old)\n", file, file);
-
-                    /* Remove corresponding headerfile */
-                    sprintf(newname, "include/%s", file);
-                    char *ext = strchr(newname, '.');
-                    *(ext + 1) = 'h';
-                    *(ext + 2) = '\0';
-                    corto_rm(newname);
+                    corto_info("stale file, please remove (renamed to %s.old)", file, file);
                 } else {
-                    printf("c_interface: %s: stale file, please remove\n", file);
+                    id[strlen(id) - 4] = '\0';
+                    char *orig = strrchr(id, '/');
+                    if (orig) orig ++;
+
+                    /* If original file was just generated, but it didn't exist before
+                     * this generation, the newly generated file won't contain
+                     * any implementation, and the old file likely has a more up
+                     * to date version of the implementation. */
+                    if (c_interfaceWasGeneratedNow(orig, data) &&
+                        !c_interfaceFileExistedBeforeGenerating(orig, data))
+                    {
+                        corto_info("restoring '%s' to '%s'", file, orig);
+                        corto_rm(strarg("src/%s", orig));
+                        corto_rename(
+                            strarg("src/%s", file),
+                            strarg("src/%s", orig)
+                        );
+                    } else {
+                        corto_info("%s: stale file, please remove", file);
+                    }
                 }
             }
         }
@@ -891,19 +924,26 @@ static corto_int16 c_interfaceWriteMainSource(c_typeWalk_t *data) {
         goto error;
     }
 
+    if (cdiff_file_close(file)) {
+        corto_throw(NULL);
+        goto error;
+    }
+
     return 0;
 error:
     return -1;
 }
 
 /* Entry point for generator */
-int corto_genMain(g_generator g) {
+int genmain(g_generator g) {
     c_typeWalk_t walkData;
     corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     /* Create source and include directories */
     corto_mkdir("src");
     corto_mkdir("include");
+
+    walkData.existedBeforeGenerating = corto_opendir("src");
 
     /* Default prefixes for corto namespaces */
     g_parse(g, corto_o, FALSE, FALSE, "");
@@ -946,7 +986,7 @@ int corto_genMain(g_generator g) {
 
         g_file mainHeader = g_fileOpen(g, headerFileName);
         if (!mainHeader) {
-            corto_seterr("failed to open file '%s'", headerFileName);
+            corto_throw("failed to open file '%s'", headerFileName);
             goto error;
         }
 
@@ -982,7 +1022,7 @@ int corto_genMain(g_generator g) {
             path,
             "_interface.h",
             FALSE,
-            &walkData)) 
+            &walkData))
         {
             goto error;
         }
@@ -1011,6 +1051,8 @@ int corto_genMain(g_generator g) {
     }
 
     c_interfaceMarkUnusedFiles(&walkData);
+
+    corto_closedir(walkData.existedBeforeGenerating);
 
     return 0;
 error:

@@ -1,0 +1,10 @@
+{
+    "id": "driver/gen/c/type",
+    "type": "package",
+    "value": {
+        "author": "Sander Mertens",
+        "description": "Generate type definitions from model for C language",
+        "managed": false,
+        "use": ["corto", "corto/g", "driver/gen/c/common"]
+    }
+}

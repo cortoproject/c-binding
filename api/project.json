@@ -1,0 +1,10 @@
+{
+    "id": "driver/gen/c/api",
+    "type": "package",
+    "value": {
+        "author": "Sander Mertens",
+        "description": "Generate type-safe API for C binding",
+        "managed": false,
+        "use": ["corto", "corto/g", "driver/gen/c/common"]
+    }
+}
