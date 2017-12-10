@@ -21,7 +21,7 @@ static void c_projectLoadPackages(g_generator g, g_file file) {
             if (strcmp(corto_idof(o), "c")) {
                 g_fileWrite(
                     file,
-                    "if (corto_load(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
+                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
                     corto_path(NULL, NULL, o, "/"));
             }
         }
@@ -73,7 +73,7 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_fileWrite(file, "#endif\n");
     if (g_getCurrent(g)) {
         c_writeExport(g, file);
-        g_fileWrite(file, " ");
+        g_fileWrite(file, "\n");
     }
 
     g_fileWrite(file, "int %s(int argc, char* argv[]) {\n", app ? "main" : "cortoinit");
