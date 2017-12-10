@@ -391,7 +391,10 @@ corto_int16 genmain(g_generator g) {
             }
             g_fileWrite(rakefile, "],\n");
 
-            g_fileWrite(rakefile, "        \"language\": \"%s\",\n", strcmp(g_getAttribute(g, "c4cpp"), "true") ? "c" : "c4cpp");
+            g_fileWrite(rakefile, "        \"language\": \"c\",\n");
+            if (!strcmp(g_getAttribute(g, "c4cpp"), "true")) {
+                g_fileWrite(rakefile, "        \"c4cpp\": true,\n");
+            }
             g_fileWrite(rakefile, "        \"managed\": false\n");
             g_fileWrite(rakefile, "    }\n");
             g_fileWrite(rakefile, "}\n");
