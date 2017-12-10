@@ -179,13 +179,15 @@ error:
 
 /* Generate implementation for virtual methods */
 static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
-    corto_id id, returnTypeId;
+    corto_id id, returnTypeId, typeVarId;
     corto_bool returnsValue;
     char *nameString = NULL;
+    bool isInterface = corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE;
 
     /* Write casting macro to header */
     g_fileWrite(data->interfaceHeader, "\n");
     g_fullOid(data->g, o, id);
+    c_varId(data->g, corto_parentof(o), typeVarId);
     c_interfaceCastMacro(corto_function(o), id, id, NULL, data);
 
     c_writeExport(data->g, data->interfaceHeader);
@@ -228,15 +230,24 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileWrite(data->wrapper, "/* Determine methodId once, then cache it for subsequent calls. */\n");
     g_fileWrite(data->wrapper, "if (!_methodId) {\n");
     g_fileIndent(data->wrapper);
-    g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
+    if (!isInterface) {
+        g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
+    } else {
+        g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(%s, \"%s\");\n", typeVarId, nameString);
+    }
     g_fileDedent(data->wrapper);
     g_fileWrite(data->wrapper, "}\n");
     g_fileWrite(
       data->wrapper,
-      "corto_assert(_methodId, \"virtual '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr() ? \": \" : \"\", corto_lasterr() ? corto_lasterr() : \"\");\n\n",
+      "corto_assert(_methodId, \"method '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr() ? \": \" : \"\", corto_lasterr() ? corto_lasterr() : \"\");\n\n",
       nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
-    g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
+    if (isInterface) {
+        g_fileWrite(data->wrapper, "_method = corto_class_resolveInterfaceMethod((corto_class)_abstract, %s, _methodId);\n", 
+            typeVarId);
+    } else {
+        g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
+    }
     g_fileWrite(data->wrapper,
       "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(_this), _methodId);\n\n",
       nameString);

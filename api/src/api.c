@@ -353,8 +353,8 @@ corto_int16 genmain(g_generator g) {
         if (!corto_file_test("c/project.json")) {
             corto_int8 ret, sig;
             corto_id cmd;
-            sprintf(cmd, "corto create package %s/c -o c --unmanaged --notest --nobuild --silent", g_getName(g));
-            sig = corto_proc_cmd(cmd, &ret);
+            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent -o c", g_getName(g));
+            sig = corto_proccmd(cmd, &ret);
             if (sig || ret) {
                 corto_throw("failed to setup project for '%s/c'", g_getName(g));
                 goto error;
