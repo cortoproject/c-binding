@@ -243,7 +243,7 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
       nameString);
     g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
     if (isInterface) {
-        g_fileWrite(data->wrapper, "_method = corto_class_resolveInterfaceMethod((corto_class)_abstract, %s, _methodId);\n", 
+        g_fileWrite(data->wrapper, "_method = corto_class_resolveInterfaceMethod((corto_class)_abstract, %s, _methodId);\n",
             typeVarId);
     } else {
         g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
@@ -695,11 +695,16 @@ error:
 
 static corto_int16 c_interfaceWriteMain(cdiff_file source, corto_string id, c_typeWalk_t* data) {
     CORTO_UNUSED(data);
+    corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
 
     cdiff_file_write(source, "\n");
 
     cdiff_file_elemBegin(source, "cortomain");
+
     cdiff_file_headerBegin(source);
+    if (cpp) {
+        cdiff_file_write(source, "extern \"C\"\n");
+    }    
     cdiff_file_write(source, "int cortomain(int argc, char *argv[]) {", id);
     cdiff_file_headerEnd(source);
 

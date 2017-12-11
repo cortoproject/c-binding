@@ -343,6 +343,7 @@ error:
 corto_int16 genmain(g_generator g) {
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     c_apiWalk_t walkData;
     memset(&walkData, 0, sizeof(walkData));
@@ -353,7 +354,12 @@ corto_int16 genmain(g_generator g) {
         if (!corto_file_test("c/project.json")) {
             corto_int8 ret, sig;
             corto_id cmd;
-            sprintf(cmd, "corto create package %s/c --unmanaged --notest --nobuild --silent -o c", g_getName(g));
+            sprintf(
+                cmd,
+                "corto create package %s/c %s --unmanaged --notest --nobuild --silent -o c",
+                g_getName(g),
+                cpp ? "--use-cpp" : "");
+
             sig = corto_proc_cmd(cmd, &ret);
             if (sig || ret) {
                 corto_throw("failed to setup project for '%s/c'", g_getName(g));
@@ -392,7 +398,7 @@ corto_int16 genmain(g_generator g) {
             g_fileWrite(rakefile, "],\n");
 
             g_fileWrite(rakefile, "        \"language\": \"c\",\n");
-            if (!strcmp(g_getAttribute(g, "c4cpp"), "true")) {
+            if (cpp) {
                 g_fileWrite(rakefile, "        \"c4cpp\": true,\n");
             }
             g_fileWrite(rakefile, "        \"managed\": false\n");
