@@ -240,25 +240,6 @@ static g_file c_apiSourceOpen(g_generator g) {
         g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
         corto_id path;
         corto_path(path, root_o, g_getCurrent(g), "/");
-
-        /* Add header files for dependent packages */
-        if (g->imports) {
-            corto_iter iter = corto_ll_iter(g->imports);
-            while (corto_iter_hasNext(&iter)) {
-                corto_object import = corto_iter_next(&iter);
-                corto_string str = corto_path(NULL, NULL, import, "/");
-                corto_string package = corto_locate(str, NULL, CORTO_LOCATION_FULLNAME);
-                if (!package) {
-                    corto_throw("project configuration contains unresolved package '%s'", str);
-                    goto error;
-                } else {
-                    corto_string name = corto_locate(str, NULL, CORTO_LOCATION_NAME);
-                    g_fileWrite(result, "#include <%s/%s.h>\n", package, name);
-                    corto_dealloc(name);
-                    corto_dealloc(package);
-                }
-            }
-        }
     } else {
         g_fileWrite(result, "#include <include/_api.h>\n");
         g_fileWrite(result, "#include <include/_load.h>\n", g_getName(g));
