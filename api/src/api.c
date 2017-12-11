@@ -376,27 +376,7 @@ corto_int16 genmain(g_generator g) {
             g_fileWrite(rakefile, "    \"id\": \"%s/c\",\n", g_getName(g));
             g_fileWrite(rakefile, "    \"type\": \"package\",\n");
             g_fileWrite(rakefile, "    \"value\": {\n");
-
-            g_fileWrite(rakefile, "        \"use\": [\"corto\"");
-            if (g->imports) {
-                corto_iter iter = corto_ll_iter(g->imports);
-                while (corto_iter_hasNext(&iter)) {
-                    corto_object import = corto_iter_next(&iter);
-                    corto_string str = corto_path(NULL, NULL, import, "/");
-
-                    /* Do not use /c packages in /c package */
-                    char *lastElem = strrchr(str, '/');
-                    if (lastElem) {
-                        if (!strcmp(lastElem, "/c")) {
-                            continue;
-                        }
-                    }
-
-                    g_fileWrite(rakefile, ", \"%s\"", str);
-                }
-            }
-            g_fileWrite(rakefile, "],\n");
-
+            g_fileWrite(rakefile, "        \"use\": [\"corto\"],\n");
             g_fileWrite(rakefile, "        \"language\": \"c\",\n");
             if (cpp) {
                 g_fileWrite(rakefile, "        \"c4cpp\": true,\n");
