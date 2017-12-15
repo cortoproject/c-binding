@@ -2,10 +2,25 @@
 #include <corto/corto.h>
 #include "driver/gen/c/common/common.h"
 
+static uint32_t c_projectCountPackagesToLoad(g_generator g) {
+    uint32_t result = 0;
+    if (g->imports && corto_ll_count(g->imports)) {
+        corto_iter iter = corto_ll_iter(g->imports);
+        while (corto_iter_hasNext(&iter)) {
+            corto_object o = corto_iter_next(&iter);
+            /* Filter out generated language packages */
+            if (strcmp(corto_idof(o), "c")) {
+                result ++;
+            }
+        }
+    }
+    return result;
+}
+
 /* Load dependencies */
 static void c_projectLoadPackages(g_generator g, g_file file) {
 
-    if (g->imports) {
+    if (g->imports && c_projectCountPackagesToLoad(g)) {
         corto_id id;
         if (g_getCurrent(g)) {
             corto_path(id, root_o, g_getCurrent(g), "_");
@@ -168,7 +183,6 @@ corto_int16 genmain(g_generator g) {
     /* Create source and include directories */
     corto_mkdir("include");
     corto_mkdir("src");
-    corto_mkdir(".corto");
 
     if (c_projectGenerateMainFile(g)) {
         if (!corto_lasterr()) {

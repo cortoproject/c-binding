@@ -704,7 +704,7 @@ static corto_int16 c_interfaceWriteMain(cdiff_file source, corto_string id, c_ty
     cdiff_file_headerBegin(source);
     if (cpp) {
         cdiff_file_write(source, "extern \"C\"\n");
-    }    
+    }
     cdiff_file_write(source, "int cortomain(int argc, char *argv[]) {", id);
     cdiff_file_headerEnd(source);
 
@@ -978,8 +978,6 @@ int genmain(g_generator g) {
     walkData.mainWritten = FALSE;
 
     if (!bootstrap) {
-        corto_mkdir(".corto");
-
         corto_object projectObject = NULL;
         corto_id headerFileName, projectName;
 
