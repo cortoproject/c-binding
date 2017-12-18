@@ -81,7 +81,7 @@ static int c_apiWalk(corto_object o, void* userData) {
             goto error;
         }
 
-        if (corto_type(o)->kind != CORTO_VOID) {
+        if (corto_type(o)->kind != CORTO_VOID || corto_type(o)->reference) {
             if (c_apiWalkNonVoid(corto_type(o), userData)) {
                 goto error;
             }
