@@ -59,9 +59,7 @@ static int c_interfaceParamTypeSource(corto_parameter *o, void *userData) {
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ", ");
     }
-    g_fileWrite(data->wrapper, "%s%s",
-        g_fullOid(data->g, o->type, type),
-        c_paramRequiresPtr(o) ? "*" : "");
+    g_fileWrite(data->wrapper, "%s", c_paramType(data->g, o, type));
     data->firstComma++;
     return 1;
 }
@@ -82,7 +80,7 @@ static int c_interfaceParamCastDef(corto_parameter *o, void *userData) {
 static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isReference, corto_inout inout) {
     if ((isReference || t->reference) &&
         (t->kind != CORTO_VOID) && (t->kind != CORTO_ANY) &&
-        (corto_checkAttr(t, CORTO_ATTR_NAMED)) &&
+        (corto_check_attr(t, CORTO_ATTR_NAMED)) &&
         (!inout))
     {
         return TRUE;
@@ -318,7 +316,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_fullpath(fullname, o);
         c_functionName(data->g, o, functionName);
 
-        defined = corto_checkState(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
+        defined = corto_check_state(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
 
         /* Check whether generation of stubs must be forced */
         if (doStubs) {

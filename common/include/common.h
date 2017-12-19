@@ -40,6 +40,9 @@ bool c_procedureHasThis(corto_function o);
 /* Translate parameter name to C (take into account special $ parameters) */
 char* c_paramName(char* name, char* buffer);
 
+/* Translate parameter type to C */
+char* c_paramType(g_generator g, corto_parameter *p, char* buffer);
+
 /* Does type require * when passed as parameter */
 bool c_paramRequiresPtr(corto_parameter *p);
 

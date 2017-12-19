@@ -437,20 +437,28 @@ static corto_int16 c_apiParamMember(corto_walk_opt* s, corto_value* v, void* use
         data = userData;
         corto_bool isOptional = m->modifiers & CORTO_OPTIONAL;
         corto_bool requiresPtr = isOptional;
+        corto_type type;
+        if (corto_typeof(m->type) != corto_type(corto_target_o)) {
+            type = m->type;
+        } else {
+            type = corto_target(m->type)->type;
+        }
+        bool isText = type->kind == CORTO_PRIMITIVE &&
+            corto_primitive(type)->kind == CORTO_TEXT;
 
         if (data->parameterCount) {
             g_fileWrite(data->header, ", ");
             g_fileWrite(data->source, ", ");
         }
 
-        /* Get type-specifier */
-        if (corto_typeof(m->type) != corto_type(corto_target_o)) {
-            c_specifierId(data->g, m->type, typeSpec, NULL, typePostfix);
-            requiresPtr |= c_typeRequiresPtr(m->type);
+        if (isText && !isOptional) {
+            strcpy(typeSpec, "const char *");
+            typePostfix[0] = '\0';
         } else {
-            c_specifierId(data->g, corto_target(m->type)->type, typeSpec, NULL, typePostfix);
-            requiresPtr |= c_typeRequiresPtr(corto_target(m->type)->type);
+            c_specifierId(data->g, type, typeSpec, NULL, typePostfix);
         }
+        requiresPtr |= c_typeRequiresPtr(type);
+
         corto_genMemberName(data->g, data->memberCache, m, memberIdTmp);
 
         if (data->args) {
@@ -917,8 +925,8 @@ corto_int16 c_apiTypeCreateIntern(
           ret, id, func, member ? "_" : "", member ? corto_idof(member) : "");
 
         if (scoped) {
-            g_fileWrite(data->header, "corto_object _parent, corto_string _id");
-            g_fileWrite(data->source, "corto_object _parent, corto_string _id");
+            g_fileWrite(data->header, "corto_object _parent, const char *_id");
+            g_fileWrite(data->source, "corto_object _parent, const char *_id");
             c_apiCastMacroAddArg(data->args, "_parent", corto_object_o, FALSE);
             c_apiCastMacroAddArg(data->args, "_id", corto_type(corto_string_o), FALSE);
             data->parameterCount = 2;
@@ -947,11 +955,11 @@ corto_int16 c_apiTypeCreateIntern(
         if (scoped) {
             g_fileWrite(
               data->source,
-              "_this = (%s)corto_declareChild(_parent, _id, %s_o);\n", ret, id);
+              "_this = (%s)corto_declare(_parent, _id, %s_o);\n", ret, id);
         } else {
             g_fileWrite(
               data->source,
-              "_this = (%s)corto_declare(%s_o);\n", ret, id);
+              "_this = (%s)corto_declare(NULL, NULL, %s_o);\n", ret, id);
         }
 
         g_fileWrite(data->source, "if (!_this) {\n");
@@ -961,7 +969,7 @@ corto_int16 c_apiTypeCreateIntern(
         g_fileWrite(data->source, "}\n");
 
         if (define) {
-            g_fileWrite(data->source, "if (!corto_checkState(_this, CORTO_VALID)) {\n");
+            g_fileWrite(data->source, "if (!corto_check_state(_this, CORTO_VALID)) {\n");
             g_fileIndent(data->source);
 
             /* Assignments */
@@ -1228,7 +1236,7 @@ corto_int16 c_apiDelegateInitCallback(
     } else {
         g_fileWrite(data->source, "d->super.instance = NULL;\n");
     }
-    g_fileWrite(data->source, "d->super.procedure = corto_declare(corto_function_o);\n");
+    g_fileWrite(data->source, "d->super.procedure = corto_declare(NULL, NULL, corto_function_o);\n");
     g_fileWrite(data->source, "d->super.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
     g_fileWrite(data->source, "corto_ptr_setref(&d->super.procedure->returnType, %s);\n", returnVarId);
     g_fileWrite(
@@ -1280,14 +1288,11 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     corto_int32 i;
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
-        g_fullOid(data->g, p->type, paramType);
+        c_paramType(data->g, p, paramType);
         g_id(data->g, p->name, paramName);
-        corto_bool ptr =
-            !p->type->reference &&
-            (p->passByReference || (p->type->kind == CORTO_COMPOSITE));
 
-        g_fileWrite(data->header, ", %s%s %s", paramType, ptr ? "*" : "", paramName);
-        g_fileWrite(data->source, ", %s%s %s", paramType, ptr ? "*" : "", paramName);
+        g_fileWrite(data->header, ", %s %s", paramType, paramName);
+        g_fileWrite(data->source, ", %s %s", paramType, paramName);
     }
 
     g_fileWrite(data->header, ");\n");
@@ -1320,7 +1325,6 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
-        g_fullOid(data->g, p->type, paramType);
         g_id(data->g, p->name, paramName);
         g_fileWrite(data->source, ", %s", paramName);
     }
