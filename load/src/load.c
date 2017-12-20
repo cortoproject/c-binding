@@ -346,9 +346,9 @@ static g_file c_loadSourceFileOpen(g_generator g) {
 
     corto_id header;
     g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
-    g_fileWrite(result, "#define DECLARE(parent, id, type) corto(parent, id, type, NULL, NULL, NULL, -1, CORTO_DO_DECLARE | CORTO_DO_FORCE_TYPE)\n");
-    g_fileWrite(result, "#define DEFINE(o) !corto(NULL, NULL, NULL, o, NULL, NULL, -1, CORTO_DO_DEFINE)\n");
-    g_fileWrite(result, "#define LOOKUP(parent, id) corto(parent, id, NULL, NULL, NULL, NULL, -1, 0)\n");
+    g_fileWrite(result, "#define DECLARE(p, i, t) corto(CORTO_DECLARE|CORTO_FORCE_TYPE, {.parent=p, .id=i, .type=t})\n");
+    g_fileWrite(result, "#define DEFINE(o) !corto(CORTO_DEFINE, {.object=o})\n");
+    g_fileWrite(result, "#define LOOKUP(p, i) corto(CORTO_LOOKUP, {.parent = p, .id = i})\n");
 
     return result;
 error:

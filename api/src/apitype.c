@@ -1304,9 +1304,9 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     g_fileWrite(data->source, "if (_delegate->super.instance) {\n");
     g_fileIndent(data->source);
     if (hasReturn) {
-        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, _result, _delegate->super.instance");
+        g_fileWrite(data->source, "corto_invoke(_delegate->super.procedure, _result, _delegate->super.instance");
     } else {
-        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, NULL, _delegate->super.instance");
+        g_fileWrite(data->source, "corto_invoke(_delegate->super.procedure, NULL, _delegate->super.instance");
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
@@ -1319,9 +1319,9 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     g_fileWrite(data->source, "} else {\n");
     g_fileIndent(data->source);
     if (hasReturn) {
-        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, _result");
+        g_fileWrite(data->source, "corto_invoke(_delegate->super.procedure, _result");
     } else {
-        g_fileWrite(data->source, "corto_call(_delegate->super.procedure, NULL");
+        g_fileWrite(data->source, "corto_invoke(_delegate->super.procedure, NULL");
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];

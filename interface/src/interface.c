@@ -270,9 +270,9 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileIndent(data->wrapper);
 
     if (returnsValue) {
-        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, _this");
+        g_fileWrite(data->wrapper, "corto_invoke(corto_function(_method), &_result, _this");
     } else {
-        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, _this");
+        g_fileWrite(data->wrapper, "corto_invoke(corto_function(_method), NULL, _this");
     }
     data->firstComma = 3;
     if (!c_paramWalk(o, c_interfaceParamNameSource, data)) {
@@ -414,7 +414,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
                 }
 
                 /* If function is already defined, it is already implemented. The generator will generate a stub instead. */
-                cdiff_file_write(data->source, "corto_call(corto_function(%s_o)", g_fullOid(data->g, o, id));
+                cdiff_file_write(data->source, "corto_invoke(corto_function(%s_o)", g_fullOid(data->g, o, id));
                 if (returnType) {
                     cdiff_file_write(data->source, ",&_result");
                 } else {
