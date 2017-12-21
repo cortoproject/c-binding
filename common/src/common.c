@@ -1022,7 +1022,7 @@ corto_int16 c_decl(
     if (corto_function(o)->overloaded) {
         strcpy(signatureName, fullname + 1); /* Skip scope */
     } else {
-        corto_signatureName(fullname + 1, signatureName);
+        corto_sig_name(fullname + 1, signatureName);
     }
 
     /* Start of function */

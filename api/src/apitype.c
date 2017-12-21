@@ -340,11 +340,11 @@ static corto_int16 c_apiAssign(
             lvalue, rvalue);
     } else {
         if (t->reference) {
-            g_fileWrite(data->source, "corto_ptr_setref(%s%s, %s);\n",
+            g_fileWrite(data->source, "corto_set_ref(%s%s, %s);\n",
                     ptr ? "" : "&", lvalue, rvalue);
         } else if (t->kind == CORTO_PRIMITIVE) {
             if (corto_primitive(t)->kind == CORTO_TEXT) {
-                g_fileWrite(data->source, "corto_ptr_setstr(%s%s, %s);\n",
+                g_fileWrite(data->source, "corto_set_str(%s%s, %s);\n",
                     ptr ? "" : "&", lvalue, rvalue);
             } else {
                 g_fileWrite(data->source, "%s%s = %s;\n",
@@ -664,7 +664,7 @@ corto_int16 c_apiTypeInitArgs(corto_type t, corto_member m, c_apiWalk_t *data) {
 /* Assign void reference */
 corto_int16 c_apiTypeAssignVoid(corto_type t, corto_string _this, c_apiWalk_t *data) {
     CORTO_UNUSED(t);
-    g_fileWrite(data->source, "corto_ptr_setref(%s, value);\n", _this);
+    g_fileWrite(data->source, "corto_set_ref(%s, value);\n", _this);
     return 0;
 }
 
@@ -1238,7 +1238,7 @@ corto_int16 c_apiDelegateInitCallback(
     }
     g_fileWrite(data->source, "d->super.procedure = corto_declare(NULL, NULL, corto_function_o);\n");
     g_fileWrite(data->source, "d->super.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
-    g_fileWrite(data->source, "corto_ptr_setref(&d->super.procedure->returnType, %s);\n", returnVarId);
+    g_fileWrite(data->source, "corto_set_ref(&d->super.procedure->returnType, %s);\n", returnVarId);
     g_fileWrite(
         data->source, "corto_function_parseParamString(d->super.procedure, \"(");
 

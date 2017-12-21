@@ -729,7 +729,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
     corto_bool isTopLevelObject;
     corto_bool isBootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
 
-    hasProcedures = !corto_scopeWalk(o, c_interfaceCheckProcedures, NULL);
+    hasProcedures = !corto_scope_walk(o, c_interfaceCheckProcedures, NULL);
     isTopLevelObject = (o == g_getCurrent(data->g)) && corto_instanceof(corto_package_o, o);
 
     /* An interface implementation file is generated when the object is
@@ -753,14 +753,14 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         }
 
         /* Walk scope */
-        corto_objectseq procs = corto_scopeClaim(o);
+        corto_objectseq procs = corto_scope_claim(o);
         corto_int32 i;
         for (i = 0; i < procs.length; i ++) {
             if (!c_interfaceClassProcedure(procs.buffer[i], data)) {
                 break;
             }
         }
-        corto_scopeRelease(procs);
+        corto_scope_release(procs);
         if (i != procs.length) {
             goto error;
         }
@@ -801,14 +801,14 @@ static int c_interfaceWalk(corto_object o, void *userData) {
     }
 
     /* Walk scope of object */
-    corto_objectseq scope = corto_scopeClaim(o);
+    corto_objectseq scope = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < scope.length; i++) {
         if (!c_interfaceWalk(scope.buffer[i], data)) {
             break;
         }
     }
-    corto_scopeRelease(scope);
+    corto_scope_release(scope);
     if (i != scope.length) {
         goto error;
     }

@@ -484,7 +484,7 @@ static corto_int16 c_initPrimitive(corto_walk_opt* s, corto_value* v, void* user
 
         /* Capitalize NAN */
         if ((corto_primitive(t)->kind == CORTO_FLOAT) && !strcmp(str, "nan")) {
-            corto_ptr_setstr(&str, "NAN");
+            corto_set_str(&str, "NAN");
         }
     }
 

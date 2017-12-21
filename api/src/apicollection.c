@@ -18,12 +18,10 @@ static corto_int16 c_apiElementInit(corto_type elementType, corto_string element
 
     g_fileWrite(data->source, "{\n");
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "corto_value v;\n");
-    g_fileWrite(data->source, "v = corto_value_value(%s, corto_type(%s));\n", element, varId);
     if (isInit) {
-        g_fileWrite(data->source, "corto_value_init(&v);\n");
+        g_fileWrite(data->source, "corto_ptr_init(%s, corto_typeof(%s));\n", element, varId);
     } else {
-        g_fileWrite(data->source, "corto_value_deinit(&v);\n");
+        g_fileWrite(data->source, "corto_ptr_deinit(%s, corto_typeof(%s));\n", element, varId);
     }
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");
@@ -93,7 +91,7 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
         }
     }
     if (elementType->reference) {
-        g_fileWrite(data->source, "corto_ptr_setref(&seq->buffer[seq->length-1], element);\n");
+        g_fileWrite(data->source, "corto_set_ref(&seq->buffer[seq->length-1], element);\n");
     } else {
         g_fileWrite(data->source, "corto_ptr_copy(&seq->buffer[seq->length-1], %s, &element);\n", varId);
     }
