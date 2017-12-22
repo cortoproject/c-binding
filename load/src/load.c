@@ -20,7 +20,7 @@ typedef struct c_typeWalk_t {
 
 /* Resolve object */
 static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* src, c_typeWalk_t *data) {
-    if ((g_mustParse(data->g, o) || (corto_isbuiltin(o) && corto_instanceof(corto_type_o, o))) && corto_checkAttr(o, CORTO_ATTR_NAMED)) {
+    if ((g_mustParse(data->g, o) || (corto_isbuiltin(o) && corto_instanceof(corto_type_o, o))) && corto_check_attr(o, CORTO_ATTR_NAMED)) {
         corto_id varId;
         c_varId(data->g, o, varId);
         if (corto_isbuiltin(o)) {
@@ -28,7 +28,7 @@ static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* sr
         } else {
             sprintf(out, "(corto_claim(%s), %s)", varId, varId);
         }
-    } else if (corto_checkAttr(o, CORTO_ATTR_NAMED) && corto_childof(root_o, o)) {
+    } else if (corto_check_attr(o, CORTO_ATTR_NAMED) && corto_childof(root_o, o)) {
         corto_id id;
         char *escaped;
         corto_fullpath(id, o);
@@ -245,11 +245,11 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
         return 1;
     }
 
-    if (!corto_checkAttr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
+    if (!corto_check_attr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
         return 1;
     }
 
-    if (corto_checkAttr(o, CORTO_ATTR_NAMED)) {
+    if (corto_check_attr(o, CORTO_ATTR_NAMED)) {
         parent = corto_parentof(o);
         if (parent && (parent != root_o) && (!g_mustParse(data->g, parent))) {
             c_loadDeclareWalk(corto_parentof(o), userData);
@@ -346,9 +346,9 @@ static g_file c_loadSourceFileOpen(g_generator g) {
 
     corto_id header;
     g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
-    g_fileWrite(result, "#define DECLARE(parent, id, type) corto(parent, id, type, NULL, NULL, NULL, -1, CORTO_DO_DECLARE | CORTO_DO_FORCE_TYPE)\n");
-    g_fileWrite(result, "#define DEFINE(o) !corto(NULL, NULL, NULL, o, NULL, NULL, -1, CORTO_DO_DEFINE)\n");
-    g_fileWrite(result, "#define LOOKUP(parent, id) corto(parent, id, NULL, NULL, NULL, NULL, -1, 0)\n");
+    g_fileWrite(result, "#define DECLARE(p, i, t) corto(CORTO_DECLARE|CORTO_FORCE_TYPE, {.parent=p, .id=i, .type=t})\n");
+    g_fileWrite(result, "#define DEFINE(o) !corto(CORTO_DEFINE, {.object=o})\n");
+    g_fileWrite(result, "#define LOOKUP(p, i) corto(CORTO_LOOKUP, {.parent = p, .id = i})\n");
 
     return result;
 error:
@@ -370,7 +370,7 @@ static void c_sourceWriteLoadStart(g_generator g, g_file file) {
     g_fileWrite(file, "corto_object _e_; /* Used for resolving extern objects */\n");
     g_fileWrite(file, "(void)_e_;\n");
     g_fileWrite(file, "_a_ = NULL;\n\n");
-    g_fileWrite(file, "corto_attr prevAttr = corto_getAttr();\n\n");
+    g_fileWrite(file, "corto_attr prevAttr = corto_get_attr();\n\n");
 }
 
 /* Write end of load-routine */
@@ -390,7 +390,7 @@ static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
         g_fileWrite(file, "corto_release(_a_);\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n\n");
-        g_fileWrite(file, "corto_setAttr(prevAttr);\n");
+        g_fileWrite(file, "corto_set_attr(prevAttr);\n");
         g_fileWrite(file, "return -1;\n");
     }
     g_fileDedent(file);
@@ -484,7 +484,7 @@ static corto_int16 c_initPrimitive(corto_walk_opt* s, corto_value* v, void* user
 
         /* Capitalize NAN */
         if ((corto_primitive(t)->kind == CORTO_FLOAT) && !strcmp(str, "nan")) {
-            corto_ptr_setstr(&str, "NAN");
+            corto_set_str(&str, "NAN");
         }
     }
 
@@ -728,7 +728,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
 
     data = userData;
 
-    if (!corto_checkAttr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
+    if (!corto_check_attr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
         return 1;
     }
 
@@ -736,11 +736,11 @@ static int c_loadDeclare(corto_object o, void* userData) {
     c_typeId(data->g, corto_typeof(o), typeCast);
 
     if (o == g_getCurrent(data->g) && corto_instanceof(corto_package_o, o)) {
-         g_fileWrite(data->source, "prevAttr = corto_setAttr(CORTO_ATTR_PERSISTENT);\n");
+         g_fileWrite(data->source, "prevAttr = corto_set_attr(CORTO_ATTR_PERSISTENT);\n");
     }
 
-    if (!corto_checkAttr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o)) {
-        g_fileWrite(data->source, "%s = %s(corto_declare(", varId, typeCast);
+    if (!corto_check_attr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o)) {
+        g_fileWrite(data->source, "%s = %s(corto_declare(NULL, NULL, ", varId, typeCast);
     } else {
         if (!g_mustParse(data->g, o)) {
             return 1;
@@ -771,7 +771,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
     }
 
     /* Declaration */
-    if (!corto_checkAttr(corto_typeof(o), CORTO_ATTR_NAMED)) {
+    if (!corto_check_attr(corto_typeof(o), CORTO_ATTR_NAMED)) {
         g_fileWrite(data->source, "(_a_ ? corto_release(_a_) : 0, _a_ = %s)));\n",
             c_varId(data->g, corto_typeof(o), typeId));
     } else {
@@ -779,7 +779,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
             c_varId(data->g, corto_typeof(o), typeId));
     }
 
-    if (corto_checkAttr(o, CORTO_ATTR_NAMED) && corto_parentof(o) && !g_mustParse(data->g, corto_parentof(o))) {
+    if (corto_check_attr(o, CORTO_ATTR_NAMED) && corto_parentof(o) && !g_mustParse(data->g, corto_parentof(o))) {
         g_fileWrite(data->source, "corto_release(_e_);\n");
     }
 
@@ -796,7 +796,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
     g_fileWrite(data->source, "}\n");
 
     if (o == g_getCurrent(data->g) && corto_instanceof(corto_package_o, o)) {
-        g_fileWrite(data->source, "corto_setAttr(prevAttr);\n");
+        g_fileWrite(data->source, "corto_set_attr(prevAttr);\n");
     }
 
     g_fileWrite(data->source, "\n");
@@ -834,7 +834,7 @@ static int c_loadDefine(corto_object o, void* userData) {
         return 1;
     }
 
-    if (!corto_checkAttr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
+    if (!corto_check_attr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
         return 1;
     }
 
@@ -843,7 +843,7 @@ static int c_loadDefine(corto_object o, void* userData) {
 
     c_varId(data->g, o, varId);
 
-    g_fileWrite(data->source, "if (!corto_checkState(%s, CORTO_VALID)) {\n", varId);
+    g_fileWrite(data->source, "if (!corto_check_state(%s, CORTO_VALID)) {\n", varId);
     g_fileIndent(data->source);
 
     /* Serialize object if object is not a primitive */

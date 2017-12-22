@@ -59,9 +59,7 @@ static int c_interfaceParamTypeSource(corto_parameter *o, void *userData) {
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ", ");
     }
-    g_fileWrite(data->wrapper, "%s%s",
-        g_fullOid(data->g, o->type, type),
-        c_paramRequiresPtr(o) ? "*" : "");
+    g_fileWrite(data->wrapper, "%s", c_paramType(data->g, o, type));
     data->firstComma++;
     return 1;
 }
@@ -82,7 +80,7 @@ static int c_interfaceParamCastDef(corto_parameter *o, void *userData) {
 static corto_bool c_interfaceParamRequiresCast(corto_type t, corto_bool isReference, corto_inout inout) {
     if ((isReference || t->reference) &&
         (t->kind != CORTO_VOID) && (t->kind != CORTO_ANY) &&
-        (corto_checkAttr(t, CORTO_ATTR_NAMED)) &&
+        (corto_check_attr(t, CORTO_ATTR_NAMED)) &&
         (!inout))
     {
         return TRUE;
@@ -272,9 +270,9 @@ static int c_interfaceGenerateVirtual(corto_method o, c_typeWalk_t* data) {
     g_fileIndent(data->wrapper);
 
     if (returnsValue) {
-        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), &_result, _this");
+        g_fileWrite(data->wrapper, "corto_invoke(corto_function(_method), &_result, _this");
     } else {
-        g_fileWrite(data->wrapper, "corto_call(corto_function(_method), NULL, _this");
+        g_fileWrite(data->wrapper, "corto_invoke(corto_function(_method), NULL, _this");
     }
     data->firstComma = 3;
     if (!c_paramWalk(o, c_interfaceParamNameSource, data)) {
@@ -318,7 +316,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
         corto_fullpath(fullname, o);
         c_functionName(data->g, o, functionName);
 
-        defined = corto_checkState(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
+        defined = corto_check_state(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
 
         /* Check whether generation of stubs must be forced */
         if (doStubs) {
@@ -416,7 +414,7 @@ static int c_interfaceClassProcedure(corto_object o, void *userData) {
                 }
 
                 /* If function is already defined, it is already implemented. The generator will generate a stub instead. */
-                cdiff_file_write(data->source, "corto_call(corto_function(%s_o)", g_fullOid(data->g, o, id));
+                cdiff_file_write(data->source, "corto_invoke(corto_function(%s_o)", g_fullOid(data->g, o, id));
                 if (returnType) {
                     cdiff_file_write(data->source, ",&_result");
                 } else {
@@ -731,7 +729,7 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
     corto_bool isTopLevelObject;
     corto_bool isBootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
 
-    hasProcedures = !corto_scopeWalk(o, c_interfaceCheckProcedures, NULL);
+    hasProcedures = !corto_scope_walk(o, c_interfaceCheckProcedures, NULL);
     isTopLevelObject = (o == g_getCurrent(data->g)) && corto_instanceof(corto_package_o, o);
 
     /* An interface implementation file is generated when the object is
@@ -755,14 +753,14 @@ static corto_int16 c_interfaceObject(corto_object o, c_typeWalk_t* data) {
         }
 
         /* Walk scope */
-        corto_objectseq procs = corto_scopeClaim(o);
+        corto_objectseq procs = corto_scope_claim(o);
         corto_int32 i;
         for (i = 0; i < procs.length; i ++) {
             if (!c_interfaceClassProcedure(procs.buffer[i], data)) {
                 break;
             }
         }
-        corto_scopeRelease(procs);
+        corto_scope_release(procs);
         if (i != procs.length) {
             goto error;
         }
@@ -803,14 +801,14 @@ static int c_interfaceWalk(corto_object o, void *userData) {
     }
 
     /* Walk scope of object */
-    corto_objectseq scope = corto_scopeClaim(o);
+    corto_objectseq scope = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < scope.length; i++) {
         if (!c_interfaceWalk(scope.buffer[i], data)) {
             break;
         }
     }
-    corto_scopeRelease(scope);
+    corto_scope_release(scope);
     if (i != scope.length) {
         goto error;
     }

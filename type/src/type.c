@@ -369,7 +369,7 @@ static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userD
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
 
-    if (corto_checkAttr(t, CORTO_ATTR_NAMED)) {
+    if (corto_check_attr(t, CORTO_ATTR_NAMED)) {
         g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
             id, id3, id);
     } else {
@@ -519,7 +519,7 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
     g_fileWrite(data->header, "\n");
 
     if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
-        if (corto_checkAttr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
+        if (corto_check_attr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
             corto_id id, localId, postfix, buildingMacro;
             c_buildingMacro(data->g, buildingMacro);
             g_localOid(data->g, t, localId);
@@ -569,7 +569,7 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
 
         if (corto_type(o)->kind != CORTO_VOID) {
             g_fileWrite(data->header,
-                "#define %s(o) ((%s)corto_assertType((corto_type)%s, o))\n",
+                "#define %s(o) ((%s)corto_assert_type((corto_type)%s, o))\n",
                 id, ptr, varId);
         } else {
             g_fileWrite(data->header,

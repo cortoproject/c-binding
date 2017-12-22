@@ -94,7 +94,7 @@ static int c_typeKeywordEscape(corto_string inputName, corto_string buffer) {
         !strcmp(inputName, "volatile") ||
         !strcmp(inputName, "wchar_t") ||
         !strcmp(inputName, "xor") ||
-        !strcmp(inputName, "while")) 
+        !strcmp(inputName, "while"))
     {
         memmove(buffer + 1, inputName, strlen(inputName) + 1);
         *buffer = '_';
@@ -355,11 +355,11 @@ corto_int16 c_specifierId(
     }
 
     /* Check if object is scoped */
-    if (corto_checkAttr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
+    if (corto_check_attr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
         if (t->kind == CORTO_PRIMITIVE &&
             corto_primitive(t)->kind != CORTO_ENUM &&
             corto_primitive(t)->kind != CORTO_BITMASK &&
-            corto_primitive(t)->kind != CORTO_TEXT) 
+            corto_primitive(t)->kind != CORTO_TEXT)
         {
             if (!c_primitiveId(g, corto_primitive(t), specifier)) {
                 goto error;
@@ -376,7 +376,7 @@ corto_int16 c_specifierId(
             corto_type elementType = corto_collection(t)->elementType;
 
             /* Get specifier of elementType */
-            if (elementType->kind == CORTO_PRIMITIVE && corto_checkAttr(elementType, CORTO_ATTR_NAMED)) {
+            if (elementType->kind == CORTO_PRIMITIVE && corto_check_attr(elementType, CORTO_ATTR_NAMED)) {
                 g_fullOid(g, elementType, _specifier);
             } else if (c_specifierId(g, elementType, _specifier, NULL, _postfix)) {
                 goto error;
@@ -433,7 +433,7 @@ error:
 corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier) {
     corto_id postfix;
 
-    if (!corto_checkAttr(t, CORTO_ATTR_NAMED)) {
+    if (!corto_check_attr(t, CORTO_ATTR_NAMED)) {
         c_specifierId(g, t, specifier, NULL, postfix);
     } else {
         g_fullOid(g, t, specifier);
@@ -468,6 +468,29 @@ corto_string c_paramName(corto_string name, corto_string buffer) {
         corto_id id;
         corto_genId(name, id);
         strcpy(buffer, id);
+    }
+    return buffer;
+}
+
+/* Translate parameter type to C */
+char* c_paramType(g_generator g, corto_parameter *p, char* buffer) {
+    if (p->type->kind == CORTO_PRIMITIVE &&
+        corto_primitive(p->type)->kind == CORTO_TEXT)
+    {
+        if (p->inout == CORTO_IN) {
+            strcpy(buffer, "const char *");
+        } else {
+            strcpy(buffer, "char *");
+        }
+    }
+    else
+    {
+        corto_id type, postfix;
+        c_specifierId(g, p->type, type, NULL, postfix);
+        strcpy(buffer, type);
+        if (c_paramRequiresPtr(p)) {
+            strcat(buffer, " *");
+        }
     }
     return buffer;
 }
@@ -565,7 +588,7 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
     }
     strupper(buff);
     strcpy(ptr, buff);
-    return buffer; 
+    return buffer;
 }
 
 void c_writeExport(g_generator g, g_file file) {
@@ -594,7 +617,7 @@ corto_object c_findPackage(g_generator g, corto_object o) {
         }
     }
 
-    /* If package is in scope of current package and not an import, use 
+    /* If package is in scope of current package and not an import, use
      * current package */
     if (g_getCurrent(g)) {
         ptr = NULL;
@@ -715,7 +738,7 @@ void c_includeFrom(
         include,
         args);
     va_end(args);
-    
+
     char *str = corto_buffer_str(&buffer);
     g_fileWrite(file, str);
     free(str);
@@ -770,7 +793,7 @@ static corto_equalityKind c_compareCollections(corto_collection c1, corto_collec
 }
 
 static int c_checkDuplicates(void* o, void* userData) {
-    if (corto_checkAttr(o, CORTO_ATTR_NAMED)) {
+    if (corto_check_attr(o, CORTO_ATTR_NAMED)) {
         return 1;
     } else {
         if (corto_instanceof(corto_collection_o, o) && corto_instanceof(corto_collection_o, userData)) {
@@ -831,7 +854,7 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
             corto_path(out, root_o, o, "_");
         } else {
             corto_id postfix;
-            if (corto_instanceof(corto_type_o, o) && (!corto_checkAttr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
+            if (corto_instanceof(corto_type_o, o) && (!corto_check_attr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
                 c_specifierId(g, o, out, NULL, postfix);
             } else {
                 g_fullOid(g, o, out);
@@ -854,7 +877,7 @@ corto_char* c_varLocalId(g_generator g, corto_object o, corto_char* out) {
             corto_path(out, root_o, o, "_");
         } else {
             corto_id postfix;
-            if (corto_instanceof(corto_type_o, o) && (!corto_checkAttr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
+            if (corto_instanceof(corto_type_o, o) && (!corto_check_attr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
                 c_specifierId(g, o, out, NULL, postfix);
             } else {
                 g_localOid(g, o, out);
@@ -881,7 +904,7 @@ char* c_functionLocalName(g_generator g, corto_function o, corto_id id) {
     if (o->overridable) {
         strcat(id, "_v");
     }
-    return id;  
+    return id;
 }
 
 typedef struct c_paramWalk_t {
@@ -893,7 +916,7 @@ typedef struct c_paramWalk_t {
 /* Generate parameters for method */
 static int c_param(corto_parameter *o, void *userData) {
     c_paramWalk_t* data;
-    corto_id specifier, postfix, name;
+    corto_id type, name;
 
     data = userData;
 
@@ -904,24 +927,19 @@ static int c_param(corto_parameter *o, void *userData) {
         corto_buffer_appendstr(data->buffer, "\n    ");
     }
 
-    if (c_specifierId(data->g, o->type, specifier, NULL, postfix)) {
-        goto error;
-    }
+    c_paramType(data->g, o, type);
 
-    corto_buffer_append(data->buffer, "%s ", specifier);
-
-    if (c_paramRequiresPtr(o)) {
-        corto_buffer_appendstrn(data->buffer, "*", 1);
+    corto_buffer_append(data->buffer, "%s", type);
+    if (type[strlen(type) - 1] != '*') {
+        corto_buffer_appendstr(data->buffer, " ");
     }
 
     /* Write to source */
-    corto_buffer_append(data->buffer, "%s%s", c_paramName(o->name, name), postfix);
+    corto_buffer_append(data->buffer, "%s", c_paramName(o->name, name));
 
     data->firstComma++;
 
     return 1;
-error:
-    return 0;
 }
 
 /* Add this to parameter-list */
@@ -1004,7 +1022,7 @@ corto_int16 c_decl(
     if (corto_function(o)->overloaded) {
         strcpy(signatureName, fullname + 1); /* Skip scope */
     } else {
-        corto_signatureName(fullname + 1, signatureName);
+        corto_sig_name(fullname + 1, signatureName);
     }
 
     /* Start of function */
