@@ -19,9 +19,9 @@ static corto_int16 c_apiElementInit(corto_type elementType, corto_string element
     g_fileWrite(data->source, "{\n");
     g_fileIndent(data->source);
     if (isInit) {
-        g_fileWrite(data->source, "corto_ptr_init(%s, corto_typeof(%s));\n", element, varId);
+        g_fileWrite(data->source, "corto_ptr_init(%s, %s);\n", element, varId);
     } else {
-        g_fileWrite(data->source, "corto_ptr_deinit(%s, corto_typeof(%s));\n", element, varId);
+        g_fileWrite(data->source, "corto_ptr_deinit(%s, %s);\n", element, varId);
     }
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n");
