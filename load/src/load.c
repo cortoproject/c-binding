@@ -345,10 +345,34 @@ static g_file c_loadSourceFileOpen(g_generator g) {
     g_fileWrite(result, " */\n\n");
 
     corto_id header;
-    g_fileWrite(result, "#include <%s>\n", c_mainheader(g, header));
-    g_fileWrite(result, "#define DECLARE(p, i, t) corto(CORTO_DECLARE|CORTO_FORCE_TYPE, {.parent=p, .id=i, .type=t})\n");
-    g_fileWrite(result, "#define DEFINE(o) !corto(CORTO_DEFINE, {.object=o})\n");
-    g_fileWrite(result, "#define LOOKUP(p, i) corto(CORTO_LOOKUP, {.parent = p, .id = i})\n");
+    g_fileWrite(result, "#include <%s>\n\n", c_mainheader(g, header));
+
+    g_fileWrite(result, "static\ncorto_object DECLARE(corto_object parent, const char *id, corto_object type)\n");
+    g_fileWrite(result, "{\n");
+    g_fileIndent(result);
+    g_fileWrite(result, "struct corto_action action = {};\n");
+    g_fileWrite(result, "action.parent = parent; action.id = id; action.type = type;\n");
+    g_fileWrite(result, "return corto(CORTO_DECLARE|CORTO_FORCE_TYPE, action);\n");
+    g_fileDedent(result);
+    g_fileWrite(result, "}\n\n");
+
+    g_fileWrite(result, "static\nint16_t DEFINE(corto_object object)\n");
+    g_fileWrite(result, "{\n");
+    g_fileIndent(result);
+    g_fileWrite(result, "struct corto_action action = {};\n");
+    g_fileWrite(result, "action.object = object;\n");
+    g_fileWrite(result, "return corto(CORTO_DEFINE, action) == NULL;\n");
+    g_fileDedent(result);
+    g_fileWrite(result, "}\n\n");
+
+    g_fileWrite(result, "static\ncorto_object LOOKUP(corto_object parent, const char *id)\n");
+    g_fileWrite(result, "{\n");
+    g_fileIndent(result);
+    g_fileWrite(result, "struct corto_action action = {};\n");
+    g_fileWrite(result, "action.parent = parent; action.id = id;\n");
+    g_fileWrite(result, "return corto(CORTO_LOOKUP, action);\n");
+    g_fileDedent(result);
+    g_fileWrite(result, "}\n");
 
     return result;
 error:
@@ -369,6 +393,10 @@ static void c_sourceWriteLoadStart(g_generator g, g_file file) {
     g_fileWrite(file, "corto_object _a_; /* Used for resolving anonymous objects */\n");
     g_fileWrite(file, "corto_object _e_; /* Used for resolving extern objects */\n");
     g_fileWrite(file, "(void)_e_;\n");
+    g_fileWrite(file, "(void)DECLARE;\n");
+    g_fileWrite(file, "(void)DEFINE;\n");
+    g_fileWrite(file, "(void)LOOKUP;\n");
+
     g_fileWrite(file, "_a_ = NULL;\n\n");
     g_fileWrite(file, "corto_attr prevAttr = corto_get_attr();\n\n");
 }
@@ -948,7 +976,6 @@ int genmain(g_generator g) {
     }
 
     g_fileWrite(walkData.source, "\n");
-
 
     /* Write comment indicating definitions in sourcefile */
     c_sourceWriteVarDefStart(walkData.source);
