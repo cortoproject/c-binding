@@ -168,7 +168,7 @@ static corto_int16 c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) 
 
     g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, t));
     c_typeId(data->g, t, id);
-    g_fileWrite(data->header, 
+    g_fileWrite(data->header,
         "typedef struct %s {corto_type type; void *value; uint8_t owner;} %s;\n", id, id);
 
     return 0;
@@ -519,7 +519,9 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
     g_fileWrite(data->header, "\n");
 
     if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
-        if (corto_check_attr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
+        if (corto_check_attr(t, CORTO_ATTR_NAMED)
+         && corto_childof(root_o, t))
+        {
             corto_id id, localId, postfix, buildingMacro;
             c_buildingMacro(data->g, buildingMacro);
             g_localOid(data->g, t, localId);
@@ -775,7 +777,7 @@ corto_int16 genmain(g_generator g) {
     g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
     if (corto_genTypeDepWalk(g, NULL, c_typeNativeTypedefWalk, &walkData)) {
         goto error;
-    }    
+    }
     g_fileWrite(walkData.header, "#endif\n");
 
     g_fileWrite(walkData.header, "\n");

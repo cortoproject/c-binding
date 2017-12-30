@@ -98,19 +98,24 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
         "corto_start(\"%s\"); /* Pass application name for logging framework */\n",
         g_getName(g));
     c_projectLoadPackages(g, file);
+    g_fileWrite(file, "int ret = 0;\n");
     if (g_getCurrent(g)) {
         corto_id id;
         corto_path(id, root_o, g_getCurrent(g), "_");
         g_fileWrite(file, "corto_log_push(\"load-model:%s\");\n", id);
-        g_fileWrite(file, "if (%s_load()) { corto_log_pop(); return -1;}\n", id);
+        g_fileWrite(file, "ret = %s_load();\n", id);
         g_fileWrite(file, "corto_log_pop();\n");
     }
     if (app) {
+        g_fileWrite(file, "if (!ret) {\n");
+        g_fileIndent(file);
         g_fileWrite(file, "int cortomain(int argc, char *argv[]);\n");
-        g_fileWrite(file, "if (cortomain(argc, argv)) return -1;\n");
+        g_fileWrite(file, "ret = cortomain(argc, argv);\n");
+        g_fileDedent(file);
+        g_fileWrite(file, "}\n");
         g_fileWrite(file, "corto_stop();\n");
     }
-    g_fileWrite(file, "return 0;\n");
+    g_fileWrite(file, "return ret;\n");
     g_fileDedent(file);
     g_fileWrite(file, "}\n\n");
 
