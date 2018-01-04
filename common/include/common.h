@@ -58,7 +58,8 @@ char* c_typeval(g_generator g, corto_type t, corto_id id);
 /* Return string with typename[*] when type is used as returntype */
 typedef enum c_refKind {
     C_ByValue,
-    C_ByReference
+    C_ByReference,
+    C_Cast
 } c_refKind;
 char* c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id);
 

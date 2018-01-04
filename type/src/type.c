@@ -557,7 +557,7 @@ corto_walk_opt c_typeSerializer(void) {
     return s;
 }
 
-/* Print class-cast macro's */
+/* Print cast macro's */
 static int c_typeClassCastWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
     corto_id id, varId, ptr;
@@ -578,6 +578,22 @@ static int c_typeClassCastWalk(corto_object o, void* userData) {
                 "#define %s(o) ((%s)o)\n",
                 id, ptr);
         }
+    }
+
+    return 0;
+}
+
+/* Print typedefs */
+static int c_typeClassTypedefWalk(corto_object o, void* userData) {
+    c_typeWalk_t* data;
+
+    data = userData;
+
+    if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
+        corto_id id;
+        c_typeId(data->g, o, id);
+
+        g_fileWrite(data->header, "typedef %s _type_%s;\n", id, id);
     }
 
     return 0;
@@ -648,7 +664,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
     /* Don't include this file when generating for the bootstrap */
     if (bootstrap) {
         if (g_getCurrent(g) == corto_lang_o) {
-            c_includeFrom(g, result, corto_o, "base.h");
+            c_includeFrom(g, result, corto_o, "platform.h");
         } else {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
@@ -759,34 +775,45 @@ corto_int16 genmain(g_generator g) {
     g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
     g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
-    /* Walk classes, print cast-macro's if not generating for cpp */
-    if (strcmp(g_getAttribute(g, "lang"), "cpp")) {
-        g_fileWrite(walkData.header, "\n");
-        g_fileWrite(walkData.header, "/* Casting macro's */\n");
-        if (corto_genTypeDepWalk(g, NULL, c_typeClassCastWalk, &walkData)) {
-            goto error;
-        }
-    }
-
     /* Define native types as void* if _type.h is used by itself */
     corto_id path;
     corto_path(path, root_o, g_getCurrent(g), "_");
     strupper(path);
     g_fileWrite(walkData.header, "\n");
-    g_fileWrite(walkData.header, "/* Native types */\n");
+    g_fileWrite(walkData.header, "/* -- Native types -- */\n");
     g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
     if (corto_genTypeDepWalk(g, NULL, c_typeNativeTypedefWalk, &walkData)) {
         goto error;
     }
     g_fileWrite(walkData.header, "#endif\n");
 
-    g_fileWrite(walkData.header, "\n");
-    g_fileWrite(walkData.header, "/* Type definitions */\n");
+    g_fileWrite(walkData.header, "\n\n");
+    g_fileWrite(walkData.header, "/* -- Type definitions -- */\n\n");
 
     /* Walk objects */
     if (corto_genTypeDepWalk(g, c_typeDeclare, c_typeDefine, &walkData)) {
         goto error;
     }
+
+    /* Walk classes, print cast-macro's if not generating for cpp */
+    if (strcmp(g_getAttribute(g, "lang"), "cpp")) {
+        g_fileWrite(walkData.header, "\n");
+        g_fileWrite(walkData.header, "/* -- Casting macro's -- */\n");
+        if (corto_genTypeDepWalk(g, NULL, c_typeClassCastWalk, &walkData)) {
+            goto error;
+        }
+    }
+
+    /* Walk classes, typedefs that will never expand to casting-macro's */
+    if (strcmp(g_getAttribute(g, "lang"), "cpp")) {
+        g_fileWrite(walkData.header, "\n");
+        g_fileWrite(walkData.header, "/* -- Non-expanding typedefs -- */\n");
+        if (corto_genTypeDepWalk(g, NULL, c_typeClassTypedefWalk, &walkData)) {
+            goto error;
+        }
+    }
+
+    g_fileWrite(walkData.header, "\n");
 
     /* Close headerfile */
     c_typeHeaderFileClose(walkData.header);

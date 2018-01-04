@@ -527,7 +527,20 @@ corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id) 
         strcat(id, "*");
     } else {
         corto_id postfix;
-        c_specifierId(g, t, id, NULL, postfix);
+        if (ref != C_Cast) {
+            c_specifierId(g, t, id, NULL, postfix);
+        } else {
+            corto_id fullId;
+            if (t->kind == CORTO_PRIMITIVE) {
+                g_fullOid(g, t, fullId);
+            } else if (t->kind == CORTO_VOID && !t->reference) {
+                strcpy(fullId, "corto_void");
+            } else {
+                c_specifierId(g, t, fullId, NULL, postfix);
+            }
+            strcpy(id, "_type_");
+            strcat(id, fullId);
+        }
         if (!t->reference && (ref == C_ByReference))
         {
             strcat(id, "*");
