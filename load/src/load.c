@@ -408,6 +408,7 @@ static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
     g_fileWrite(file, "corto_release(_a_);\n");
     g_fileDedent(file);
     g_fileWrite(file, "}\n\n");
+    g_fileWrite(file, "corto_set_attr(prevAttr);\n\n");
     g_fileWrite(file, "return 0;\n");
     if (data->errorCount) {
         g_fileDedent(file);
@@ -824,7 +825,7 @@ static int c_loadDeclare(corto_object o, void* userData) {
     g_fileWrite(data->source, "}\n");
 
     if (o == g_getCurrent(data->g) && corto_instanceof(corto_package_o, o)) {
-        g_fileWrite(data->source, "corto_set_attr(prevAttr);\n");
+        g_fileWrite(data->source, "corto_set_attr(0);\n");
     }
 
     g_fileWrite(data->source, "\n");
