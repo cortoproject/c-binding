@@ -592,8 +592,16 @@ static int c_typeClassTypedefWalk(corto_object o, void* userData) {
     if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
         corto_id id;
         c_typeId(data->g, o, id);
+        bool named = corto_check_attr(o, CORTO_ATTR_NAMED);
 
+        if (!named) {
+            g_fileWrite(data->header, "#ifndef _type_%s_DEFINED\n", id);
+            g_fileWrite(data->header, "#define _type_%s_DEFINED\n", id);
+        }
         g_fileWrite(data->header, "typedef %s _type_%s;\n", id, id);
+        if (!named) {
+            g_fileWrite(data->header, "#endif\n");
+        }
     }
 
     return 0;
