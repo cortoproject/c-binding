@@ -682,14 +682,20 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
     } else {
-        /* Dynamically determine dependencies of metadata so we know which _type
-         * headers to include. This cannot be derived from the list of imports
-         * because it can contain packages that don't have a _type header.
-         *
-         * We also don't want to include the main header of the import packages
-         * here because that would potentially include headers to which this
-         * package does not have include paths for. */
-        c_includeDependencies(g, result, "_type.h");
+        g_fileWrite(result, "#include <corto/corto.h>\n");
+
+        /* Add include files of managed dependencies with models */
+        corto_iter it = corto_ll_iter(g->imports);
+        while (corto_iter_hasNext(&it)) {
+            corto_object import = corto_iter_next(&it);
+            corto_id import_id;
+            corto_path(import_id, root_o, import, "/");
+            char *include = corto_locate(import_id, NULL, CORTO_LOCATION_INCLUDE);
+            if (corto_file_test(strarg("%s/_type.h", include))) {
+                g_fileWrite(result, "#include <%s/_type.h>\n", import_id);
+            }
+        }
+
         g_fileWrite(result, "\n");
     }
 
