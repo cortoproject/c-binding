@@ -590,8 +590,8 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
     strcpy(buffer, "BUILDING_");
     char *ptr = &buffer[9];
 
-    if (strcmp(g_getAttribute(g, "bootstrap"), "true") && g_getCurrent(g)) {
-        corto_path(buff, root_o, g_getCurrent(g), "_");
+    if (strcmp(g_getAttribute(g, "bootstrap"), "true") && g_getPackage(g)) {
+        corto_path(buff, root_o, g_getPackage(g), "_");
     } else {
         strcpy(buff, g_getName(g));
         char *ptr, ch;
