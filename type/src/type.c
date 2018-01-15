@@ -520,7 +520,8 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
 
     if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
         if (corto_check_attr(t, CORTO_ATTR_NAMED)
-         && corto_childof(root_o, t))
+         && corto_childof(root_o, t)
+         && corto_parentof(t) != root_o)
         {
             corto_id id, localId, postfix, buildingMacro;
             c_buildingMacro(data->g, buildingMacro);
