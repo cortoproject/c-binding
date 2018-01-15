@@ -657,7 +657,11 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
         goto error;
     }
 
-    corto_path(path, root_o, g_getCurrent(g), "_");
+    if (bootstrap) {
+        corto_path(path, root_o, g_getCurrent(g), "_");
+    } else {
+        corto_path(path, root_o, g_getPackage(g), "_");
+    }
     strupper(path);
 
     /* Print standard comments and includes */

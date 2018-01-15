@@ -22,8 +22,8 @@ static void c_projectLoadPackages(g_generator g, g_file file) {
 
     if (g->imports && c_projectCountPackagesToLoad(g)) {
         corto_id id;
-        if (g_getCurrent(g)) {
-            corto_path(id, root_o, g_getCurrent(g), "_");
+        if (g_getPackage(g)) {
+            corto_path(id, root_o, g_getPackage(g), "_");
         } else {
             strcpy(id, g_getProjectName(g));
         }
@@ -74,12 +74,12 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
         g_fileWrite(file, "#include <%spp>\n", c_mainheader(g, header));
     }
 
-    if (!app && g_getCurrent(g)) {
-        c_includeFrom(g, file, g_getCurrent(g), "_project.h");
+    if (!app && g_getPackage(g)) {
+        c_includeFrom(g, file, g_getPackage(g), "_project.h");
     }
 
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "int %s_load(void);\n", corto_path(NULL, root_o, g_getCurrent(g), "_"));
+        g_fileWrite(file, "int %s_load(void);\n", corto_path(NULL, root_o, g_getPackage(g), "_"));
         g_fileWrite(file, "\n");
     }
 
@@ -101,7 +101,7 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     g_fileWrite(file, "int ret = 0;\n");
     if (g_getCurrent(g)) {
         corto_id id;
-        corto_path(id, root_o, g_getCurrent(g), "_");
+        corto_path(id, root_o, g_getPackage(g), "_");
         g_fileWrite(file, "corto_log_push(\"load-model:%s\");\n", id);
         g_fileWrite(file, "ret = %s_load();\n", id);
         g_fileWrite(file, "corto_log_pop();\n");

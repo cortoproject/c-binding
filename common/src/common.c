@@ -702,7 +702,7 @@ void c_includeFrom_toBufferv(
      * there is no need to prefix the header with a path */
     if ((!strcmp(g_getAttribute(g, "local"), "true") ||
          !strcmp(g_getAttribute(g, "app"), "true")) &&
-        (g_getCurrent(g) == package))
+        (g_getPackage(g) == package))
     {
         /* Never include headers by just their names, as this could potentially
          * conflict with system headers, for example when a user creates a class

@@ -742,7 +742,7 @@ corto_int16 c_interfaceHeaderWrite(
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
     } else {
         c_include(g, result, corto_o);
-        c_includeFrom(g, result, g_getCurrent(g), "_project.h");
+        c_includeFrom(g, result, g_getPackage(g), "_project.h");
     }
 
     if (mainHeader) {
@@ -787,17 +787,23 @@ corto_int16 c_interfaceHeaderWrite(
         }
     }
 
-    if (o) {
+    if (g_getCurrent(g)) {
+        corto_object from = g_getPackage(g);
+
+        if (bootstrap) {
+            from = g_getCurrent(g);
+        }
+
         g_fileWrite(result, "\n");
-        c_includeFrom(g, result, g_getCurrent(g), "_type.h");
-        c_includeFrom(g, result, g_getCurrent(g), "_interface.h");
-        c_includeFrom(g, result, g_getCurrent(g), "_load.h");
+        c_includeFrom(g, result, from, "_type.h");
+        c_includeFrom(g, result, from, "_interface.h");
+        c_includeFrom(g, result, from, "_load.h");
 
         if (!bootstrap) {
             if (local || app) {
-                c_includeFrom(g, result, g_getCurrent(g), "_api.h");
+                c_includeFrom(g, result, from, "_api.h");
             } else {
-                c_includeFrom(g, result, g_getCurrent(g), "c/_api.h");
+                c_includeFrom(g, result, from, "c/_api.h");
             }
         }
     }
@@ -945,8 +951,10 @@ corto_int16 c_interfaceObject(
     corto_objectseq procs = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < procs.length; i ++) {
-        if (!c_interfaceProcedure(procs.buffer[i], data)) {
-            break;
+        if (g_mustParse(data->g, procs.buffer[i])) {
+            if (!c_interfaceProcedure(procs.buffer[i], data)) {
+                break;
+            }
         }
     }
     corto_scope_release(procs);
@@ -987,8 +995,10 @@ corto_int16 c_interfaceAliasMacro(
     corto_objectseq procs = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < procs.length; i ++) {
-        if (!c_interfaceProcedureAliasMacro(procs.buffer[i], data)) {
-            break;
+        if (g_mustParse(data->g, procs.buffer[i])) {
+            if (!c_interfaceProcedureAliasMacro(procs.buffer[i], data)) {
+                break;
+            }
         }
     }
     corto_scope_release(procs);
@@ -1004,8 +1014,10 @@ corto_int16 c_interfaceShorthandMacro(
     corto_objectseq procs = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < procs.length; i ++) {
-        if (!c_interfaceProcedureShorthandMacro(procs.buffer[i], data)) {
-            break;
+        if (g_mustParse(data->g, procs.buffer[i])) {
+            if (!c_interfaceProcedureShorthandMacro(procs.buffer[i], data)) {
+                break;
+            }
         }
     }
     corto_scope_release(procs);
@@ -1021,8 +1033,10 @@ corto_int16 c_interfaceArgCastMacro(
     corto_objectseq procs = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < procs.length; i ++) {
-        if (!c_interfaceProcedureCastMacro(procs.buffer[i], data)) {
-            break;
+        if (g_mustParse(data->g, procs.buffer[i])) {
+            if (!c_interfaceProcedureCastMacro(procs.buffer[i], data)) {
+                break;
+            }
         }
     }
     corto_scope_release(procs);
@@ -1039,8 +1053,10 @@ corto_int16 c_interfaceSafeCastMacro(
     corto_objectseq procs = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < procs.length; i ++) {
-        if (!c_interfaceProcedureSafeCastMacro(procs.buffer[i], data)) {
-            break;
+        if (g_mustParse(data->g, procs.buffer[i])) {
+            if (!c_interfaceProcedureSafeCastMacro(procs.buffer[i], data)) {
+                break;
+            }
         }
     }
     corto_scope_release(procs);
@@ -1069,8 +1085,10 @@ int c_interfaceWalk(
     corto_objectseq scope = corto_scope_claim(o);
     corto_int32 i;
     for (i = 0; i < scope.length; i++) {
-        if (!c_interfaceWalk(scope.buffer[i], data)) {
-            break;
+        if (g_mustParse(data->g, scope.buffer[i])) {
+            if (!c_interfaceWalk(scope.buffer[i], data)) {
+                break;
+            }
         }
     }
     corto_scope_release(scope);
@@ -1252,25 +1270,10 @@ int genmain(g_generator g) {
     walkData.mainWritten = FALSE;
 
     if (!bootstrap) {
-        corto_object projectObject = NULL;
         corto_id headerFileName, projectName;
 
-        /* If parsing an object and not a package, the mainheader should be
-         * the name of the project, not the object */
-        if (g_getCurrent(g)) {
-            if (!corto_instanceof(corto_package_o, g_getCurrent(g))) {
-                projectObject = g_getCurrent(g);
-                sprintf(headerFileName, "%s.h", g_getProjectName(g));
-                strcpy(projectName, g_getProjectName(g));
-            } else {
-                projectObject = g_getCurrent(g);
-                sprintf(headerFileName, "%s.h", corto_idof(g_getCurrent(g)));
-                corto_path(projectName, root_o, projectObject, "_");
-            }
-        } else {
-            sprintf(headerFileName, "%s.h", g_getProjectName(g));
-            strcpy(projectName, g_getName(g));
-        }
+        sprintf(headerFileName, "%s.h", g_getProjectName(g));
+        strcpy(projectName, g_getName(g));
 
         g_file mainHeader = g_fileOpen(g, headerFileName);
         if (!mainHeader) {
@@ -1284,7 +1287,7 @@ int genmain(g_generator g) {
         if (c_interfaceHeaderWrite(
             g,
             mainHeader,
-            projectObject,
+            g_getPackage(g),
             projectName,
             headerFileName,
             TRUE,
@@ -1301,7 +1304,11 @@ int genmain(g_generator g) {
         }
 
         corto_id path;
-        corto_path(path, root_o, g_getCurrent(g), "_");
+        if (bootstrap) {
+            corto_path(path, root_o, g_getCurrent(g), "_");
+        } else {
+            corto_path(path, root_o, g_getPackage(g), "_");
+        }
         strcat(path, "/interface");
         if (c_interfaceHeaderWrite(
             g,

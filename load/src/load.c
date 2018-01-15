@@ -286,7 +286,7 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     sprintf(headerFileName, "_load.h");
     result = g_fileOpen(g, headerFileName);
 
-    corto_path(path, root_o, g_getCurrent(g), "_");
+    corto_path(path, root_o, g_getPackage(g), "_");
     strupper(path);
 
     /* Print standard comments and includes */
@@ -298,7 +298,7 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     g_fileWrite(result, "#ifndef %s_LOAD_H\n", path);
     g_fileWrite(result, "#define %s_LOAD_H\n\n", path);
     c_includeFrom(g, result, corto_o, "corto.h");
-    c_includeFrom(g, result, g_getCurrent(g), "_project.h");
+    c_includeFrom(g, result, g_getPackage(g), "_project.h");
 
     /* Include _type.h from dependencies, just in case there are objects of a
      * type defined in another package */
@@ -388,7 +388,7 @@ static void c_sourceWriteVarDefStart(g_file file) {
 static void c_sourceWriteLoadStart(g_generator g, g_file file) {
     g_fileWrite(file, "\n");
     g_fileWrite(file, "/* Load objects in object store. */\n");
-    g_fileWrite(file, "int %s_load(void) {\n", corto_path(NULL, root_o, g_getCurrent(g), "_"));
+    g_fileWrite(file, "int %s_load(void) {\n", corto_path(NULL, root_o, g_getPackage(g), "_"));
     g_fileIndent(file);
     g_fileWrite(file, "corto_object _a_; /* Used for resolving anonymous objects */\n");
     g_fileWrite(file, "corto_object _e_; /* Used for resolving extern objects */\n");

@@ -117,9 +117,17 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     corto_id headerFileName, path;
     corto_id name = {0};
     char *namePtr = g_getName(data->g), *ptr = name + 1;
+    bool bootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
+
+    corto_object pkg;
+    if (bootstrap) {
+        pkg = g_getCurrent(data->g);
+    } else {
+        pkg = g_getPackage(data->g);
+    }
 
     if (!app && !local) {
-        corto_fullpath(name, g_getCurrent(data->g));
+        corto_fullpath(name, pkg);
 
         while (*namePtr == *ptr && *namePtr && *ptr) {
             namePtr ++;
@@ -147,7 +155,7 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     result = g_fileOpen(data->g, headerFileName);
 
     /* Obtain path for macro */
-    corto_path(path, root_o, g_getCurrent(data->g), "_");
+    corto_path(path, root_o, pkg, "_");
     strupper(path);
 
     /* Print standard comments and includes */
@@ -160,11 +168,11 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     g_fileWrite(result, "#define %s__API_H\n\n", path);
 
     c_includeFrom(data->g, result, corto_o, "corto.h");
-    if (!strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
+    if (bootstrap) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(data->g));
     } else {
-        c_includeFrom(data->g, result, g_getCurrent(data->g), "_project.h");
-        c_includeFrom(data->g, result, g_getCurrent(data->g), "_type.h");
+        c_includeFrom(data->g, result, pkg, "_project.h");
+        c_includeFrom(data->g, result, pkg, "_type.h");
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
