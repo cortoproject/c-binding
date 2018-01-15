@@ -757,15 +757,19 @@ void c_includeFrom(
     free(str);
 }
 
-void c_includeDependencies(g_generator g, g_file file, corto_string header) {
-    corto_ll dependencies = g_getDependencies(g);
-    if (dependencies) {
-        corto_iter it = corto_ll_iter(dependencies);
-        while (corto_iter_hasNext(&it)) {
-            corto_object o = corto_iter_next(&it);
-            c_includeFrom(g, file, o, header);
+void c_includeDependencies(g_generator g, g_file result, corto_string header) {
+    g_fileWrite(result, "#include <corto/corto.h>\n");
+
+    /* Add include files of managed dependencies with models */
+    corto_iter it = corto_ll_iter(g->imports);
+    while (corto_iter_hasNext(&it)) {
+        corto_object import = corto_iter_next(&it);
+        corto_id import_id;
+        corto_path(import_id, root_o, import, "/");
+        char *include = corto_locate(import_id, NULL, CORTO_LOCATION_INCLUDE);
+        if (corto_file_test(strarg("%s/%s", include, header))) {
+            g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
         }
-        corto_ll_free(dependencies);
     }
 }
 
