@@ -413,7 +413,16 @@ corto_int16 c_specifierId(
                 }
                 break;
             case CORTO_MAP:
-                strcpy(specifier, "corto_rb");
+                if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_LIST)) {
+                    sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
+                } else {
+                    if (corto_collection(t)->max) {
+                        sprintf(specifier, "%sMap%d", _specifier, corto_collection(t)->max);
+                    } else {
+                        sprintf(specifier, "%sMap", _specifier);
+                    }
+                }
+            break;
                 break;
             }
             break;

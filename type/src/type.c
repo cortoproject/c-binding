@@ -416,8 +416,7 @@ static corto_int16 c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) 
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "CORTO_MAP(%s);\n",
-            id);
+    g_fileWrite(data->header, "typedef corto_rb %s;\n", id);
 
     return 0;
 }
