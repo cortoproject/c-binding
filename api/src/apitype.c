@@ -816,7 +816,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
         break;
     case CORTO_LIST:
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
-        g_fileWrite(data->source, "%s_clear(*%s);\n", id, cVar);
+        g_fileWrite(data->source, "%s__clear(*%s);\n", id, cVar);
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
         g_fileIndent(data->source);
 
@@ -1039,7 +1039,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         g_fileWrite(data->source, "_%s%s%s%s(%s _this",
             id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
 
-        if (strcmp(func, "Assign")) {
+        if (strcmp(func, "__assign")) {
             c_apiCastMacroAddThis(data->args, "_this", t, FALSE, TRUE, g);
         } else {
             c_apiCastMacroAddThis(data->args, "_this", t, FALSE, FALSE, g);

@@ -472,10 +472,10 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " void %s_clear(%s list);\n", id, id);
+    g_fileWrite(data->header, " void %s__clear(%s list);\n", id, id);
 
     /* Function implementation */
-    g_fileWrite(data->source, "void %s_clear(%s list) {\n", id, id);
+    g_fileWrite(data->source, "void %s__clear(%s list) {\n", id, id);
     g_fileIndent(data->source);
 
     g_fileWrite(data->source, "corto_iter iter = corto_ll_iter(list);\n");
