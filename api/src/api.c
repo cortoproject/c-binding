@@ -11,11 +11,6 @@
 /* Walk all types */
 static corto_int16 c_apiWalkType(corto_type o, c_apiWalk_t* data) {
 
-    /* Generate _create function */
-    if (c_apiTypeCreate(o, data)) {
-        goto error;
-    }
-
     /* Generate _createChild function */
     if (c_apiTypeCreateChild(o, data)) {
         goto error;
@@ -37,11 +32,6 @@ error:
 static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
 
     /* Generate _declare function */
-    if (c_apiTypeDeclare(o, data)) {
-        goto error;
-    }
-
-    /* Generate _declareChild function */
     if (c_apiTypeDeclareChild(o, data)) {
         goto error;
     }
