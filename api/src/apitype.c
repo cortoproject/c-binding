@@ -274,7 +274,7 @@ static corto_int16 c_apiCastMacroSet(
       id);
     c_apiPrintArgs(data->args, 0, 1, data->header);
 
-    g_fileWrite(data->header, " (%s*)%sAssign((%s*)corto_ptr_new(%s)", id, id, id, typeId);
+    g_fileWrite(data->header, " (%s*)%s__assign((%s*)corto_ptr_new(%s)", id, id, id, typeId);
     c_apiPrintArgs(data->args, 1, 1, data->header);
     g_fileWrite(data->header, "\n");
 
@@ -285,27 +285,27 @@ static corto_int16 c_apiCastMacroSet(
       id);
     c_apiPrintArgs(data->args, 1, 1, data->header);
 
-    g_fileWrite(data->header, " cond ? (%s*)%s_assign((%s*)corto_ptr_new(%s)", id, id, id, typeId);
+    g_fileWrite(data->header, " cond ? (%s*)%s__assign((%s*)corto_ptr_new(%s)", id, id, id, typeId);
     c_apiPrintArgs(data->args, 1, 1, data->header);
     g_fileWrite(data->header, " : NULL\n");
 
     /* Unset macro */
     g_fileWrite(
       data->header,
-      "#define %s_unset(_this) _this ? corto_ptr_free(_this, %s), 0 : 0; _this = NULL;\n",
+      "#define %s__unset(_this) _this ? corto_ptr_free(_this, %s), 0 : 0; _this = NULL;\n",
       id,
       typeId);
 
     /* Assign macro */
-    g_fileWrite(data->header, "#define %s_assign(", id);
+    g_fileWrite(data->header, "#define %s__assign(", id);
     c_apiPrintArgs(data->args, 0, 0, data->header);
-    c_apiCastMacroCall(id, "_assign", NULL, data);
+    c_apiCastMacroCall(id, "__assign", NULL, data);
 
     /* Set macro */
-    g_fileWrite(data->header, "#define %s_set(", id);
+    g_fileWrite(data->header, "#define %s__set(", id);
     c_apiPrintArgs(data->args, 0, 0, data->header);
     g_fileWrite(data->header, " _this = _this ? _this : (%s*)corto_ptr_new(%s);", id, typeId);
-    c_apiCastMacroCall(id, "_assign", NULL, data);
+    c_apiCastMacroCall(id, "__assign", NULL, data);
 
     return 0;
 }
@@ -797,7 +797,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
     switch(corto_collection(t)->kind) {
     case CORTO_SEQUENCE:
         strcat(cVar, "->buffer");
-        g_fileWrite(data->source, "%s_resize(%s, length);\n", id, _this);
+        g_fileWrite(data->source, "%s__resize(%s, length);\n", id, _this);
     case CORTO_ARRAY:
         g_fileWrite(data->source, "corto_uint32 i = 0;\n");
         g_fileWrite(data->source, "for (i = 0; i < length; i ++) {\n");
@@ -823,9 +823,9 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
         /* Append expects value as regular parameter while elements[i] points to
          * the value directly. Compensate with a & */
         if (c_typeRequiresPtr(elementType)) {
-            g_fileWrite(data->source, "%s_append(*%s, &elements[i]);\n", id, cVar);
+            g_fileWrite(data->source, "%s__append(*%s, &elements[i]);\n", id, cVar);
         } else {
-            g_fileWrite(data->source, "%s_append(*%s, elements[i]);\n", id, cVar);
+            g_fileWrite(data->source, "%s__append(*%s, elements[i]);\n", id, cVar);
         }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
@@ -1000,12 +1000,12 @@ corto_int16 c_apiTypeCreateIntern(
 }
 
 corto_int16 c_apiTypeCreateChild(corto_type t, c_apiWalk_t *data) {
-    return c_apiTypeCreateIntern(t, data, "_create", TRUE, TRUE);
+    return c_apiTypeCreateIntern(t, data, "__create", TRUE, TRUE);
 }
 
 corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool isUpdate, corto_bool doUpdate) {
     corto_id id, ptr;
-    corto_string func = isUpdate ? doUpdate ? "_update" : "_assign" : "_define";
+    corto_string func = isUpdate ? doUpdate ? "__update" : "__assign" : "__define";
     corto_bool isSet = isUpdate ? doUpdate ? FALSE : TRUE : FALSE;
     g_generator g = data->g;
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
@@ -1134,8 +1134,8 @@ corto_int16 c_apiDelegate_init_callbackAuto(
     g_fullOid(data->g, t, id);
 
     if (!instance) {
-        g_fileWrite(data->header, "#define %s_init_c_auto(d, callback) ", id);
-        g_fileWrite(data->header, "%s d; %s_init_c(&d, callback)\n", id, id);
+        g_fileWrite(data->header, "#define %s__init_c_auto(d, callback) ", id);
+        g_fileWrite(data->header, "%s d; %s__init_c(&d, callback)\n", id, id);
     } else {
         g_fileWrite(
             data->header,
@@ -1167,8 +1167,8 @@ corto_int16 c_apiDelegateInitCallback(
 
     c_writeExport(data->g, data->header);
     if (!instance) {
-        g_fileWrite(data->header, " corto_int16 %s_init_c(%s *d, ", id, id);
-        g_fileWrite(data->source, "corto_int16 %s_init_c(%s *d, ", id, id);
+        g_fileWrite(data->header, " corto_int16 %s__init_c(%s *d, ", id, id);
+        g_fileWrite(data->source, "corto_int16 %s__init_c(%s *d, ", id, id);
     } else {
         g_fileWrite(
             data->header,
@@ -1261,8 +1261,8 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     g_fullOid(data->g, t, id);
     corto_bool hasReturn = t->returnType->reference || (t->returnType->kind != CORTO_VOID);
 
-    g_fileWrite(data->header, "corto_int16 %s_call(%s *_delegate", id, id);
-    g_fileWrite(data->source, "corto_int16 %s_call(%s *_delegate", id, id);
+    g_fileWrite(data->header, "corto_int16 %s__call(%s *_delegate", id, id);
+    g_fileWrite(data->source, "corto_int16 %s__call(%s *_delegate", id, id);
 
     if (hasReturn) {
         g_fileWrite(data->header, ", %s* _result", returnId);

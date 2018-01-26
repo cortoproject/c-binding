@@ -10,7 +10,7 @@ corto_int16 c_apiIteratorForeach(corto_iterator o, c_apiWalk_t *data) {
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
     c_specifierId(data->g, corto_type(o->elementType), elementId, &prefix, NULL);
 
-    g_fileWrite(data->header, "#define %s_foreach(iter, elem) \\\n", id);
+    g_fileWrite(data->header, "#define %s__foreach(iter, elem) \\\n", id);
     g_fileIndent(data->header);
     g_fileWrite(data->header, "%s elem;\\\n", elementId);
     g_fileWrite(data->header, "while(corto_iter_hasNext(&iter) ? ");

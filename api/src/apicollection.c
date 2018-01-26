@@ -41,10 +41,10 @@ static corto_int16 c_apiSequenceTypeAppendAlloc(corto_sequence o, c_apiWalk_t* d
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " %s* %s_append_alloc(%s *seq);\n", elementId, id, id);
+    g_fileWrite(data->header, " %s* %s__append_alloc(%s *seq);\n", elementId, id, id);
 
     /* Function implementation */
-    g_fileWrite(data->source, "%s* %s_append_alloc(%s *seq) {\n", elementId, id, id);
+    g_fileWrite(data->source, "%s* %s__append_alloc(%s *seq) {\n", elementId, id, id);
 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_uint32 size;\n");
@@ -75,10 +75,10 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " %s* %s_append(%s *seq, %s element);\n", elementId, id, id, elementId);
+    g_fileWrite(data->header, " %s* %s__append(%s *seq, %s element);\n", elementId, id, id, elementId);
 
     /* Function implementation */
-    g_fileWrite(data->source, "%s* %s_append(%s *seq, %s element) {\n", elementId, id, id, elementId);
+    g_fileWrite(data->source, "%s* %s__append(%s *seq, %s element) {\n", elementId, id, id, elementId);
 
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_uint32 size;\n");
@@ -115,10 +115,10 @@ static corto_int16 c_apiSequenceTypeResize(corto_sequence o, c_apiWalk_t* data) 
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " void %s_resize(%s *seq, corto_uint32 length);\n", id, id);
+    g_fileWrite(data->header, " void %s__resize(%s *seq, corto_uint32 length);\n", id, id);
 
     /* Function implementation */
-    g_fileWrite(data->source, "void %s_resize(%s *seq, corto_uint32 length) {\n", id, id);
+    g_fileWrite(data->source, "void %s__resize(%s *seq, corto_uint32 length) {\n", id, id);
     g_fileIndent(data->source);
     g_fileWrite(data->source, "corto_uint32 size;\n");
 
@@ -175,12 +175,12 @@ static corto_int16 c_apiSequenceTypeClear(corto_sequence o, c_apiWalk_t* data) {
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
-    g_fileWrite(data->header, " void %s_clear(%s *seq);\n", id, id);
+    g_fileWrite(data->header, " void %s__clear(%s *seq);\n", id, id);
 
     /* Function implementation */
-    g_fileWrite(data->source, "void %s_clear(%s *seq) {\n", id, id);
+    g_fileWrite(data->source, "void %s__clear(%s *seq) {\n", id, id);
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "%s_resize(seq, 0);\n", id);
+    g_fileWrite(data->source, "%s__resize(seq, 0);\n", id);
     g_fileDedent(data->source);
     g_fileWrite(data->source, "}\n\n");
 
@@ -220,7 +220,7 @@ error:
 }
 
 static corto_string corto_operationToApi(corto_string operation, corto_id id) {
-    sprintf(id, "corto_ll%s", operation);
+    sprintf(id, "corto_ll%s", &operation[1]);
     return id;
 }
 
@@ -365,11 +365,11 @@ static corto_int16 c_apiListTypeRemove(corto_list o, c_apiWalk_t* data) {
     g_fileWrite(data->source, "void ");
 
     /* Function declaration */
-    g_fileWrite(data->header, "%s_remove(%s list, %s element);\n",
+    g_fileWrite(data->header, "%s__remove(%s list, %s element);\n",
         id, id, elementId);
 
     /* Function implementation */
-    g_fileWrite(data->source, "%s_remove(%s list, %s element) {\n",
+    g_fileWrite(data->source, "%s__remove(%s list, %s element) {\n",
         id, id, elementId);
 
     g_fileIndent(data->source);
@@ -426,14 +426,14 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     c_writeExport(data->g, data->header);
     g_fileWrite(
       data->header,
-      " %s%s %s_get(%s list, corto_uint32 index);\n",
+      " %s%s %s__get(%s list, corto_uint32 index);\n",
       elementId,
       deref ? "*" : "", id, id);
 
     /* Function implementation */
     g_fileWrite(
       data->source,
-      "%s%s %s_get(%s list, corto_uint32 index) {\n",
+      "%s%s %s__get(%s list, corto_uint32 index) {\n",
       elementId,
       deref ? "*" : "", id, id);
 
@@ -508,11 +508,11 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
 
     data->current = o;
 
-    if (c_apiListTypeInsert(o, "_insert", data)) {
+    if (c_apiListTypeInsert(o, "__insert", data)) {
         goto error;
     }
 
-    if (c_apiListTypeInsert(o, "_append", data)) {
+    if (c_apiListTypeInsert(o, "__append", data)) {
         goto error;
     }
 
@@ -522,11 +522,11 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
         }
     }
 
-    if (c_apiListTypeTake(o, "_takeFirst", data)) {
+    if (c_apiListTypeTake(o, "__takeFirst", data)) {
         goto error;
     }
 
-    if (c_apiListTypeTake(o, "_last", data)) {
+    if (c_apiListTypeTake(o, "__last", data)) {
         goto error;
     }
 
