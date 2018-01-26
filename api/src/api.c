@@ -31,16 +31,6 @@ error:
 /* Walk non-void types */
 static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
 
-    /* Generate _declare function */
-    if (c_apiTypeDeclareChild(o, data)) {
-        goto error;
-    }
-
-    /* Generate _define function */
-    if (c_apiTypeDefine(o, data)) {
-        goto error;
-    }
-
     /* Generate _set function */
     if (c_apiTypeSet(o, data)) {
         goto error;

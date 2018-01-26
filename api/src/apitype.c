@@ -1003,10 +1003,6 @@ corto_int16 c_apiTypeCreateChild(corto_type t, c_apiWalk_t *data) {
     return c_apiTypeCreateIntern(t, data, "_create", TRUE, TRUE);
 }
 
-corto_int16 c_apiTypeDeclareChild(corto_type t, c_apiWalk_t *data) {
-    return c_apiTypeCreateIntern(t, data, "_declare", TRUE, FALSE);
-}
-
 corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool isUpdate, corto_bool doUpdate) {
     corto_id id, ptr;
     corto_string func = isUpdate ? doUpdate ? "_update" : "_assign" : "_define";
@@ -1118,10 +1114,6 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     } while (isUnion && (memberCount < corto_interface(t)->members.length));
 
     return 0;
-}
-
-corto_int16 c_apiTypeDefine(corto_type t, c_apiWalk_t *data) {
-  return c_apiTypeDefineIntern(t, data, FALSE, FALSE);
 }
 
 corto_int16 c_apiTypeUpdate(corto_type t, c_apiWalk_t *data) {
