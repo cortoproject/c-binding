@@ -337,7 +337,7 @@ int c_interfaceGenerateVirtual(
             "))((corto_function)((corto_interface)corto_typeof(_this))->methods.buffer[((corto_method)%s)->index - 1])->fptr)(%s(_this)",
             methodVarId,
             typeId);
-        if (!c_paramWalk(o, c_interfaceParamNameHeader, data)) {
+        if (!c_paramWalk(o, c_interfaceParamCastWalk, data)) {
             goto error;
         }
         g_fileWrite(data->interfaceHeader, ") \\\n");
@@ -357,7 +357,7 @@ int c_interfaceGenerateVirtual(
                 typeId);
         }
         data->firstComma = 3;
-        if (!c_paramWalk(o, c_interfaceParamCastDef, data)) {
+        if (!c_paramWalk(o, c_interfaceParamCastWalk, data)) {
             goto error;
         }
         g_fileWrite(data->interfaceHeader, ") \\\n");
