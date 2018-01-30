@@ -246,6 +246,7 @@ g_file c_interfaceWrapperFileOpen(
     g_file result;
     corto_char fileName[512];
     bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     corto_object o = g_getCurrent(g);
     sprintf(fileName, "_interface.%s", cpp ? "cpp" : "c");
@@ -263,20 +264,28 @@ g_file c_interfaceWrapperFileOpen(
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", fileName);
     g_fileWrite(result, " *\n");
-    g_fileWrite(result, " * This file contains wrapper functions for %s.\n",
+    g_fileWrite(result, " * This file contains interface methods for %s.\n",
         corto_fullpath(NULL, o));
     g_fileWrite(result, " */\n\n");
 
-    corto_buffer include = CORTO_BUFFER_INIT;
-    c_include_toBuffer(g, &include, g_getCurrent(g));
-    char *includeStr = corto_buffer_str(&include);
-    g_fileWrite(result, includeStr);
-    free(includeStr);
+    if (!bootstrap) {
+        corto_buffer include = CORTO_BUFFER_INIT;
+        c_include_toBuffer(g, &include, g_getCurrent(g));
+        char *includeStr = corto_buffer_str(&include);
+        g_fileWrite(result, includeStr);
+        free(includeStr);
 
-    c_includeFrom_toBuffer(g, &include, g_getCurrent(g), "_load.h");
-    includeStr = corto_buffer_str(&include);
-    g_fileWrite(result, includeStr);
-    free(includeStr);
+        c_includeFrom_toBuffer(g, &include, g_getCurrent(g), "_load.h");
+        includeStr = corto_buffer_str(&include);
+        g_fileWrite(result, includeStr);
+        free(includeStr);
+    } else {
+        corto_buffer include = CORTO_BUFFER_INIT;
+        c_include_toBuffer(g, &include, corto_o);
+        char *includeStr = corto_buffer_str(&include);
+        g_fileWrite(result, includeStr);
+        free(includeStr);
+    }
 
     return result;
 error:
@@ -733,14 +742,13 @@ corto_int16 c_interfaceHeaderWrite(
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n\n", path);
 
-    /* Include corto, if not generating corto */
-    if (o && (o != corto_o)) {
-        c_includeFrom(g, result, corto_o, "corto.h");
-    }
-
     if (bootstrap) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
     } else {
+        if (o && (o != corto_o)) {
+            /* Do not include corto.h in headers of builtin packages */
+            c_includeFrom(g, result, corto_o, "corto.h");
+        }
         c_includeFrom(g, result, g_getPackage(g), "_project.h");
     }
 
