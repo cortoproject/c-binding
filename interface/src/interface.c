@@ -744,7 +744,7 @@ corto_int16 c_interfaceHeaderWrite(
 
     if (bootstrap) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
-    } else {
+    } else if (mainHeader) {
         if (o && (o != corto_o)) {
             /* Do not include corto.h in headers of builtin packages */
             c_includeFrom(g, result, corto_o, "corto.h");
@@ -800,11 +800,13 @@ corto_int16 c_interfaceHeaderWrite(
         }
 
         g_fileWrite(result, "\n");
-        c_includeFrom(g, result, from, "_type.h");
-        c_includeFrom(g, result, from, "_interface.h");
-        c_includeFrom(g, result, from, "_load.h");
+        if (mainHeader) {
+            c_includeFrom(g, result, from, "_type.h");
+            c_includeFrom(g, result, from, "_interface.h");
+            c_includeFrom(g, result, from, "_load.h");
+        }
 
-        if (!bootstrap) {
+        if (mainHeader && !bootstrap) {
             if (local || app) {
                 c_includeFrom(g, result, from, "_api.h");
             } else {

@@ -297,12 +297,6 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_LOAD_H\n", path);
     g_fileWrite(result, "#define %s_LOAD_H\n\n", path);
-    c_includeFrom(g, result, corto_o, "corto.h");
-    c_includeFrom(g, result, g_getPackage(g), "_project.h");
-
-    /* Include _type.h from dependencies, just in case there are objects of a
-     * type defined in another package */
-    c_includeDependencies(g, result, "_type.h");
 
     g_fileWrite(result, "\n");
     g_fileWrite(result, "#ifdef __cplusplus\n");
