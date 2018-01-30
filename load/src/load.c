@@ -234,7 +234,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 /* Walk types */
 static int c_loadDeclareWalk(corto_object o, void* userData) {
     c_typeWalk_t* data;
-    corto_id specifier, objectId, localId, building;
+    corto_id specifier, objectId, localId;
     corto_type t;
     corto_object parent;
 
@@ -245,7 +245,8 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
         return 1;
     }
 
-    if (!corto_check_attr(o, CORTO_ATTR_NAMED) && !corto_instanceof(corto_type_o, o)) {
+    if (!corto_check_attr(o, CORTO_ATTR_NAMED) &&
+        !corto_instanceof(corto_type_o, o)) {
         return 1;
     }
 
@@ -258,7 +259,6 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
 
     /* Get C typespecifier */
     c_typeret(data->g, t, C_ByReference, specifier);
-
     c_varId(data->g, o, objectId);
     c_varLocalId(data->g, o, localId);
 
@@ -266,13 +266,46 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
 
     /* Declare objects in headerfile and define in sourcefile */
     g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);
-    if (strcmp(objectId, localId)) {
-        c_buildingMacro(data->g, building);
-        g_fileWrite(data->header, "#if !defined(__cplusplus) && defined(%s)\n", building);
-        g_fileWrite(data->header, "#define %s %s\n", localId, objectId);
-        g_fileWrite(data->header, "#endif\n");
-    }
     g_fileWrite(data->source, "%s %s;\n", specifier, objectId);
+
+    return 1;
+}
+
+/* Walk types for alias macro's */
+static int c_loadDeclareAliasWalk(corto_object o, void* userData) {
+    c_typeWalk_t* data;
+    corto_id specifier, objectId, localId;
+    corto_type t;
+    corto_object parent;
+
+    data = userData;
+    t = corto_typeof(o);
+
+    if (!g_mustParse(data->g, o)) {
+        return 1;
+    }
+
+    if (!corto_check_attr(o, CORTO_ATTR_NAMED) &&
+        !corto_instanceof(corto_type_o, o)) {
+        return 1;
+    }
+
+    if (corto_check_attr(o, CORTO_ATTR_NAMED)) {
+        parent = corto_parentof(o);
+        if (parent && (parent != root_o) && (!g_mustParse(data->g, parent))) {
+            c_loadDeclareAliasWalk(corto_parentof(o), userData);
+        }
+    }
+
+    /* Get C typespecifier */
+    c_typeret(data->g, t, C_ByReference, specifier);
+    c_varId(data->g, o, objectId);
+    c_varLocalId(data->g, o, localId);
+
+    /* Write alias define */
+    if (strcmp(objectId, localId)) {
+        g_fileWrite(data->header, "#define %s %s\n", localId, objectId);
+    }
 
     return 1;
 }
@@ -979,6 +1012,15 @@ int genmain(g_generator g) {
     if (corto_genDepWalk(g, c_loadDeclareWalk, NULL, &walkData)) {
         goto error;
     }
+
+    /* Write alias definitions */
+    corto_id building;
+    c_buildingMacro(g, building);
+    g_fileWrite(walkData.header, "#if !defined(__cplusplus) && defined(%s)\n", building);
+    if (corto_genDepWalk(g, c_loadDeclareAliasWalk, NULL, &walkData)) {
+        goto error;
+    }
+    g_fileWrite(walkData.header, "#endif\n", building);
 
     /* Create load-routine */
     c_sourceWriteLoadStart(g, walkData.source);
