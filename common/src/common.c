@@ -773,11 +773,14 @@ void c_includeDependencies(g_generator g, g_file result, corto_string header) {
     corto_iter it = corto_ll_iter(g->imports);
     while (corto_iter_hasNext(&it)) {
         corto_object import = corto_iter_next(&it);
-        corto_id import_id;
-        corto_path(import_id, root_o, import, "/");
-        char *include = corto_locate(import_id, NULL, CORTO_LOCATION_INCLUDE);
-        if (corto_file_test(strarg("%s/%s", include, header))) {
-            g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
+        if (import != corto_o) {
+            corto_id import_id;
+            corto_path(import_id, root_o, import, "/");
+            const char *include = corto_locate(
+                import_id, NULL, CORTO_LOCATE_INCLUDE);
+            if (corto_file_test(strarg("%s/%s", include, header))) {
+                g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
+            }
         }
     }
 }

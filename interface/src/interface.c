@@ -750,21 +750,14 @@ corto_int16 c_interfaceHeaderWrite(
         if (g->imports) {
             corto_iter iter = corto_ll_iter(g->imports);
             while (corto_iter_hasNext(&iter)) {
+                corto_id package_path;
                 corto_object import = corto_iter_next(&iter);
-                corto_string str = corto_path(NULL, NULL, import, "/");
-                corto_string package = corto_locate(str, NULL, CORTO_LOCATION_FULLNAME);
-                if (!package) {
-                    corto_throw("project configuration contains unresolved package '%s'", str);
-
-                    /* Don't break out of generation here, as this will mess up the
-                     * file's code snippet */
-                    error = TRUE;
-                } else {
-                    corto_string name = corto_locate(str, NULL, CORTO_LOCATION_NAME);
-                    g_fileWrite(result, "#include <%s/%s.h>\n", package, name);
-                    corto_dealloc(name);
-                    corto_dealloc(package);
+                corto_path(package_path, root_o, import, "/");
+                char *name = strrchr(package_path, '/');
+                if (!name) {
+                    name = package_path;
                 }
+                g_fileWrite(result, "#include <%s/%s.h>\n", package_path, name);
             }
         }
     }
