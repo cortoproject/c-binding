@@ -767,8 +767,6 @@ void c_includeFrom(
 }
 
 void c_includeDependencies(g_generator g, g_file result, corto_string header) {
-    g_fileWrite(result, "#include <corto/corto.h>\n");
-
     /* Add include files of managed dependencies with models */
     corto_iter it = corto_ll_iter(g->imports);
     while (corto_iter_hasNext(&it)) {

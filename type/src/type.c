@@ -681,6 +681,7 @@ static g_file c_typeHeaderFileOpen(g_generator g) {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }
     } else {
+        c_includeFrom(g, result, corto_o, "corto.h");
         c_includeDependencies(g, result, "_type.h");
         g_fileWrite(result, "\n");
     }

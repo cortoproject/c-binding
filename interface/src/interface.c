@@ -741,7 +741,6 @@ corto_int16 c_interfaceHeaderWrite(
     if (bootstrap) {
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
     } else {
-        c_include(g, result, corto_o);
         c_includeFrom(g, result, g_getPackage(g), "_project.h");
     }
 
@@ -752,14 +751,17 @@ corto_int16 c_interfaceHeaderWrite(
             while (corto_iter_hasNext(&iter)) {
                 corto_id package_path;
                 corto_object import = corto_iter_next(&iter);
-                corto_path(package_path, root_o, import, "/");
-                char *name = strrchr(package_path, '/');
-                if (name) {
-                    name ++;
-                } else {
-                    name = package_path;
+                if (import != corto_o) {
+                    corto_path(package_path, root_o, import, "/");
+                    char *name = strrchr(package_path, '/');
+                    if (name) {
+                        name ++;
+                    } else {
+                        name = package_path;
+                    }
+                    g_fileWrite(
+                        result, "#include <%s/%s.h>\n", package_path, name);
                 }
-                g_fileWrite(result, "#include <%s/%s.h>\n", package_path, name);
             }
         }
     }
