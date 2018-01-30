@@ -754,7 +754,9 @@ corto_int16 c_interfaceHeaderWrite(
                 corto_object import = corto_iter_next(&iter);
                 corto_path(package_path, root_o, import, "/");
                 char *name = strrchr(package_path, '/');
-                if (!name) {
+                if (name) {
+                    name ++;
+                } else {
                     name = package_path;
                 }
                 g_fileWrite(result, "#include <%s/%s.h>\n", package_path, name);
