@@ -753,25 +753,7 @@ corto_int16 c_interfaceHeaderWrite(
     }
 
     if (mainHeader) {
-        /* Add header files for dependent packages */
-        if (g->imports) {
-            corto_iter iter = corto_ll_iter(g->imports);
-            while (corto_iter_hasNext(&iter)) {
-                corto_id package_path;
-                corto_object import = corto_iter_next(&iter);
-                if (import != corto_o) {
-                    corto_path(package_path, root_o, import, "/");
-                    char *name = strrchr(package_path, '/');
-                    if (name) {
-                        name ++;
-                    } else {
-                        name = package_path;
-                    }
-                    g_fileWrite(
-                        result, "#include <%s/%s.h>\n", package_path, name);
-                }
-            }
-        }
+        c_includeDependencies(data->g, result, name);
     }
     if (error) {
         goto error;
