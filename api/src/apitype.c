@@ -1003,6 +1003,20 @@ corto_int16 c_apiTypeCreateChild(corto_type t, c_apiWalk_t *data) {
     return c_apiTypeCreateIntern(t, data, "__create", TRUE, TRUE);
 }
 
+corto_int16 c_apiTypeDeclareChild(corto_type t, c_apiWalk_t *data) {
+    corto_id typeId, retId, varId;
+
+    g_fullOid(data->g, t, typeId);
+    c_typeret(data->g, t, C_ByReference, retId);
+    c_varId(data->g, t, varId);
+
+    g_fileWrite(data->header,
+        "#define %s__declare(parent, id) (%s)corto_declare(parent, id, %s)\n",
+        typeId, retId, varId);
+
+    return 0;
+}
+
 corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool isUpdate, corto_bool doUpdate) {
     corto_id id, ptr;
     corto_string func = isUpdate ? doUpdate ? "__update" : "__assign" : "__define";

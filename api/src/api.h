@@ -29,22 +29,13 @@ typedef struct c_apiWalk_t {
     corto_ll args;
 } c_apiWalk_t;
 
-corto_int16 c_apiTypeCreate(corto_type t, c_apiWalk_t *data);
 corto_int16 c_apiTypeCreateChild(corto_type t, c_apiWalk_t *data);
-corto_int16 c_apiTypeStr(corto_type t, c_apiWalk_t *data);
-
-corto_int16 c_apiTypeDeclare(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiTypeDeclareChild(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiTypeDefine(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiTypeUpdate(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiTypeSet(corto_type t, c_apiWalk_t *data);
 corto_int16 c_apiTypeStr(corto_type o, c_apiWalk_t *data);
 corto_int16 c_apiTypeFromStr(corto_type o, c_apiWalk_t *data);
-corto_int16 c_apiTypeCopy(corto_type o, c_apiWalk_t *data);
-corto_int16 c_apiTypeCompare(corto_type o, c_apiWalk_t *data);
-
-corto_int16 c_apiTypeInit(corto_type o, c_apiWalk_t *data);
-corto_int16 c_apiTypeDeinit(corto_type o, c_apiWalk_t *data);
 
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data);
 corto_int16 c_apiDelegateInitCallback(
