@@ -753,7 +753,8 @@ corto_int16 c_interfaceHeaderWrite(
     }
 
     if (mainHeader) {
-        c_includeDependencies(data->g, result, name);
+        printf("include dependencies for main header..\n");
+        c_includeDependencies(data->g, result, NULL);
     }
     if (error) {
         goto error;
