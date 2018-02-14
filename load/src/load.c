@@ -12,14 +12,20 @@ typedef struct c_typeWalk_t {
     g_generator g;
     g_file header;
     g_file source;
-    corto_uint32 firstComma;
-    corto_uint32 errorCount;
+    uint32_t firstComma;
+    uint32_t errorCount;
     corto_ll collections;
-    corto_bool scoped; /* Switch between generating scoped and anonymous */
+    bool scoped; /* Switch between generating scoped and anonymous */
 } c_typeWalk_t;
 
 /* Resolve object */
-static corto_char* c_loadResolve(corto_object o, corto_char* out, corto_char* src, c_typeWalk_t *data) {
+static
+char* c_loadResolve(
+    corto_object o,
+    char* out,
+    char* src,
+    c_typeWalk_t *data)
+{
     if ((g_mustParse(data->g, o) || (corto_isbuiltin(o) && corto_instanceof(corto_type_o, o))) && corto_check_attr(o, CORTO_ATTR_NAMED)) {
         corto_id varId;
         c_varId(data->g, o, varId);
@@ -70,8 +76,13 @@ error:
 }
 
 /* Get element id, for lists and maps. */
-static corto_char* c_loadElementId(corto_value* v, corto_char* out, corto_int32 offset) {
-    corto_uint32 i;
+static
+char* c_loadElementId(
+    corto_value* v,
+    char* out,
+    int32_t offset)
+{
+    uint32_t i;
     corto_value* ptr;
 
     i = 0;
@@ -90,13 +101,19 @@ static corto_char* c_loadElementId(corto_value* v, corto_char* out, corto_int32 
 
 /* This function translates from a value-object to a valid C-string identifying a
  * part of the object that is being serialized. */
-static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char* out, corto_bool addMemberOperator) {
+static
+char* c_loadMemberId(
+    c_typeWalk_t* data,
+    corto_value* v,
+    char* out,
+    bool addMemberOperator)
+{
     corto_value* stack[CORTO_MAX_INHERITANCE_DEPTH];
-    corto_uint32 count;
+    uint32_t count;
     corto_value *ptr;
     corto_object o;
     corto_type thisType;
-    corto_bool objectDeref, derefMemberOperator;
+    bool objectDeref, derefMemberOperator;
 
     *out = '\0';
 
@@ -174,7 +191,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
         /* Element */
         case CORTO_ELEMENT: {
             corto_collection t;
-            corto_char arrayIndex[24];
+            char arrayIndex[24];
 
             t = corto_collection(corto_value_typeof(stack[count+1]));
 
@@ -199,7 +216,7 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 
             /* Use elementId's for non-array collections. */
             default: {
-                corto_char elementId[9]; /* One-million nested collections should be adequate in most cases. */
+                char elementId[9]; /* One-million nested collections should be adequate in most cases. */
 
                 if ((corto_value_typeof(stack[count])->kind == CORTO_COLLECTION) && (corto_collection(corto_value_typeof(stack[count]))->kind == CORTO_ARRAY)) {
                     sprintf(out, "(*%s)", c_loadElementId(stack[count], elementId, 0));
@@ -232,7 +249,11 @@ static corto_char* c_loadMemberId(c_typeWalk_t* data, corto_value* v, corto_char
 }
 
 /* Walk types */
-static int c_loadDeclareWalk(corto_object o, void* userData) {
+static
+int c_loadDeclareWalk(
+    corto_object o,
+    void* userData)
+{
     c_typeWalk_t* data;
     corto_id specifier, objectId, localId;
     corto_type t;
@@ -272,7 +293,11 @@ static int c_loadDeclareWalk(corto_object o, void* userData) {
 }
 
 /* Walk types for alias macro's */
-static int c_loadDeclareAliasWalk(corto_object o, void* userData) {
+static
+int c_loadDeclareAliasWalk(
+    corto_object o,
+    void* userData)
+{
     c_typeWalk_t* data;
     corto_id specifier, objectId, localId;
     corto_type t;
@@ -311,7 +336,10 @@ static int c_loadDeclareAliasWalk(corto_object o, void* userData) {
 }
 
 /* Open generator headerfile */
-static g_file c_loadHeaderFileOpen(g_generator g) {
+static
+g_file c_loadHeaderFileOpen(
+    g_generator g)
+{
     g_file result;
     corto_id headerFileName, path;
 
@@ -340,7 +368,11 @@ static g_file c_loadHeaderFileOpen(g_generator g) {
 }
 
 /* Close headerfile */
-static void c_loadHeaderFileClose(g_generator g, g_file file) {
+static
+void c_loadHeaderFileClose(
+    g_generator g,
+    g_file file)
+{
     CORTO_UNUSED(g);
 
     /* Print standard comments and includes */
@@ -352,10 +384,13 @@ static void c_loadHeaderFileClose(g_generator g, g_file file) {
 }
 
 /* Open generator sourcefile */
-static g_file c_loadSourceFileOpen(g_generator g) {
+static
+g_file c_loadSourceFileOpen(
+    g_generator g)
+{
     g_file result;
     corto_id fileName;
-    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     /* Create file */
     sprintf(fileName, "_load.%s", cpp ? "cpp" : "c");
@@ -407,12 +442,19 @@ error:
 }
 
 /* Write starting comment of variable definitions */
-static void c_sourceWriteVarDefStart(g_file file) {
+static
+void c_sourceWriteVarDefStart(
+    g_file file)
+{
     g_fileWrite(file, "/* Variable definitions */\n");
 }
 
 /* Write start of load-routine */
-static void c_sourceWriteLoadStart(g_generator g, g_file file) {
+static
+void c_sourceWriteLoadStart(
+    g_generator g,
+    g_file file)
+{
     g_fileWrite(file, "\n");
     g_fileWrite(file, "/* Load objects in object store. */\n");
     g_fileWrite(file, "int %s_load(void) {\n", corto_path(NULL, root_o, g_getPackage(g), "_"));
@@ -429,7 +471,11 @@ static void c_sourceWriteLoadStart(g_generator g, g_file file) {
 }
 
 /* Write end of load-routine */
-static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
+static
+void c_sourceWriteLoadEnd(
+    g_file file,
+    c_typeWalk_t *data)
+{
     g_fileWrite(file, "if (_a_) {\n");
     g_fileIndent(file);
     g_fileWrite(file, "corto_release(_a_);\n");
@@ -454,7 +500,11 @@ static void c_sourceWriteLoadEnd(g_file file, c_typeWalk_t *data) {
 }
 
 /* Print variable start */
-static void c_varPrintStart(corto_value* v, c_typeWalk_t* data) {
+static
+void c_varPrintStart(
+    corto_value* v,
+    c_typeWalk_t* data)
+{
     corto_id memberId;
     corto_type t;
 
@@ -469,7 +519,11 @@ static void c_varPrintStart(corto_value* v, c_typeWalk_t* data) {
 }
 
 /* Print variable end */
-static void c_varPrintEnd(corto_value* v, c_typeWalk_t* data) {
+static
+void c_varPrintEnd(
+    corto_value* v,
+    c_typeWalk_t* data)
+{
     corto_type t;
 
     /* Get member object */
@@ -481,7 +535,12 @@ static void c_varPrintEnd(corto_value* v, c_typeWalk_t* data) {
 }
 
 /* c_initPrimitive */
-static corto_int16 c_initPrimitive(corto_walk_opt* s, corto_value* v, void* userData) {
+static
+int16_t c_initPrimitive(
+    corto_walk_opt* s,
+    corto_value* v,
+    void* userData)
+{
     void* ptr;
     corto_type t;
     corto_string str;
@@ -498,7 +557,7 @@ static corto_int16 c_initPrimitive(corto_walk_opt* s, corto_value* v, void* user
     /* Treat booleans separately, the default convert translates booleans to 'true' and 'false' while
      * the language mapping of C TRUE and FALSE is. */
     if (corto_primitive(t)->kind == CORTO_BOOLEAN) {
-        if (*(corto_bool*)ptr) {
+        if (*(bool*)ptr) {
             str = corto_strdup("TRUE");
         } else {
             str = corto_strdup("FALSE");
@@ -507,10 +566,10 @@ static corto_int16 c_initPrimitive(corto_walk_opt* s, corto_value* v, void* user
         corto_id enumId;
 
         /* Convert constant-name to language id */
-        str = corto_strdup(c_constantId(data->g, corto_enum_constant(corto_enum(t), *(corto_uint32*)ptr), enumId));
+        str = corto_strdup(c_constantId(data->g, corto_enum_constant(corto_enum(t), *(uint32_t*)ptr), enumId));
     } else if (corto_primitive(t)->kind == CORTO_BITMASK) {
         str = corto_alloc(11);
-        sprintf(str, "0x%x", *(corto_uint32*)ptr);
+        sprintf(str, "0x%x", *(uint32_t*)ptr);
     } else if (corto_primitive(t)->kind == CORTO_TEXT) {
         corto_string v = *(corto_string*)ptr;
         if (v) {
@@ -523,7 +582,7 @@ static corto_int16 c_initPrimitive(corto_walk_opt* s, corto_value* v, void* user
             str = corto_strdup("NULL");
         }
     } else if (corto_primitive(t)->kind == CORTO_CHARACTER) {
-        corto_char v = *(corto_char*)ptr;
+        char v = *(char*)ptr;
         if (v) {
             char buff[3];
             chresc(buff, v, '\'')[0] = '\0';
@@ -555,13 +614,20 @@ error:
 }
 
 /* c_initReference */
-static corto_int16 c_initReference(corto_walk_opt* s, corto_value* v, void* userData) {
+static
+int16_t c_initReference(
+    corto_walk_opt* s,
+    corto_value* v,
+    void* userData)
+{
     corto_object *optr, o;
     c_typeWalk_t* data;
     CORTO_UNUSED(s);
 
     data = userData;
     optr = corto_value_ptrof(v);
+
+    corto_assert(optr != NULL, "walk value yields NULL ptr");
 
     c_varPrintStart(v, userData);
 
@@ -581,11 +647,46 @@ static corto_int16 c_initReference(corto_walk_opt* s, corto_value* v, void* user
     return 0;
 }
 
-/* c_initElement */
-static corto_int16 c_initElement(corto_walk_opt* s, corto_value* v, void* userData) {
+static
+int16_t c_initMember(
+    corto_walk_opt* s,
+    corto_value* v,
+    void* userData)
+{
+    corto_member m = v->is.member.t;
+    c_typeWalk_t* data = userData;
+
+    if (m->modifiers & CORTO_OPTIONAL) {
+        void *ptr = corto_value_ptrof(v);
+        corto_id memberId;
+        if (*(void**)ptr == NULL) {
+            /* If no value is set for optional value, assign NULL */
+            g_fileWrite(data->source, "%s = NULL;\n",
+                    c_loadMemberId(data, v, memberId, FALSE));
+            return 0;
+        } else {
+            /* If optional value is set, allocate memory */
+            corto_id varId;
+            c_varId(data->g, m->type, varId);
+            g_fileWrite(data->source, "%s = corto_ptr_new(%s);\n",
+                c_loadMemberId(data, v, memberId, FALSE), varId);
+            corto_value_ptrset(v, *(void**)ptr);
+            return corto_walk_value(s, v, data);
+        }
+    } else {
+        return corto_walk_value(s, v, data);
+    }
+}
+
+static
+int16_t c_initElement(
+    corto_walk_opt* s,
+    corto_value* v,
+    void* userData)
+{
     c_typeWalk_t* data = userData;
     corto_collection t = corto_collection(corto_value_typeof(v->parent));
-    corto_bool requiresAlloc = corto_collection_requiresAlloc(t->elementType);
+    bool requiresAlloc = corto_collection_requiresAlloc(t->elementType);
 
     /* Allocate space for element */
     switch (t->kind) {
@@ -635,13 +736,18 @@ error:
 }
 
 /* c_initCollection */
-static corto_int16 c_initCollection(corto_walk_opt* s, corto_value* v, void* userData) {
+static
+int16_t c_initCollection(
+    corto_walk_opt* s,
+    corto_value* v,
+    void* userData)
+{
     corto_collection t;
     c_typeWalk_t* data;
     corto_id memberId;
     int result;
     void* ptr;
-    corto_uint32 size = 0;
+    uint32_t size = 0;
 
     ptr = corto_value_ptrof(v);
 
@@ -653,10 +759,10 @@ static corto_int16 c_initCollection(corto_walk_opt* s, corto_value* v, void* use
         size = t->max;
         break;
     case CORTO_SEQUENCE: {
-        corto_uint32 length;
+        uint32_t length;
         corto_id specifier, postfix;
 
-        length = *(corto_uint32*)ptr;
+        length = *(uint32_t*)ptr;
         size = length;
 
         /* Set length of sequence */
@@ -685,6 +791,12 @@ static corto_int16 c_initCollection(corto_walk_opt* s, corto_value* v, void* use
     }
     case CORTO_LIST:
         /* Lists are created by initializer */
+        g_fileWrite(data->source, "if (!%s)\n",
+                c_loadMemberId(data, v, memberId, FALSE));
+        g_fileIndent(data->source);
+        g_fileWrite(data->source, "%s = corto_ll_new();\n",
+                c_loadMemberId(data, v, memberId, FALSE));
+        g_fileDedent(data->source);
         size = corto_ll_count(*(corto_ll*)ptr);
         break;
     case CORTO_MAP: {
@@ -744,7 +856,12 @@ static corto_int16 c_initCollection(corto_walk_opt* s, corto_value* v, void* use
 }
 
 /* Write forward-declaration to interface function, return name. */
-static int c_loadCFunction(corto_function o, c_typeWalk_t* data, corto_id name) {
+static
+int c_loadCFunction(
+    corto_function o,
+    c_typeWalk_t* data,
+    corto_id name)
+{
 
     /* Print name */
     g_fullOid(data->g, o, name);
@@ -758,7 +875,9 @@ static int c_loadCFunction(corto_function o, c_typeWalk_t* data, corto_id name) 
 }
 
 /* Create serializer that initializes object values */
-static corto_walk_opt c_initSerializer(void) {
+static
+corto_walk_opt c_initSerializer(void)
+{
     corto_walk_opt s;
 
     corto_walk_init(&s);
@@ -766,10 +885,11 @@ static corto_walk_opt c_initSerializer(void) {
     s.access = CORTO_LOCAL;
     s.accessKind = CORTO_NOT;
     s.aliasAction = CORTO_WALK_ALIAS_IGNORE;
-    s.optionalAction = CORTO_WALK_OPTIONAL_ALWAYS;
+    s.optionalAction = CORTO_WALK_OPTIONAL_PASSTHROUGH;
     s.traceKind = CORTO_WALK_TRACE_ON_FAIL;
     s.program[CORTO_PRIMITIVE] = c_initPrimitive;
     s.program[CORTO_COLLECTION] = c_initCollection;
+    s.metaprogram[CORTO_MEMBER] = c_initMember;
     s.metaprogram[CORTO_ELEMENT] = c_initElement;
     s.reference = c_initReference;
 
@@ -777,7 +897,11 @@ static corto_walk_opt c_initSerializer(void) {
 }
 
 /* Declare object */
-static int c_loadDeclare(corto_object o, void* userData) {
+static
+int c_loadDeclare(
+    corto_object o,
+    void* userData)
+{
     c_typeWalk_t* data;
     corto_id varId, parentId, typeId, typeCast;
     char *escapedName = NULL;
@@ -861,7 +985,11 @@ static int c_loadDeclare(corto_object o, void* userData) {
 }
 
 /* Forward declare procedures */
-static corto_int16 c_loadFwdDeclProcedure(corto_function f, c_typeWalk_t* data) {
+static
+int16_t c_loadFwdDeclProcedure(
+    corto_function f,
+    c_typeWalk_t* data)
+{
     g_fileWrite(data->source, "\n#ifdef __cplusplus\n");
     g_fileWrite(data->source, "extern \"C\"\n");
     g_fileWrite(data->source, "#endif\n");
@@ -874,7 +1002,11 @@ static corto_int16 c_loadFwdDeclProcedure(corto_function f, c_typeWalk_t* data) 
 
     return 0;
 }
-static int c_walkProcedures(corto_object o, void *userData) {
+static
+int c_walkProcedures(
+    corto_object o,
+    void *userData)
+{
     if (corto_instanceof(corto_function_o, o)) {
         c_loadFwdDeclProcedure(o, userData);
     }
@@ -882,7 +1014,11 @@ static int c_walkProcedures(corto_object o, void *userData) {
 }
 
 /* Define object */
-static int c_loadDefine(corto_object o, void* userData) {
+static
+int c_loadDefine(
+    corto_object o,
+    void* userData)
+{
     corto_walk_opt s;
     c_typeWalk_t* data = userData;
 
