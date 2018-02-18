@@ -1,5 +1,5 @@
 
-#include <binding/binding.h>
+#include <driver/gen/c/common/common.h>
 
 typedef struct c_binding_t {
     g_generator g;
