@@ -255,7 +255,7 @@ int c_loadDeclareWalk(
     void* userData)
 {
     c_typeWalk_t* data;
-    corto_id specifier, objectId, localId;
+    corto_id specifier, objectId;
     corto_type t;
     corto_object parent;
 
@@ -279,58 +279,14 @@ int c_loadDeclareWalk(
     }
 
     /* Get C typespecifier */
-    c_typeret(data->g, t, C_ByReference, specifier);
+    c_typeret(data->g, t, C_ByReference, false, specifier);
     c_varId(data->g, o, objectId);
-    c_varLocalId(data->g, o, localId);
 
     c_writeExport(data->g, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
     g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);
     g_fileWrite(data->source, "%s %s;\n", specifier, objectId);
-
-    return 1;
-}
-
-/* Walk types for alias macro's */
-static
-int c_loadDeclareAliasWalk(
-    corto_object o,
-    void* userData)
-{
-    c_typeWalk_t* data;
-    corto_id specifier, objectId, localId;
-    corto_type t;
-    corto_object parent;
-
-    data = userData;
-    t = corto_typeof(o);
-
-    if (!g_mustParse(data->g, o)) {
-        return 1;
-    }
-
-    if (!corto_check_attr(o, CORTO_ATTR_NAMED) &&
-        !corto_instanceof(corto_type_o, o)) {
-        return 1;
-    }
-
-    if (corto_check_attr(o, CORTO_ATTR_NAMED)) {
-        parent = corto_parentof(o);
-        if (parent && (parent != root_o) && (!g_mustParse(data->g, parent))) {
-            c_loadDeclareAliasWalk(corto_parentof(o), userData);
-        }
-    }
-
-    /* Get C typespecifier */
-    c_typeret(data->g, t, C_ByReference, specifier);
-    c_varId(data->g, o, objectId);
-    c_varLocalId(data->g, o, localId);
-
-    /* Write alias define */
-    if (strcmp(objectId, localId)) {
-        g_fileWrite(data->header, "#define %s %s\n", localId, objectId);
-    }
 
     return 1;
 }
@@ -352,9 +308,7 @@ g_file c_loadHeaderFileOpen(
 
     /* Print standard comments and includes */
     g_fileWrite(result, "/* %s\n", headerFileName);
-    g_fileWrite(result, " *\n");
-    g_fileWrite(result, " * This file contains variables for objects/type definitions in the package.\n");
-    g_fileWrite(result, " * You should not manually modify the contents of this file.\n");
+    g_fileWrite(result, " * This file is generated. Do not modify the contents of this file.\n");
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_LOAD_H\n", path);
     g_fileWrite(result, "#define %s_LOAD_H\n\n", path);
@@ -1045,11 +999,19 @@ int c_loadDefine(
     /* If object is a procedure, set function implementation */
     if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
         corto_id name;
-        g_fileWrite(data->source, "\n");
-        if (!corto_function(o)->impl) {
-            g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
-            c_loadCFunction(o, data, name);
-            g_fileWrite(data->source, "corto_function(%s)->fptr = (corto_word)_%s;\n", varId, name);
+        bool isInterface = false;
+        if (corto_instanceof(corto_method_o, o)) {
+            isInterface = corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE;
+        }
+        if (!isInterface) {
+            g_fileWrite(data->source, "\n");
+            if (!corto_function(o)->impl) {
+                g_fileWrite(data->source, "corto_function(%s)->kind = CORTO_PROCEDURE_CDECL;\n", varId);
+                c_loadCFunction(o, data, name);
+                g_fileWrite(data->source, "corto_function(%s)->fptr = (corto_word)_%s;\n", varId, name);
+            }
+        } else {
+            /* Methods in interface types have no implementation */
         }
     }
 
@@ -1114,13 +1076,6 @@ int c_loadDefine(
 int genmain(g_generator g) {
     c_typeWalk_t walkData;
 
-    /* Default prefixes for corto namespaces */
-    g_parse(g, corto_o, FALSE, FALSE, "");
-    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_vstore_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
-
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;
     walkData.header = c_loadHeaderFileOpen(g);
@@ -1148,15 +1103,6 @@ int genmain(g_generator g) {
     if (corto_genDepWalk(g, c_loadDeclareWalk, NULL, &walkData)) {
         goto error;
     }
-
-    /* Write alias definitions */
-    corto_id building;
-    c_buildingMacro(g, building);
-    g_fileWrite(walkData.header, "#if !defined(__cplusplus) && defined(%s)\n", building);
-    if (corto_genDepWalk(g, c_loadDeclareAliasWalk, NULL, &walkData)) {
-        goto error;
-    }
-    g_fileWrite(walkData.header, "#endif\n", building);
 
     /* Create load-routine */
     c_sourceWriteLoadStart(g, walkData.source);

@@ -16,10 +16,10 @@ typedef struct c_interfaceExisting {
     corto_string src;
 } c_interfaceExisting;
 
-typedef struct c_typeWalk_t c_typeWalk_t;
-struct c_typeWalk_t {
+typedef struct c_interfaceWalk_t c_interfaceWalk_t;
+struct c_interfaceWalk_t {
     g_generator g;
-    int16_t(*walkAction)(corto_object,c_typeWalk_t*);
+    int16_t(*walkAction)(corto_object,c_interfaceWalk_t*);
     cdiff_file source;
     g_file wrapper;
     g_file mainHeader;
@@ -36,7 +36,7 @@ struct c_typeWalk_t {
 static
 cdiff_file c_interfaceOpenFile(
     corto_string name,
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     corto_id filepath;
     char *filename = g_filePath(data->g, filepath, "%s", name);
@@ -53,7 +53,7 @@ int c_interfaceParamNameSource(
     corto_parameter *o,
     void *userData)
 {
-    c_typeWalk_t* data = userData;
+    c_interfaceWalk_t* data = userData;
     corto_id name;
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ", ");
@@ -64,26 +64,11 @@ int c_interfaceParamNameSource(
 }
 
 static
-int c_interfaceParamNameHeader(
-    corto_parameter *o,
-    void *userData)
-{
-    c_typeWalk_t* data = userData;
-    corto_id name;
-    if (data->firstComma) {
-        g_fileWrite(data->interfaceHeader, ", ");
-    }
-    g_fileWrite(data->interfaceHeader, "%s", c_paramName(o->name, name));
-    data->firstComma++;
-    return 1;
-}
-
-static
 int c_interfaceParamTypeSource(
     corto_parameter *o,
     void *userData)
 {
-    c_typeWalk_t* data = userData;
+    c_interfaceWalk_t* data = userData;
     corto_id type;
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ", ");
@@ -91,152 +76,6 @@ int c_interfaceParamTypeSource(
     g_fileWrite(data->wrapper, "%s", c_paramType(data->g, o, type));
     data->firstComma++;
     return 1;
-}
-
-static
-int c_interfaceParamTypeHeader(
-    corto_parameter *o,
-    void *userData)
-{
-    c_typeWalk_t* data = userData;
-    corto_id type;
-    if (data->firstComma) {
-        g_fileWrite(data->interfaceHeader, ", ");
-    }
-    g_fileWrite(data->interfaceHeader, "%s", c_paramType(data->g, o, type));
-    data->firstComma++;
-    return 1;
-}
-
-static
-int c_interfaceParamCastDef(
-    corto_parameter *o,
-    void *userData)
-{
-    c_typeWalk_t* data = userData;
-    if (*o->name != '$') {
-        corto_id name;
-        if (data->firstComma) {
-            g_fileWrite(data->interfaceHeader, ", ");
-        }
-        g_fileWrite(data->interfaceHeader, "%s", c_paramName(o->name, name));
-        data->firstComma++;
-    }
-    return 1;
-}
-
-static
-bool c_interfaceParamRequiresCast(
-    corto_type t,
-    bool isReference,
-    corto_inout inout)
-{
-    if ((isReference || t->reference) &&
-        (t->kind != CORTO_VOID) && (t->kind != CORTO_ANY) &&
-        (corto_check_attr(t, CORTO_ATTR_NAMED)) &&
-        (!inout))
-    {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-static
-int c_interfaceParamCastWalk(
-    corto_parameter *o,
-    void *userData)
-{
-    c_typeWalk_t* data = userData;
-    corto_id specifier, postfix, name;
-
-    if (data->firstComma) {
-        g_fileWrite(data->interfaceHeader, ", ");
-    }
-
-    if (c_specifierId(data->g, o->type, specifier, NULL, postfix)) {
-        goto error;
-    }
-
-    /* If parameter is a meta argument, stringify it */
-    if (*o->name == '$') {
-        if (!strcmp(o->name, "$__line")) {
-            g_fileWrite(data->interfaceHeader, "__LINE__");
-        } else if (!strcmp(o->name, "$__file")) {
-            g_fileWrite(data->interfaceHeader, "__FILE__");
-        } else {
-            g_fileWrite(data->interfaceHeader, "#%s", o->name + 1);
-        }
-    } else {
-        if (c_interfaceParamRequiresCast(o->type, o->passByReference, o->inout)) {
-            g_fileWrite(data->interfaceHeader, "%s(%s)", specifier, o->name);
-        } else {
-            g_fileWrite(data->interfaceHeader, "%s", c_paramName(o->name, name));
-        }
-    }
-
-    data->firstComma = TRUE;
-
-    return 1;
-error:
-    return 0;
-}
-
-static
-int c_interfaceCastMacro(
-    corto_function o,
-    char *macroName,
-    char *functionName,
-    char *prefix,
-    c_typeWalk_t *data)
-{
-    data->firstComma = FALSE;
-
-    if (prefix) {
-        g_fileWrite(data->interfaceHeader, "#define %s%s(", prefix, macroName);
-    } else {
-        g_fileWrite(data->interfaceHeader, "#define %s(", macroName);
-    }
-
-    if (c_procedureHasThis(o)) {
-        g_fileWrite(data->interfaceHeader, "_this");
-        data->firstComma = TRUE;
-    }
-
-    if (!c_paramWalk(o, c_interfaceParamCastDef, data)) {
-        goto error;
-    }
-
-    g_fileWrite(data->interfaceHeader, ") _%s(", functionName);
-
-    if (c_procedureHasThis(o)) {
-        corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
-        if (!thisType || thisType->reference) {
-            corto_id classId;
-            corto_type parentType = corto_parentof(o);
-            g_fullOid(data->g, parentType, classId);
-            if (parentType->reference) {
-                g_fileWrite(data->interfaceHeader, "%s(_this)", classId);
-            } else {
-                g_fileWrite(data->interfaceHeader, "_this", classId);
-            }
-        } else {
-            g_fileWrite(data->interfaceHeader, "_this");
-        }
-        data->firstComma = TRUE;
-    } else {
-        data->firstComma = FALSE;
-    }
-
-    if (!c_paramWalk(o, c_interfaceParamCastWalk, data)) {
-        goto error;
-    }
-
-    g_fileWrite(data->interfaceHeader, ")\n");
-
-    return 0;
-error:
-    return -1;
 }
 
 static
@@ -296,83 +135,29 @@ error:
 static
 int c_interfaceGenerateVirtual(
     corto_method o,
-    c_typeWalk_t* data)
+    c_interfaceWalk_t* data)
 {
     corto_id id, returnTypeId, typeVarId, methodVarId, typeId;
     bool returnsValue;
     char *nameString = NULL;
     bool isInterface = corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE;
 
-    g_fullOid(data->g, o, id);
-    g_fullOid(data->g, corto_parentof(o), typeId);
-    c_varId(data->g, o, methodVarId);
-    c_varId(data->g, corto_parentof(o), typeVarId);
+    if (isInterface) {
+        g_fullOid(data->g, o, id);
+        g_fullOid(data->g, corto_parentof(o), typeId);
+        c_varId(data->g, o, methodVarId);
+        c_varId(data->g, corto_parentof(o), typeVarId);
 
-    if (((corto_function)o)->returnType &&
-        ((corto_function(o)->returnType->kind != CORTO_VOID) ||
-         corto_function(o)->returnType->reference))
-    {
-        returnsValue = TRUE;
-        c_typeret(data->g, corto_function(o)->returnType, C_ByValue, returnTypeId);
-    } else {
-        returnsValue = FALSE;
-        strcpy(returnTypeId, "void");
-    }
-
-    if (!isInterface) {
-        g_fileWrite(data->interfaceHeader, "\n/* %s %s(%s", returnTypeId, id, typeId);
-        data->firstComma = 1;
-        if (!c_paramWalk(o, c_interfaceParamTypeHeader, data)) {
-            goto error;
-        }
-        g_fileWrite(data->interfaceHeader, ") */\n", returnTypeId, id);
-
-        g_fileWrite(data->interfaceHeader, "#define %s(_this", id);
-        data->firstComma = 1;
-        if (!c_paramWalk(o, c_interfaceParamNameHeader, data)) {
-            goto error;
-        }
-
-        corto_id returnTypeCastId;
-        c_typeret(data->g, corto_function(o)->returnType, C_Cast, returnTypeCastId);
-        g_fileWrite(data->interfaceHeader, ") ( \\\n");
-        g_fileWrite(data->interfaceHeader, "    ((corto_function)%s)->kind == CORTO_PROCEDURE_CDECL \\\n", methodVarId);
-        g_fileWrite(data->interfaceHeader, "    ? ((%s (*)(corto_object", returnTypeCastId);
-        if (!c_paramWalk(o, c_interfaceParamTypeHeader, data)) {
-            goto error;
-        }
-        g_fileWrite(
-            data->interfaceHeader,
-            "))((corto_function)((corto_interface)corto_typeof(_this))->methods.buffer[((corto_method)%s)->index - 1])->fptr)(%s(_this)",
-            methodVarId,
-            typeId);
-        if (!c_paramWalk(o, c_interfaceParamCastWalk, data)) {
-            goto error;
-        }
-        g_fileWrite(data->interfaceHeader, ") \\\n");
-        if (returnsValue) {
-            g_fileWrite(
-                data->interfaceHeader,
-                "    : *(%s*)corto_invoke(((corto_interface)corto_typeof(_this))->methods.buffer[((corto_method)%s)->index - 1], alloca(sizeof(%s)), %s(_this)",
-                returnTypeId,
-                methodVarId,
-                returnTypeId,
-                typeId);
+        if (((corto_function)o)->returnType &&
+            ((corto_function(o)->returnType->kind != CORTO_VOID) ||
+             corto_function(o)->returnType->reference))
+        {
+            returnsValue = TRUE;
+            c_typeret(data->g, corto_function(o)->returnType, C_ByValue, false, returnTypeId);
         } else {
-            g_fileWrite(
-                data->interfaceHeader,
-                "    : (void)corto_invoke(((corto_interface)corto_typeof(_this))->methods.buffer[((corto_method)%s)->index - 1], NULL, %s(_this)",
-                methodVarId,
-                typeId);
+            returnsValue = FALSE;
+            strcpy(returnTypeId, "void");
         }
-        data->firstComma = 3;
-        if (!c_paramWalk(o, c_interfaceParamCastWalk, data)) {
-            goto error;
-        }
-        g_fileWrite(data->interfaceHeader, ") \\\n");
-        g_fileWrite(data->interfaceHeader, "    )\n");
-
-    } else {
 
         /* Create a wrapper file if it was not already created */
         if (!data->wrapper) {
@@ -382,18 +167,23 @@ int c_interfaceGenerateVirtual(
             }
         }
 
-        /* Write casting macro to header */
-        g_fileWrite(data->interfaceHeader, "\n");
-        c_interfaceCastMacro(corto_function(o), id, id, NULL, data);
-
-        c_writeExport(data->g, data->interfaceHeader);
-        g_fileWrite(data->interfaceHeader, "\n");
-
         corto_buffer declBuffer = CORTO_BUFFER_INIT;
-        if (c_decl(data->g, &declBuffer, corto_function(o), TRUE, TRUE /* never write 'this' in public header */, FALSE)) {
+        if (c_decl(
+            data->g,
+            &declBuffer,
+            corto_function(o),
+            TRUE,
+            TRUE /* never write 'this' in public header */,
+            FALSE))
+        {
             goto error;
         }
+
         char *decl = corto_buffer_str(&declBuffer);
+
+        /* Write casting macro to header */
+        c_writeExport(data->g, data->interfaceHeader);
+        g_fileWrite(data->interfaceHeader, "\n");
         g_fileWrite(data->interfaceHeader, "%s;\n", decl);
         g_fileWrite(data->wrapper, "%s\n", decl);
         free(decl);
@@ -492,7 +282,7 @@ int c_interfaceProcedure(
     corto_object o,
     void *userData)
 {
-    c_typeWalk_t *data = userData;
+    c_interfaceWalk_t *data = userData;
     bool defined = FALSE;
 
     /* Only generate code for procedures */
@@ -501,104 +291,111 @@ int c_interfaceProcedure(
         corto_type returnType = corto_function(o)->returnType;
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
+        bool isInterface = false;
+        if (corto_instanceof(corto_method_o, o)) {
+            isInterface = corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE;
+        }
 
-        corto_fullpath(fullname, o);
-        c_functionName(data->g, o, functionName);
+        g_fileWrite(data->interfaceHeader, "\n");
 
-        defined = corto_check_state(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
+        if (!isInterface) {
+            corto_fullpath(fullname, o);
+            c_short_id(data->g, functionName, o);
 
-        /* Check whether generation of stubs must be forced */
-        if (doStubs) {
-            if (!strcmp(doStubs, "true")) {
-                defined = TRUE;
-            } else if(!strcmp(doStubs, "false")) {
-                defined = FALSE;
+            defined = corto_check_state(o, CORTO_VALID) && (corto_function(o)->kind != CORTO_PROCEDURE_STUB);
+
+            /* Check whether generation of stubs must be forced */
+            if (doStubs) {
+                if (!strcmp(doStubs, "true")) {
+                    defined = TRUE;
+                } else if(!strcmp(doStubs, "false")) {
+                    defined = FALSE;
+                }
             }
-        }
 
-        /* Write forward declaration */
-        g_fileWrite(data->interfaceHeader, "\n");
-        c_writeExport(data->g, data->interfaceHeader);
-        g_fileWrite(data->interfaceHeader, "\n");
+            /* Write forward declaration */
+            c_writeExport(data->g, data->interfaceHeader);
+            g_fileWrite(data->interfaceHeader, "\n");
 
-        corto_buffer declBuffer = CORTO_BUFFER_INIT;
-        if (c_decl(data->g, &declBuffer, corto_function(o), FALSE, TRUE /* never use 'this' in public headers */, FALSE)) {
-            goto error;
-        }
-        char *decl = corto_buffer_str(&declBuffer);
-        g_fileWrite(data->interfaceHeader, "%s;\n", decl);
-        free(decl);
+            corto_buffer declBuffer = CORTO_BUFFER_INIT;
+            if (c_decl(data->g, &declBuffer, corto_function(o), FALSE, TRUE /* never use 'this' in public headers */, FALSE)) {
+                goto error;
+            }
+            char *decl = corto_buffer_str(&declBuffer);
+            g_fileWrite(data->interfaceHeader, "%s;\n", decl);
+            free(decl);
 
-        /* Write to sourcefile */
-        cdiff_file_write(data->source, "\n");
-
-        /* Open element for function */
-        cdiff_file_elemBegin(data->source, functionName);
-
-        /* Write header for function */
-        if (c_decl(data->g, &declBuffer, corto_function(o), FALSE, cpp, TRUE)) {
-            goto error;
-        }
-        decl = corto_buffer_str(&declBuffer);
-
-        cdiff_file_headerBegin(data->source);
-        cdiff_file_write(data->source, "%s\n{", decl);
-        cdiff_file_headerEnd(data->source);
-        free(decl);
-
-        /* Write body for function if this is first time function is written */
-        if (!cdiff_file_bodyBegin(data->source)) {
+            /* Write to sourcefile */
             cdiff_file_write(data->source, "\n");
-            cdiff_file_indent(data->source);
-            cdiff_file_write(data->source, "/* Insert implementation */\n");
-            cdiff_file_dedent(data->source);
 
-            /* Lookup if there is an existing implementation. */
-            if (defined) {
-                corto_id id;
-                corto_uint32 i;
-                corto_parameter *p;
+            /* Open element for function */
+            cdiff_file_elemBegin(data->source, functionName);
 
-                if ((returnType->kind != CORTO_VOID) || (returnType->reference)) {
-                    corto_id specifier;
-                    c_typeret(data->g, returnType, C_ByValue, specifier);
-                    cdiff_file_write(data->source, "%s _result;\n", specifier);
-                } else {
-                    returnType = NULL;
-                }
+            /* Write header for function */
+            if (c_decl(data->g, &declBuffer, corto_function(o), FALSE, cpp, TRUE)) {
+                goto error;
+            }
+            decl = corto_buffer_str(&declBuffer);
 
-                /* If function is already defined, it is already implemented. The generator will generate a stub instead. */
-                cdiff_file_write(data->source, "corto_invoke(corto_function(%s_o)", g_fullOid(data->g, o, id));
-                if (returnType) {
-                    cdiff_file_write(data->source, ",&_result");
-                } else {
-                    cdiff_file_write(data->source, ",NULL");
-                }
-                if (corto_class_instanceof(corto_interface_o, corto_parentof(o))) {
-                    if (corto_procedure(corto_typeof(o))->hasThis) {
-                        if (!cpp) {
-                            cdiff_file_write(data->source, ",this");
-                        } else {
-                            cdiff_file_write(data->source, ",_this");
+            cdiff_file_headerBegin(data->source);
+            cdiff_file_write(data->source, "%s\n{", decl);
+            cdiff_file_headerEnd(data->source);
+            free(decl);
+
+            /* Write body for function if this is first time function is written */
+            if (!cdiff_file_bodyBegin(data->source)) {
+                cdiff_file_write(data->source, "\n");
+                cdiff_file_indent(data->source);
+                cdiff_file_write(data->source, "/* Insert implementation */\n");
+                cdiff_file_dedent(data->source);
+
+                /* Lookup if there is an existing implementation. */
+                if (defined) {
+                    corto_id id;
+                    corto_uint32 i;
+                    corto_parameter *p;
+
+                    if ((returnType->kind != CORTO_VOID) || (returnType->reference)) {
+                        corto_id specifier;
+                        c_typeret(data->g, returnType, C_ByValue, false, specifier);
+                        cdiff_file_write(data->source, "%s _result;\n", specifier);
+                    } else {
+                        returnType = NULL;
+                    }
+
+                    /* If function is already defined, it is already implemented. The generator will generate a stub instead. */
+                    cdiff_file_write(data->source, "corto_invoke(corto_function(%s_o)", g_fullOid(data->g, o, id));
+                    if (returnType) {
+                        cdiff_file_write(data->source, ",&_result");
+                    } else {
+                        cdiff_file_write(data->source, ",NULL");
+                    }
+                    if (corto_class_instanceof(corto_interface_o, corto_parentof(o))) {
+                        if (corto_procedure(corto_typeof(o))->hasThis) {
+                            if (!cpp) {
+                                cdiff_file_write(data->source, ",this");
+                            } else {
+                                cdiff_file_write(data->source, ",_this");
+                            }
                         }
                     }
+                    for (i=0; i<corto_function(o)->parameters.length; i++) {
+                        p = &corto_function(o)->parameters.buffer[i];
+                        cdiff_file_write(data->source, ",%s", g_id(data->g, p->name, id));
+                    }
+                    cdiff_file_write(data->source, ");\n");
+                    if (returnType) {
+                        cdiff_file_write(data->source, "return _result;\n");
+                    }
+                    cdiff_file_dedent(data->source);
                 }
-                for (i=0; i<corto_function(o)->parameters.length; i++) {
-                    p = &corto_function(o)->parameters.buffer[i];
-                    cdiff_file_write(data->source, ",%s", g_id(data->g, p->name, id));
-                }
-                cdiff_file_write(data->source, ");\n");
-                if (returnType) {
-                    cdiff_file_write(data->source, "return _result;\n");
-                }
-                cdiff_file_dedent(data->source);
+
+                cdiff_file_write(data->source, "}\n");
+                cdiff_file_bodyEnd(data->source);
             }
 
-            cdiff_file_write(data->source, "}\n");
-            cdiff_file_bodyEnd(data->source);
+            cdiff_file_elemEnd(data->source);
         }
-
-        cdiff_file_elemEnd(data->source);
 
         if (corto_function(o)->overridable) {
             c_interfaceGenerateVirtual(o, data);
@@ -608,80 +405,6 @@ int c_interfaceProcedure(
     return 1;
 error:
     return 0;
-}
-
-/* Generate procedure macro's */
-static
-int c_interfaceProcedureCastMacro(
-    corto_object o,
-    void *userData)
-{
-    c_typeWalk_t *data = userData;
-    corto_id functionName;
-
-    if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-        c_functionName(data->g, o, functionName);
-        c_interfaceCastMacro(o, functionName, functionName, NULL, data);
-    }
-
-    return 1;
-}
-
-/* Generate procedure macro's */
-static
-int c_interfaceProcedureSafeCastMacro(
-    corto_object o,
-    void *userData)
-{
-    c_typeWalk_t *data = userData;
-    corto_id functionName;
-
-    if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-        c_functionName(data->g, o, functionName);
-        c_interfaceCastMacro(o, functionName, functionName, "safe_", data);
-    }
-
-    return 1;
-}
-
-/* Generate shorthand macro's */
-static
-int c_interfaceProcedureShorthandMacro(
-    corto_object o,
-    void *userData)
-{
-    c_typeWalk_t *data = userData;
-    corto_id functionName;
-
-    if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-        c_functionName(data->g, o, functionName);
-        if (strcmp(g_getAttribute(data->g, "bootstrap"), "true")) {
-            corto_id localName;
-            c_functionLocalName(data->g, o, localName);
-            if (strcmp(functionName, localName)) {
-                c_interfaceCastMacro(o, localName, functionName, NULL, data);
-            }
-        }
-    }
-
-    return 1;
-}
-
-/* Generate procedure macro's */
-static
-int c_interfaceProcedureAliasMacro(
-    corto_object o,
-    void *userData)
-{
-    c_typeWalk_t *data = userData;
-    corto_id functionName;
-
-    if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
-        c_functionName(data->g, o, functionName);
-        g_fileWrite(data->interfaceHeader, "#define %s _%s\n", functionName, functionName);
-    }
-
-    return 1;
 }
 
 /* Check if there are procedures in the scope of an object. */
@@ -712,7 +435,7 @@ corto_int16 c_interfaceHeaderWrite(
     corto_string name,
     corto_string headerFileName,
     bool mainHeader,
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     bool local = !strcmp(g_getAttribute(g, "local"), "true");
@@ -729,32 +452,40 @@ corto_int16 c_interfaceHeaderWrite(
     for (ptr = path; (ch = *ptr); ptr++) if (ch == '/') *ptr = '_';
 
     g_fileWrite(result, "/* %s\n", headerFileName);
-    g_fileWrite(result, " *\n");
     if (mainHeader) {
         g_fileWrite(result, " * This is the main package file. Include this file in other projects.\n");
         g_fileWrite(result, " * Only modify inside the header-end and body-end sections.\n");
     } else {
-        g_fileWrite(result, " * This file contains generated package function and method declarations.\n");
-        g_fileWrite(result, " * You should not manually modify the contents of this file.\n");
+        g_fileWrite(result, " * This file is generated. Do not modify the contents of this file.\n");
     }
 
     g_fileWrite(result, " */\n\n");
     g_fileWrite(result, "#ifndef %s_H\n", path);
-    g_fileWrite(result, "#define %s_H\n\n", path);
+    g_fileWrite(result, "#define %s_H\n", path);
+
+    int header_count = 0;
 
     if (bootstrap) {
+        g_fileWrite(result, "\n");
         g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
+        header_count ++;
     } else if (mainHeader) {
+        g_fileWrite(result, "\n");
         if (o && (o != corto_o)) {
             /* Do not include corto.h in headers of builtin packages */
             c_includeFrom(g, result, corto_o, "corto.h");
+            header_count ++;
         }
         c_includeFrom(g, result, g_getPackage(g), "_project.h");
+        header_count ++;
     }
 
     if (mainHeader) {
-        c_includeDependencies(data->g, result, NULL);
+        if (c_includeDependencies(data->g, result, NULL) || header_count) {
+            g_fileWrite(result, "\n");
+        }
     }
+
     if (error) {
         goto error;
     }
@@ -762,7 +493,6 @@ corto_int16 c_interfaceHeaderWrite(
     /* If a header exists, write it */
     if (mainHeader) {
         corto_string snippet;
-        g_fileWrite(result, "\n");
         if ((snippet = g_fileLookupHeader(result, ""))) {
             g_fileWrite(result, "/* $header()");
             g_fileWrite(result, "%s", snippet);
@@ -786,6 +516,7 @@ corto_int16 c_interfaceHeaderWrite(
             c_includeFrom(g, result, from, "_type.h");
             c_includeFrom(g, result, from, "_interface.h");
             c_includeFrom(g, result, from, "_load.h");
+            c_includeFrom(g, result, from, "_binding.h");
         }
 
         if (mainHeader && !bootstrap) {
@@ -829,7 +560,7 @@ static
 void c_interfaceHeaderFileClose(
     g_file file,
     bool mainHeader,
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     CORTO_UNUSED(data);
 
@@ -849,7 +580,7 @@ static
 cdiff_file c_interfaceSourceFileOpen(
     corto_object o,
     corto_string name,
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     cdiff_file result;
     corto_id fileName;
@@ -882,7 +613,7 @@ static
 corto_int16 c_interfaceWriteMain(
     cdiff_file source,
     corto_string id,
-    c_typeWalk_t* data)
+    c_interfaceWalk_t* data)
 {
     CORTO_UNUSED(data);
     bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
@@ -919,7 +650,7 @@ corto_int16 c_interfaceWriteMain(
 static
 corto_int16 c_interfaceObject(
     corto_object o,
-    c_typeWalk_t* data)
+    c_interfaceWalk_t* data)
 {
     bool isBootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
     int hasProcedures = !corto_scope_walk(o, c_interfaceCheckProcedures, NULL);
@@ -931,10 +662,12 @@ corto_int16 c_interfaceObject(
         goto error;
     }
 
-    g_fileWrite(
-        data->interfaceHeader, "\n\n/* %s %s */\n",
-        corto_fullpath(NULL, corto_typeof(o)),
-        corto_path(NULL, root_o, o, "/"));
+    if (!corto_instanceof(corto_package_o, o)) {
+        g_fileWrite(
+            data->interfaceHeader, "\n\n/* %s %s */\n",
+            corto_fullpath(NULL, corto_typeof(o)),
+            corto_path(NULL, root_o, o, "/"));
+    }
 
     /* Walk scope */
     corto_objectseq procs = corto_scope_claim(o);
@@ -974,91 +707,13 @@ error:
     return 1;
 }
 
-/* Generate macro's for procedure */
-static
-corto_int16 c_interfaceAliasMacro(
-    corto_object o,
-    c_typeWalk_t* data)
-{
-    /* Walk scope */
-    corto_objectseq procs = corto_scope_claim(o);
-    corto_int32 i;
-    for (i = 0; i < procs.length; i ++) {
-        if (g_mustParse(data->g, procs.buffer[i])) {
-            if (!c_interfaceProcedureAliasMacro(procs.buffer[i], data)) {
-                break;
-            }
-        }
-    }
-    corto_scope_release(procs);
-    return 0;
-}
-
-static
-corto_int16 c_interfaceShorthandMacro(
-    corto_object o,
-    c_typeWalk_t* data)
-{
-    /* Walk scope */
-    corto_objectseq procs = corto_scope_claim(o);
-    corto_int32 i;
-    for (i = 0; i < procs.length; i ++) {
-        if (g_mustParse(data->g, procs.buffer[i])) {
-            if (!c_interfaceProcedureShorthandMacro(procs.buffer[i], data)) {
-                break;
-            }
-        }
-    }
-    corto_scope_release(procs);
-    return 0;
-}
-
-static
-corto_int16 c_interfaceArgCastMacro(
-    corto_object o,
-    c_typeWalk_t* data)
-{
-    /* Walk scope */
-    corto_objectseq procs = corto_scope_claim(o);
-    corto_int32 i;
-    for (i = 0; i < procs.length; i ++) {
-        if (g_mustParse(data->g, procs.buffer[i])) {
-            if (!c_interfaceProcedureCastMacro(procs.buffer[i], data)) {
-                break;
-            }
-        }
-    }
-    corto_scope_release(procs);
-    return 0;
-}
-
-/* Generate casting macro's for procedure */
-static
-corto_int16 c_interfaceSafeCastMacro(
-    corto_object o,
-    c_typeWalk_t* data)
-{
-    /* Walk scope */
-    corto_objectseq procs = corto_scope_claim(o);
-    corto_int32 i;
-    for (i = 0; i < procs.length; i ++) {
-        if (g_mustParse(data->g, procs.buffer[i])) {
-            if (!c_interfaceProcedureSafeCastMacro(procs.buffer[i], data)) {
-                break;
-            }
-        }
-    }
-    corto_scope_release(procs);
-    return 0;
-}
-
 /* Walk interfaces */
 static
 int c_interfaceWalk(
     corto_object o,
     void *userData)
 {
-    c_typeWalk_t *data = userData;
+    c_interfaceWalk_t *data = userData;
     bool isBootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
     int hasProcedures = !corto_scope_walk(o, c_interfaceCheckProcedures, NULL);
     bool isTopLevelObject = (o == g_getCurrent(data->g)) && corto_instanceof(corto_package_o, o);
@@ -1115,7 +770,7 @@ bool c_interfaceIsGenerated(
 static
 bool c_interfaceWasGeneratedNow(
     corto_string name,
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     corto_iter iter = corto_ll_iter(data->generated);
 
@@ -1132,7 +787,7 @@ bool c_interfaceWasGeneratedNow(
 static
 bool c_interfaceFileExistedBeforeGenerating(
     corto_string name,
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     corto_iter iter = corto_ll_iter(data->existedBeforeGenerating);
 
@@ -1149,7 +804,7 @@ bool c_interfaceFileExistedBeforeGenerating(
 /* Mark files that haven't been regenerated */
 static
 int c_interfaceMarkUnusedFiles(
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     corto_ll files = corto_opendir("./src");
     corto_iter iter = corto_ll_iter(files);
@@ -1204,7 +859,7 @@ int c_interfaceMarkUnusedFiles(
 
 static
 corto_int16 c_interfaceWriteMainSource(
-    c_typeWalk_t *data)
+    c_interfaceWalk_t *data)
 {
     corto_id fileName, header;
     bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
@@ -1233,7 +888,7 @@ error:
 
 /* Entry point for generator */
 int genmain(g_generator g) {
-    c_typeWalk_t walkData;
+    c_interfaceWalk_t walkData;
     bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     /* Create source and include directories */
@@ -1241,13 +896,6 @@ int genmain(g_generator g) {
     corto_mkdir("include");
 
     walkData.existedBeforeGenerating = corto_opendir("src");
-
-    /* Default prefixes for corto namespaces */
-    g_parse(g, corto_o, FALSE, FALSE, "");
-    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_vstore_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;
@@ -1313,46 +961,9 @@ int genmain(g_generator g) {
     }
 
     /* Walk objects, generate procedure headers & implementations */
-    if (g_getCurrent(g)) {
-        g_fileWrite(walkData.interfaceHeader, "\n/* -- Procudure declarations -- */\n");
-    }
     walkData.walkAction = c_interfaceObject;
     if (!g_walkNoScope(g, c_interfaceWalk, &walkData)) {
         goto error;
-    }
-
-    if (g_getCurrent(g)) {
-        corto_id macro;
-        g_fileWrite(walkData.interfaceHeader, "\n");
-        g_fileWrite(walkData.interfaceHeader, "/* -- Support macro's -- */\n");
-        g_fileWrite(walkData.interfaceHeader, "#ifndef %s\n", c_buildingMacro(g, macro));
-
-        /* Walk objects, generate type safety macro's, overridable procedures */
-        walkData.walkAction = c_interfaceArgCastMacro;
-        if (!g_walkNoScope(g, c_interfaceWalk, &walkData)) {
-            goto error;
-        }
-
-        g_fileWrite(walkData.interfaceHeader, "#else\n");
-
-        walkData.walkAction = c_interfaceAliasMacro;
-        if (!g_walkNoScope(g, c_interfaceWalk, &walkData)) {
-            goto error;
-        }
-
-        g_fileWrite(walkData.interfaceHeader, "#ifndef __cplusplus\n");
-        walkData.walkAction = c_interfaceShorthandMacro;
-        if (!g_walkNoScope(g, c_interfaceWalk, &walkData)) {
-            goto error;
-        }
-        g_fileWrite(walkData.interfaceHeader, "#endif\n");
-
-        g_fileWrite(walkData.interfaceHeader, "#endif\n");
-
-        walkData.walkAction = c_interfaceSafeCastMacro;
-        if (!g_walkNoScope(g, c_interfaceWalk, &walkData)) {
-            goto error;
-        }
     }
 
     if (walkData.mainHeader) {

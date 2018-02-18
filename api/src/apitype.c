@@ -118,7 +118,7 @@ static corto_int16 c_apiCastAuto(
     g_fileWrite(
         data->header,
         ") %s _id = %s%s%s%s(%s",
-        c_typeret(data->g, t, C_ByReference, ret),
+        c_typeret(data->g, t, C_ByReference, false, ret),
         id,
         func,
         m ? "_" : "",
@@ -412,7 +412,7 @@ static corto_int16 c_apiAssignMember(corto_walk_opt* s, corto_value* v, void* us
 
         sprintf(lvalue,
             "((%s)%s)->%s%s",
-            c_typeptr(data->g, corto_parentof(m), ptr),
+            c_typeptr(data->g, corto_parentof(m), false, ptr),
             data->_this,
             isUnionCase ? "is." : "",
             memberId);
@@ -870,20 +870,6 @@ corto_int16 c_apiTypeInitAssign(corto_type t, corto_string _this, corto_member m
     return result;
 }
 
-void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id) {
-    corto_id localId, buildingMacro;
-
-    c_buildingMacro(data->g, buildingMacro);
-    g_localOid(data->g, t, localId);
-
-    if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(t) != root_o) {
-        g_fileWrite(data->header, "\n");
-        g_fileWrite(data->header, "#if defined(%s) && !defined(__cplusplus)\n", buildingMacro);
-        g_fileWrite(data->header, "#define %s%s %s%s\n", localId, func, id, func);
-        g_fileWrite(data->header, "#endif\n");
-    }
-}
-
 corto_int16 c_apiTypeCreateIntern(
     corto_type t,
     c_apiWalk_t *data,
@@ -901,7 +887,7 @@ corto_int16 c_apiTypeCreateIntern(
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t) && define;
 
     g_fullOid(data->g, t, id);
-    c_typeret(g, t, C_ByReference, ret);
+    c_typeret(g, t, C_ByReference, false, ret);
 
     do {
         if (isUnion) {
@@ -912,9 +898,6 @@ corto_int16 c_apiTypeCreateIntern(
         /* Collect arguments for casting macro */
         data->args = corto_ll_new();
         data->parameterCount = 0;
-
-        /* Function declaration */
-        c_apiLocalDefinition(t, data, func, id);
 
         c_writeExport(data->g, data->header);
         g_fileWrite(data->header, " %s _%s%s%s%s(",
@@ -1007,7 +990,7 @@ corto_int16 c_apiTypeDeclareChild(corto_type t, c_apiWalk_t *data) {
     corto_id typeId, retId, varId;
 
     g_fullOid(data->g, t, typeId);
-    c_typeret(data->g, t, C_ByReference, retId);
+    c_typeret(data->g, t, C_ByReference, false, retId);
     c_varId(data->g, t, varId);
 
     g_fileWrite(data->header,
@@ -1036,22 +1019,20 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         data->parameterCount = 1;
         c_typeId(data->g, t, id);
 
-        c_apiLocalDefinition(t, data, func, id);
-
         c_writeExport(data->g, data->header);
 
         if (isUpdate && !doUpdate) {
-            g_fileWrite(data->header, " %s ", c_typeret(g, t, C_ByReference, ptr));
-            g_fileWrite(data->source, "%s ", c_typeret(g, t, C_ByReference, ptr));
+            g_fileWrite(data->header, " %s ", c_typeret(g, t, C_ByReference, false, ptr));
+            g_fileWrite(data->source, "%s ", c_typeret(g, t, C_ByReference, false, ptr));
         } else {
             g_fileWrite(data->header, " corto_int16 ");
             g_fileWrite(data->source, "corto_int16 ");
         }
 
         g_fileWrite(data->header, "_%s%s%s%s(%s _this",
-            id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
+            id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, false, ptr));
         g_fileWrite(data->source, "_%s%s%s%s(%s _this",
-            id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, ptr));
+            id, func, member ? "_" : "", member ? corto_idof(member) : "", c_typeptr(g, t, false, ptr));
 
         if (strcmp(func, "__assign")) {
             c_apiCastMacroAddThis(data->args, "_this", t, FALSE, TRUE, g);
@@ -1084,7 +1065,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             g_fileIndent(data->source);
             corto_id thisVar;
             sprintf(thisVar, "((%s)CORTO_OFFSET(_this, ((corto_type)%s_o)->size))",
-                c_typeret(g, t, C_ByReference, ptr), id);
+                c_typeret(g, t, C_ByReference, false, ptr), id);
             data->owned = FALSE;
             c_apiTypeInitAssign(t, thisVar, member, data);
             g_fileDedent(data->source);

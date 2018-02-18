@@ -158,8 +158,7 @@ static corto_int16 c_genInterfaceHeader(g_generator g) {
         c_buildingMacro(g, buildingMacro);
 
         g_fileWrite(interfaceHeader, "/* %s\n", interfaceHeaderName);
-        g_fileWrite(interfaceHeader, " *\n");
-        g_fileWrite(interfaceHeader, " * This file contains generated code. Do not modify!\n");
+        g_fileWrite(interfaceHeader, " * This file is generated. Do not modify the contents of this file.\n");
         g_fileWrite(interfaceHeader, " */\n\n");
 
         g_fileWrite(interfaceHeader, "#if %s && defined _MSC_VER\n", buildingMacro);

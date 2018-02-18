@@ -45,6 +45,7 @@ corto_int16 c_apiDelegateInitCallback(
 
 int c_apiCollectionWalk(void* o, void* userData);
 int c_apiIteratorWalk(void* o, void* userData);
+void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id);
 
 #ifdef __cplusplus
 }

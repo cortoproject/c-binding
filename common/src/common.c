@@ -105,7 +105,7 @@ static int c_typeKeywordEscape(corto_string inputName, corto_string buffer) {
 }
 
 corto_string corto_genId(corto_string str, corto_id id) {
-    corto_char *ptr, ch, *idptr;
+    char *ptr, ch, *idptr;
 
     ptr = str;
     idptr = id;
@@ -148,8 +148,8 @@ corto_string corto_genId(corto_string str, corto_id id) {
 }
 
 /* Get string representing the base-platform type */
-corto_char* c_primitiveId(g_generator g, corto_primitive t, corto_char* buff) {
-    corto_bool appendWidth, appendT;
+char* c_primitiveId(g_generator g, corto_primitive t, char* buff) {
+    bool appendWidth, appendT;
 
     appendWidth = FALSE;
     appendT = FALSE;
@@ -247,7 +247,7 @@ error:
 
 /* Convert string to upper. */
 static corto_string c_typeToUpper(corto_string str, corto_id buffer) {
-    corto_char *ptr, *bptr, ch;
+    char *ptr, *bptr, ch;
 
     ptr = str;
     bptr = buffer;
@@ -261,7 +261,7 @@ static corto_string c_typeToUpper(corto_string str, corto_id buffer) {
     return buffer;
 }
 
-static corto_char c_lastLetter(corto_string str) {
+static char c_lastLetter(corto_string str) {
     char *ptr, ch = '\0';
 
     ptr = str + (strlen(str) - 1);
@@ -278,7 +278,7 @@ static corto_char c_lastLetter(corto_string str) {
     return ptr >= str ? ch : '\0';
 }
 
-corto_bool c_typeHasCaps(corto_string str) {
+bool c_typeHasCaps(corto_string str) {
     char *ptr = str, ch;
 
     for (;(ch = *ptr); ptr ++) {
@@ -291,46 +291,96 @@ corto_bool c_typeHasCaps(corto_string str) {
 }
 
 /* Translate constant to C-language id */
-corto_char* c_constantId(g_generator g, corto_constant* c, corto_char* buffer) {
-    corto_string prefixOrig;
+char* c_constantId_intern(
+    g_generator g,
+    corto_constant* c,
+    char* buffer,
+    int mode) /* 0 = default, 1 = short */
+{
     corto_enum e = corto_parentof(c);
-    corto_string name = corto_idof(e->constants.buffer[0]);
-    corto_id prefix;
-    corto_char ch;
+    char *ptr, ch;
+    corto_object from = root_o;
+    corto_object parent = g_getCurrent(g);
 
-    prefixOrig = g_getPrefix(g, c);
-    if (!prefixOrig) {
-        prefixOrig = corto_idof(g_getCurrent(g));
+    /* Determine caps strategy from first constant in enum */
+    corto_string name = corto_idof(e->constants.buffer[0]);
+
+    if (mode == 1) {
+        from = corto_parentof(g_getCurrent(g));
     }
 
-    strcpy(prefix, prefixOrig);
+    /* Create full path for container of enumeration */
+    if (!corto_isbuiltin(c)) {
+        if (from != parent) {
+            corto_path(buffer, from, parent, "/");
+        } else {
+            buffer[0] = '\0';
+        }
+    } else {
+        strcpy(buffer, "corto");
+    }
 
     /* If the prefix contains capitals, leave names unaltered */
-    if (!c_typeHasCaps(prefix)) {
-        /* Find last letter */
-        ch = c_lastLetter(name);
+    if (strlen(buffer)) {
+        if (!c_typeHasCaps(buffer)) {
+            /* Find last letter */
+            ch = c_lastLetter(name);
 
-        if (isupper(name[0])) {
-            if (isupper(ch)) { /* All caps */
-                c_typeToUpper(prefixOrig, prefix);
-            } else { /* Initial caps */
-                prefix[0] = toupper(prefix[0]);
+            if (isupper(name[0])) {
+                if (isupper(ch)) {
+                    /* All caps */
+                    strupper(buffer);
+                } else {
+                    /* Initial caps */
+                    buffer[0] = toupper(buffer[0]);
+                    for (ptr = buffer; (ch = *ptr); ptr ++) {
+                        if (ch == '/') {
+                            ptr[1] = toupper(ptr[1]);
+                        }
+                    }
+                }
             }
         }
+
+        for (ptr = buffer; (ch = *ptr); ptr ++) {
+            if (ch == '/') {
+                *ptr = '_';
+            }
+        }
+
+        strcat(buffer, "_");
     }
 
-    sprintf(buffer, "%s_%s", prefix, corto_idof(c));
+    strcat(buffer, corto_idof(c));
 
     return buffer;
 }
 
+char* c_constantId(
+    g_generator g,
+    corto_constant* c,
+    char* buffer)
+{
+    return c_constantId_intern(g, c, buffer, 0);
+}
+
+char* c_shortConstantId(
+    g_generator g,
+    corto_constant* c,
+    char* buffer)
+{
+    return c_constantId_intern(g, c, buffer, 1);
+}
+
 /* Parse type into C-specifier */
-corto_int16 c_specifierId(
+static
+int16_t c_specifierId_intern(
     g_generator g,
     corto_type t,
-    corto_char* specifier,
-    corto_bool* prefix,
-    corto_char* postfix)
+    char* specifier,
+    bool* prefix,
+    char* postfix,
+    int mode) /* 0 = default, 1 = local, 2 = short */
 {
     if (postfix) {
         *postfix = '\0';
@@ -367,7 +417,11 @@ corto_int16 c_specifierId(
         } else if (t->kind == CORTO_VOID && !t->reference) {
             strcpy(specifier, "void");
         } else {
-            g_fullOid(g, t, specifier);
+            if (mode == 0) {
+                g_fullOid(g, t, specifier);
+            } else if (mode == 1) {
+                g_shortOid(g, t, specifier);
+            }
         }
     } else {
         switch(corto_type(t)->kind) {
@@ -377,8 +431,12 @@ corto_int16 c_specifierId(
 
             /* Get specifier of elementType */
             if (elementType->kind == CORTO_PRIMITIVE && corto_check_attr(elementType, CORTO_ATTR_NAMED)) {
-                g_fullOid(g, elementType, _specifier);
-            } else if (c_specifierId(g, elementType, _specifier, NULL, _postfix)) {
+                if (mode == 0) {
+                    g_fullOid(g, elementType, _specifier);
+                } else if (mode == 1) {
+                    g_shortOid(g, elementType, _specifier);
+                }
+            } else if (c_specifierId_intern(g, elementType, _specifier, NULL, _postfix, mode)) {
                 goto error;
             }
 
@@ -428,7 +486,11 @@ corto_int16 c_specifierId(
             break;
         }
         default: {
-            g_fullOid(g, t, specifier);
+            if (mode == 0) {
+                g_fullOid(g, t, specifier);
+            } else if (mode == 1) {
+                g_shortOid(g, t, specifier);
+            }
             break;
         }
         }
@@ -439,7 +501,18 @@ error:
     return -1;
 }
 
-corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier) {
+/* Parse type into C-specifier */
+corto_int16 c_specifierId(
+    g_generator g,
+    corto_type t,
+    char* specifier,
+    bool* prefix,
+    char* postfix)
+{
+    return c_specifierId_intern(g, t, specifier, prefix, postfix, 0);
+}
+
+char* _c_typeId(g_generator g, corto_type t, char *specifier) {
     corto_id postfix;
 
     if (!corto_check_attr(t, CORTO_ATTR_NAMED)) {
@@ -451,14 +524,14 @@ corto_char* _c_typeId(g_generator g, corto_type t, corto_char *specifier) {
     return specifier;
 }
 
-corto_char* c_escapeString(corto_string str) {
+char* c_escapeString(corto_string str) {
     size_t length = stresc(NULL, 0, str);
     corto_string out = corto_alloc(length + 1);
     stresc(out, length + 1, str);
     return out;
 }
 
-corto_bool c_procedureHasThis(corto_function o) {
+bool c_procedureHasThis(corto_function o) {
     corto_procedure t = corto_procedure(corto_typeof(o));
     return t->hasThis;
 }
@@ -504,21 +577,40 @@ char* c_paramType(g_generator g, corto_parameter *p, char* buffer) {
     return buffer;
 }
 
-corto_bool c_paramRequiresPtr(corto_parameter *p) {
+/* Translate parameter type to C */
+char* c_impl_paramType(g_generator g, corto_parameter *p, char* buffer) {
+    if (p->type->kind == CORTO_PRIMITIVE &&
+        corto_primitive(p->type)->kind == CORTO_TEXT)
+    {
+        return c_paramType(g, p, buffer);
+    }
+    else
+    {
+        corto_id type, postfix;
+        c_specifierId_intern(g, p->type, type, NULL, postfix, 1);
+        strcpy(buffer, type);
+        if (c_paramRequiresPtr(p)) {
+            strcat(buffer, " *");
+        }
+    }
+    return buffer;
+}
+
+bool c_paramRequiresPtr(corto_parameter *p) {
     return (!p->type->reference &&
            (p->passByReference || (p->type->kind == CORTO_COMPOSITE))) ||
            p->inout == CORTO_OUT ||
            p->inout == CORTO_INOUT;
 }
 
-corto_bool c_typeRequiresPtr(corto_type t) {
+bool c_typeRequiresPtr(corto_type t) {
     return (!t->reference &&
            (t->kind == CORTO_COMPOSITE));
 }
 
-corto_string c_typeptr(g_generator g, corto_type t, corto_id id) {
+corto_string c_typeptr(g_generator g, corto_type t, bool impl, corto_id id) {
     corto_id postfix;
-    c_specifierId(g, t, id, NULL, postfix);
+    c_specifierId_intern(g, t, id, NULL, postfix, impl);
     if (!t->reference &&
         !(t->kind == CORTO_COLLECTION &&
         (corto_collection(t)->kind == CORTO_ARRAY)))
@@ -528,16 +620,20 @@ corto_string c_typeptr(g_generator g, corto_type t, corto_id id) {
     return id;
 }
 
-corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id) {
+corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, bool impl, corto_id id) {
     if ((t->kind == CORTO_COLLECTION &&
         (corto_collection(t)->kind == CORTO_ARRAY)))
     {
-        g_fullOid(g, corto_collection(t)->elementType, id);
+        if (!impl) {
+            g_fullOid(g, corto_collection(t)->elementType, id);
+        } else {
+            g_shortOid(g, corto_collection(t)->elementType, id);
+        }
         strcat(id, "*");
     } else {
         corto_id postfix;
         if (ref != C_Cast) {
-            c_specifierId(g, t, id, NULL, postfix);
+            c_specifierId_intern(g, t, id, NULL, postfix, impl);
         } else {
             corto_id fullId;
             if (t->kind == CORTO_PRIMITIVE) {
@@ -545,7 +641,7 @@ corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id) 
             } else if (t->kind == CORTO_VOID && !t->reference) {
                 strcpy(fullId, "corto_void");
             } else {
-                c_specifierId(g, t, fullId, NULL, postfix);
+                c_specifierId_intern(g, t, fullId, NULL, postfix, impl);
             }
             strcpy(id, "_type_");
             strcat(id, fullId);
@@ -559,16 +655,16 @@ corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id) 
     return id;
 }
 
-corto_string c_typeval(g_generator g, corto_type t, corto_id id) {
+corto_string c_typeval(g_generator g, corto_type t, bool impl, corto_id id) {
     corto_id postfix;
-    c_specifierId(g, t, id, NULL, postfix);
+    c_specifierId_intern(g, t, id, NULL, postfix, impl);
     if (!t->reference && (t->kind == CORTO_COMPOSITE)) {
         strcat(id, "*");
     }
     return id;
 }
 
-corto_char* c_usingName(g_generator g, corto_object o, corto_id id) {
+char* c_usingName(g_generator g, corto_object o, corto_id id) {
     corto_id buff;
     char *ptr;
 
@@ -583,7 +679,7 @@ corto_char* c_usingName(g_generator g, corto_object o, corto_id id) {
     return id;
 }
 
-corto_char* c_usingConstant(g_generator g, corto_id id) {
+char* c_usingConstant(g_generator g, corto_id id) {
     corto_id buff;
     strcpy(id, "USING_");
     char *ptr = &id[6];
@@ -596,8 +692,7 @@ corto_char* c_usingConstant(g_generator g, corto_id id) {
 /* Generate BUILDING macro */
 char* c_buildingMacro(g_generator g, corto_id buffer) {
     corto_id buff;
-    strcpy(buffer, "BUILDING_");
-    char *ptr = &buffer[9];
+    char *ptr = buffer;
 
     if (strcmp(g_getAttribute(g, "bootstrap"), "true") && g_getPackage(g)) {
         corto_path(buff, root_o, g_getPackage(g), "_");
@@ -608,8 +703,10 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
             if (ch == '/') *ptr = '_';
         }
     }
+
     strupper(buff);
     strcpy(ptr, buff);
+    strcat(ptr, "_IMPL");
     return buffer;
 }
 
@@ -675,7 +772,7 @@ char* c_filename(
 {
     corto_id path;
     corto_object package = c_findPackage(g, o);
-    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     if (cpp && !strcmp(ext, "c")) {
         ext = "cpp";
@@ -766,7 +863,9 @@ void c_includeFrom(
     free(str);
 }
 
-void c_includeDependencies(g_generator g, g_file result, corto_string header) {
+int c_includeDependencies(g_generator g, g_file result, corto_string header) {
+    int count = 0;
+
     /* Add include files of managed dependencies with models */
     corto_iter it = corto_ll_iter(g->imports);
     while (corto_iter_hasNext(&it)) {
@@ -780,6 +879,7 @@ void c_includeDependencies(g_generator g, g_file result, corto_string header) {
             if (header) {
                 if (corto_file_test(strarg("%s/%s", include, header))) {
                     g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
+                    count ++;
                 }
             } else {
                 char *import_name = strrchr(import_id, '/');
@@ -790,10 +890,12 @@ void c_includeDependencies(g_generator g, g_file result, corto_string header) {
                 }
                 if (corto_file_test(strarg("%s/%s.h", include, import_name))) {
                     g_fileWrite(result, "#include <%s/%s.h>\n", import_id, import_name);
+                    count ++;
                 }
             }
         }
     }
+    return count;
 }
 
 void c_include_toBuffer(g_generator g, corto_buffer *buffer, corto_object o) {
@@ -885,8 +987,13 @@ error:
     return NULL;
 }
 
-corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
-
+static
+char* c_varId_intern(
+    g_generator g,
+    corto_object o,
+    char* out,
+    int mode) /* 0 = default, 1 = local, 2 = short */
+{
     if (o != root_o) {
         /* Using fully scoped name for package variables allows using
          * packages with the same name */
@@ -895,9 +1002,15 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
         } else {
             corto_id postfix;
             if (corto_instanceof(corto_type_o, o) && (!corto_check_attr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
-                c_specifierId(g, o, out, NULL, postfix);
+                c_specifierId_intern(g, o, out, NULL, postfix, mode);
             } else {
-                g_fullOid(g, o, out);
+                if (mode == 0) {
+                    g_fullOid(g, o, out);
+                } else if (mode == 1) {
+                    g_shortOid(g, o, out);
+                } else if (mode == 2) {
+                    g_shortOid(g, o, out);
+                }
             }
         }
         strcat(out, "_o");
@@ -908,27 +1021,16 @@ corto_char* c_varId(g_generator g, corto_object o, corto_char* out) {
     return out;
 }
 
-corto_char* c_varLocalId(g_generator g, corto_object o, corto_char* out) {
+char* c_varId(g_generator g, corto_object o, char* out) {
+    return c_varId_intern(g, o, out, 0);
+}
 
-    if (o != root_o) {
-        /* Using fully scoped name for package variables allows using
-         * packages with the same name */
-        if (corto_instanceof(corto_package_o, o)) {
-            corto_path(out, root_o, o, "_");
-        } else {
-            corto_id postfix;
-            if (corto_instanceof(corto_type_o, o) && (!corto_check_attr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o))) {
-                c_specifierId(g, o, out, NULL, postfix);
-            } else {
-                g_localOid(g, o, out);
-            }
-        }
-        strcat(out, "_o");
-    } else {
-        strcpy(out, "root_o");
-    }
+char* c_impl_varId(g_generator g, corto_object o, char* out) {
+    return c_varId_intern(g, o, out, 1);
+}
 
-    return out;
+char* c_short_varId(g_generator g, corto_object o, char* out) {
+    return c_varId_intern(g, o, out, 2);
 }
 
 char* c_functionName(g_generator g, corto_function o, corto_id id) {
@@ -940,7 +1042,7 @@ char* c_functionName(g_generator g, corto_function o, corto_id id) {
 }
 
 char* c_functionLocalName(g_generator g, corto_function o, corto_id id) {
-    g_localOid(g, o, id);
+    g_shortOid(g, o, id);
     if (o->overridable) {
         strcat(id, "_v");
     }
@@ -949,12 +1051,17 @@ char* c_functionLocalName(g_generator g, corto_function o, corto_id id) {
 
 typedef struct c_paramWalk_t {
     g_generator g;
-    corto_bool firstComma;
+    bool firstComma;
+    bool impl;
     corto_buffer *buffer;
 } c_paramWalk_t;
 
 /* Generate parameters for method */
-static int c_param(corto_parameter *o, void *userData) {
+static
+int c_param(
+    corto_parameter *o,
+    void *userData)
+{
     c_paramWalk_t* data;
     corto_id type, name;
 
@@ -967,7 +1074,11 @@ static int c_param(corto_parameter *o, void *userData) {
         corto_buffer_appendstr(data->buffer, "\n    ");
     }
 
-    c_paramType(data->g, o, type);
+    if (!data->impl) {
+        c_paramType(data->g, o, type);
+    } else {
+        c_impl_paramType(data->g, o, type);
+    }
 
     corto_buffer_append(data->buffer, "%s", type);
     if (type[strlen(type) - 1] != '*') {
@@ -986,7 +1097,8 @@ static int c_param(corto_parameter *o, void *userData) {
 void c_paramThis(
     g_generator g,
     corto_buffer *buffer,
-    corto_bool cpp,
+    bool cpp,
+    bool impl,
     corto_type parentType)
 {
     corto_id classId;
@@ -998,11 +1110,11 @@ void c_paramThis(
     if (!cpp) {
         corto_buffer_append(buffer,
             "\n    %s this",
-            c_typeptr(g, parentType, classId));
+            c_typeptr(g, parentType, impl, classId));
     } else {
         corto_buffer_append(buffer,
             "\n    %s _this",
-            c_typeptr(g, parentType, classId));
+            c_typeptr(g, parentType, impl, classId));
     }
 }
 
@@ -1030,39 +1142,35 @@ corto_int16 c_decl(
     g_generator g,
     corto_buffer *buffer,
     corto_function o,
-    corto_bool isWrapper,
-    corto_bool cpp,
-    corto_bool impl)
+    bool isWrapper,
+    bool cpp,
+    bool impl)
 {
-    corto_id fullname, functionName, signatureName, returnSpec;
+    corto_id functionName, returnSpec;
     corto_type returnType;
     c_paramWalk_t walkData;
 
     walkData.g = g;
     walkData.firstComma = 0;
     walkData.buffer = buffer;
+    walkData.impl = impl;
 
     /* Generate function-return type string */
     returnType = ((corto_function)o)->returnType;
     if (returnType) {
-        c_typeret(g, returnType, C_ByValue, returnSpec);
+        c_typeret(g, returnType, C_ByValue, impl, returnSpec);
     } else {
         strcpy(returnSpec, "void");
     }
 
-    corto_fullpath(fullname, o);
-
-    /* If the function is not a wrapper, append _v if the function is virtual */
-    if (isWrapper) {
-        g_fullOid(g, o, functionName);
+    if (impl) {
+        c_short_id(g, functionName, o);
     } else {
-        c_functionName(g, o, functionName);
+        c_id(g, functionName, o);
     }
-
-    if (corto_function(o)->overloaded) {
-        strcpy(signatureName, fullname + 1); /* Skip scope */
-    } else {
-        corto_sig_name(fullname + 1, signatureName);
+    if (isWrapper && o->overridable) {
+        /* Remove _v */
+        functionName[strlen(functionName) - 2] = '\0';
     }
 
     /* Start of function */
@@ -1076,7 +1184,7 @@ corto_int16 c_decl(
     if (c_procedureHasThis(o)) {
         corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
         if (!thisType || thisType->reference) {
-            c_paramThis(g, buffer, cpp, corto_parentof(o));
+            c_paramThis(g, buffer, cpp, impl, corto_parentof(o));
         } else {
             if (!cpp) {
                 corto_buffer_appendstr(buffer, "corto_any this");
@@ -1110,8 +1218,8 @@ error:
 
 /* Get filename of mainheader */
 char* c_mainheader(g_generator g, corto_id header) {
-    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
-    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    bool local = !strcmp(g_getAttribute(g, "local"), "true");
 
     if (!app && !local) {
         corto_id name;
@@ -1142,4 +1250,95 @@ char* c_mainheaderImpl(g_generator g, corto_id header) {
     }
 
     return header;
+}
+
+/* Open generated header file */
+g_file c_headerOpen(
+    g_generator g,
+    const char *name)
+{
+    bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
+    corto_id filename, path, upper_name;
+    sprintf(filename, "_%s.h", name);
+
+    if (bootstrap) {
+        corto_path(path, root_o, g_getCurrent(g), "_");
+    } else {
+        corto_path(path, root_o, g_getPackage(g), "_");
+    }
+    strupper(path);
+
+    strcpy(upper_name, name);
+    strupper(upper_name);
+
+    g_file result = g_fileOpen(g, filename);
+
+    /* Print standard comments and includes */
+    g_fileWrite(result, "/* %s\n", filename);
+    g_fileWrite(result, " * This file is generated. Do not modify its contents.\n");
+    g_fileWrite(result, " */\n\n");
+    g_fileWrite(result, "#ifndef %s_%s_H\n", path, upper_name);
+    g_fileWrite(result, "#define %s_%s_H\n\n", path, upper_name);
+
+    return result;
+}
+
+/* Close generated header file */
+void c_headerClose(
+    g_file file)
+{
+    g_fileWrite(file, "#endif\n\n");
+    g_fileClose(file);
+}
+
+/* Get identifier for language object */
+static
+char* c_id_intern(
+    g_generator g,
+    corto_id id,
+    corto_object o,
+    int mode) /* 0 = default, 1 = local, 2 = short */
+{
+    corto_object parent = corto_parentof(o);
+    if (corto_instanceof(corto_constant_o, o) && parent && corto_instanceof(corto_enum_o, parent)) {
+        switch (mode) {
+        case 0: return c_constantId(g, o, id);
+        case 1: return c_shortConstantId(g, o, id); /* short constants not supported */
+        default: return NULL;
+        }
+    } else {
+        if (corto_instanceof(corto_type_o, o) && !corto_check_attr(o, CORTO_ATTR_NAMED)) {
+            corto_id postfix;
+            c_specifierId_intern(g, o, id, NULL, postfix, mode);
+        } else {
+            switch(mode) {
+            case 0: g_fullOid(g, o, id); break;
+            case 1: g_shortOid(g, o, id); break;
+            default: return NULL;
+            }
+        }
+        if (corto_instanceof(corto_function_o, o) &&
+            ((corto_function)o)->overridable)
+        {
+            strcat(id, "_v");
+        }
+        return id;
+    }
+}
+
+char* c_id(
+    g_generator g,
+    corto_id id,
+    corto_object o)
+{
+    return c_id_intern(g, id, o, 0);
+}
+
+/* Get short identifier for language object */
+char* c_short_id(
+    g_generator g,
+    corto_id id,
+    corto_object o)
+{
+    return c_id_intern(g, id, o, 1);
 }

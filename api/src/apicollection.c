@@ -214,6 +214,20 @@ static corto_int16 c_apiWalkSequence(corto_sequence o, c_apiWalk_t* data) {
         goto error;
     }
 
+    if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(o) != root_o) {
+        corto_id id;
+        corto_id localId;
+        c_short_id(data->g, localId, o);
+        c_id(data->g, id, o);
+        if (strcmp(localId, id)) {
+            g_fileWrite(data->header, "\n");
+            g_fileWrite(data->header, "#define %s__append %s__append\n", localId, id);
+            g_fileWrite(data->header, "#define %s__append_alloc %s__append_alloc\n", localId, id);
+            g_fileWrite(data->header, "#define %s__resize %s__resize\n", localId, id);
+            g_fileWrite(data->header, "#define %s__clear %s__clear\n", localId, id);
+        }
+    }
+
     return 0;
 error:
     return -1;
@@ -536,6 +550,26 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
 
     if (c_apiListTypeClear(o, data)) {
         goto error;
+    }
+
+    if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(o) != root_o) {
+        corto_id id;
+        corto_id localId;
+        c_short_id(data->g, localId, o);
+        c_id(data->g, id, o);
+        if (strcmp(localId, id)) {
+            g_fileWrite(data->header, "\n");
+            g_fileWrite(data->header, "#define %s__insert %s__insert\n", localId, id);
+            g_fileWrite(data->header, "#define %s__append %s__append\n", localId, id);
+            g_fileWrite(data->header, "#define %s__append_alloc %s__append_alloc\n", localId, id);
+            if (corto_collection(o)->elementType->reference) {
+                g_fileWrite(data->header, "#define %s__remove %s__remove\n", localId, id);
+            }
+            g_fileWrite(data->header, "#define %s__takeFirst %s__takeFirst\n", localId, id);
+            g_fileWrite(data->header, "#define %s__last %s__last\n", localId, id);
+            g_fileWrite(data->header, "#define %s__get %s__get\n", localId, id);
+            g_fileWrite(data->header, "#define %s__clear %s__clear\n", localId, id);
+        }
     }
 
     return 0;

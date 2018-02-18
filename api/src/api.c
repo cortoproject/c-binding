@@ -26,8 +26,6 @@ static corto_int16 c_apiWalkType(corto_type o, c_apiWalk_t* data) {
         goto error;
     }
 
-    g_fileWrite(data->header, "\n");
-
     return 0;
 error:
     return -1;
@@ -40,8 +38,6 @@ static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
     if (c_apiTypeSet(o, data)) {
         goto error;
     }
-
-    g_fileWrite(data->header, "\n");
 
     return 0;
 error:
@@ -72,6 +68,26 @@ static int c_apiWalk(corto_object o, void* userData) {
             }
         }
 
+        corto_id id;
+        corto_id localId;
+        c_short_id(data->g, localId, o);
+        c_id(data->g, id, o);
+
+        if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(o) != root_o) {
+            if (strcmp(id, localId)) {
+                g_fileWrite(data->header, "\n");
+                g_fileWrite(data->header, "#define %s__create %s__create\n", localId, id);
+                g_fileWrite(data->header, "#define %s__create_auto %s__create_auto\n", localId, id);
+                g_fileWrite(data->header, "#define %s__declare %s__declare\n", localId, id);
+                g_fileWrite(data->header, "#define %s__update %s__update\n", localId, id);
+                if (corto_type(o)->kind != CORTO_VOID || corto_type(o)->reference) {
+                    g_fileWrite(data->header, "#define %s__assign %s__assign\n", localId, id);
+                    g_fileWrite(data->header, "#define %s__set %s__set\n", localId, id);
+                    g_fileWrite(data->header, "#define %s__unset %s__unset\n", localId, id);
+                }
+            }
+        }
+
         /* Clear nameconflict cache */
         if (corto_type(o)->kind == CORTO_COMPOSITE) {
             if (corto_interface(o)->kind == CORTO_DELEGATE) {
@@ -86,12 +102,37 @@ static int c_apiWalk(corto_object o, void* userData) {
                 }
             }
             corto_genMemberCacheClean(data->memberCache);
+
+            if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(o) != root_o) {
+                if (strcmp(id, localId)) {
+                    g_fileWrite(data->header, "#define %s__call %s__call\n", localId, id);
+                    g_fileWrite(data->header, "#define %s__init_c %s__init_c\n", localId, id);
+                    g_fileWrite(data->header, "#define %s__init_c_instance %s__init_c_instance\n", localId, id);
+                    g_fileWrite(data->header, "#define %s__init_c_instance_auto %s__init_c_instance_auto\n", localId, id);
+                }
+            }
         }
+
+        g_fileWrite(data->header, "\n");
     }
 
     return 1;
 error:
     return 0;
+}
+
+void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id) {
+    corto_id localId, buildingMacro;
+
+    c_buildingMacro(data->g, buildingMacro);
+    g_shortOid(data->g, t, localId);
+
+    if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(t) != root_o) {
+        g_fileWrite(data->header, "\n");
+        g_fileWrite(data->header, "#if defined(%s) && !defined(__cplusplus)\n", buildingMacro);
+        g_fileWrite(data->header, "#define %s%s %s%s\n", localId, func, id, func);
+        g_fileWrite(data->header, "#endif\n");
+    }
 }
 
 /* Open headerfile, write standard header. */
@@ -158,11 +199,12 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
     } else {
         c_includeFrom(data->g, result, pkg, "_project.h");
         c_includeFrom(data->g, result, pkg, "_type.h");
+        g_fileWrite(result, "\n");
     }
 
     g_fileWrite(result, "#ifdef __cplusplus\n");
     g_fileWrite(result, "extern \"C\" {\n");
-    g_fileWrite(result, "#endif\n");
+    g_fileWrite(result, "#endif\n\n");
 
     return result;
 }
@@ -250,7 +292,7 @@ static int c_apiVariableWalk(void *o, void *userData) {
     corto_id varId, typeId, packageId;
     corto_fullpath(packageId, g_getCurrent(data->g));
     c_varId(data->g, o, varId);
-    c_typeret(data->g, corto_typeof(o), C_ByReference, typeId);
+    c_typeret(data->g, corto_typeof(o), C_ByReference, false, typeId);
     g_fileWrite(data->source, "corto_type _%s;\n", varId);
     g_fileWrite(
         data->source,
@@ -372,13 +414,6 @@ corto_int16 genmain(g_generator g) {
         walkData.mainHeader = NULL;
     }
     walkData.g = g;
-
-    /* Default prefixes for corto namespaces */
-    g_parse(g, corto_o, FALSE, FALSE, "");
-    g_parse(g, corto_lang_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_vstore_o, FALSE, FALSE, "corto");
-    g_parse(g, corto_native_o, FALSE, FALSE, "corto_native");
-    g_parse(g, corto_secure_o, FALSE, FALSE, "corto_secure");
 
     if (!g_walkNoScope(g, c_apiWalkPackages, &walkData)) {
         goto error;

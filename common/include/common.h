@@ -24,7 +24,7 @@ char* c_primitiveId(g_generator g, corto_primitive t, char* buff);
 /* Parse type into C-specifier */
 int16_t c_specifierId(g_generator g, corto_type t, char* specifier, bool* prefix, char* postfix);
 
-/* Get simple type dd */
+/* Get simple type id */
 #define c_typeId(g, t, specifier) _c_typeId(g, corto_type(t), specifier)
 char* _c_typeId(g_generator g, corto_type t, char *specifier);
 
@@ -50,10 +50,10 @@ bool c_paramRequiresPtr(corto_parameter *p);
 bool c_typeRequiresPtr(corto_type t);
 
 /* Return string with typename[*] */
-char* c_typeptr(g_generator g, corto_type t, corto_id id);
+char* c_typeptr(g_generator g, corto_type t, bool impl, corto_id id);
 
 /* Return string with typename[*] */
-char* c_typeval(g_generator g, corto_type t, corto_id id);
+char* c_typeval(g_generator g, corto_type t, bool impl, corto_id id);
 
 /* Return string with typename[*] when type is used as returntype */
 typedef enum c_refKind {
@@ -61,7 +61,7 @@ typedef enum c_refKind {
     C_ByReference,
     C_Cast
 } c_refKind;
-char* c_typeret(g_generator g, corto_type t, c_refKind ref, corto_id id);
+char* c_typeret(g_generator g, corto_type t, c_refKind ref, bool impl, corto_id id);
 
 /* Generate USING name */
 char* c_usingName(g_generator g, corto_object o, corto_id id);
@@ -102,7 +102,10 @@ corto_ll c_findType(g_generator g, corto_class type);
 char* c_varId(g_generator g, corto_object o, char* out);
 
 /* Object name without package prefix (only used inside of package) */
-char* c_varLocalId(g_generator g, corto_object o, char* out);
+char* c_impl_varId(g_generator g, corto_object o, char* out);
+
+/* Object name with only parent package as prefix */
+char* c_short_varId(g_generator g, corto_object o, char* out);
 
 /* Function name */
 char* c_functionName(g_generator g, corto_function o, corto_id id);
@@ -110,11 +113,21 @@ char* c_functionName(g_generator g, corto_function o, corto_id id);
 /* Function name without package prefix (only used inside of package) */
 char* c_functionLocalName(g_generator g, corto_function o, corto_id id);
 
+/* Get identifier for language object */
+char* c_id(g_generator g, corto_id id, corto_object o);
+
+/* Get implementation identifier for language object */
+char* c_impl_id(g_generator g, corto_id id, corto_object o);
+
+/* Get short identifier for language object */
+char* c_short_id(g_generator g, corto_id id, corto_object o);
+
 /* Write this parameter to file */
 void c_paramThis(
     g_generator g,
     corto_buffer *buffer,
     bool cpp,
+    bool impl,
     corto_type parentType);
 
 int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *userData);
@@ -123,7 +136,16 @@ int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *use
 int16_t c_decl(g_generator g, corto_buffer *buffer, corto_function f, bool isWrapper, bool cpp, bool impl);
 
 /* Include dependencies */
-void c_includeDependencies(g_generator g, g_file file, char* header);
+int c_includeDependencies(g_generator g, g_file file, char* header);
+
+/* Open generated header file */
+g_file c_headerOpen(
+    g_generator g,
+    const char *name);
+
+/* Close generated header file */
+void c_headerClose(
+    g_file file);
 
 #ifdef __cplusplus
 }
