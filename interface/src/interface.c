@@ -292,7 +292,9 @@ int c_interfaceProcedure(
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
         bool isInterface = false;
-        if (corto_instanceof(corto_method_o, o)) {
+        if (corto_instanceof(corto_method_o, o) &&
+            corto_instanceof(corto_interface_o, corto_parentof(o)))
+        {
             isInterface = corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE;
         }
 
@@ -512,6 +514,7 @@ corto_int16 c_interfaceHeaderWrite(
         }
 
         g_fileWrite(result, "\n");
+
         if (mainHeader) {
             c_includeFrom(g, result, from, "_type.h");
             c_includeFrom(g, result, from, "_interface.h");

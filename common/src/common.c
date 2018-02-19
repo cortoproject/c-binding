@@ -317,7 +317,13 @@ char* c_constantId_intern(
             buffer[0] = '\0';
         }
     } else {
-        strcpy(buffer, "corto");
+        if (parent == corto_secure_o) {
+            strcpy(buffer, "corto_secure");
+        } else if (parent == corto_native_o) {
+            strcpy(buffer, "corto_native");
+        } else {
+            strcpy(buffer, "corto");
+        }
     }
 
     /* If the prefix contains capitals, leave names unaltered */

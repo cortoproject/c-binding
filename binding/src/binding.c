@@ -364,7 +364,7 @@ int c_binding_interfaceArgCastMacroWalk(
 {
     c_binding_t *data = userData;
 
-    if (corto_instanceof(corto_method_o, o)) {
+    if (corto_instanceof(corto_method_o, o) && corto_instanceof(corto_interface_o, corto_parentof(o))) {
         corto_id functionName;
         if (corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE) {
             g_fullOid(data->g, o, functionName); /* Don't append _v */
