@@ -147,6 +147,23 @@ g_file c_headerOpen(
 void c_headerClose(
     g_file file);
 
+
+/* -- C++ UTILITY FUNCTIONS -- */
+
+/* Check whether a type translates to a native construct or may act as a C++ namespace */
+bool
+cpp_nativeType(corto_object o);
+
+/* Open a namespace */
+void
+cpp_openScope(
+    g_file file,
+    bool namespaceOnly,
+    corto_object to);
+
+/* Close a namespace */
+void cpp_closeScope(g_file file);
+
 #ifdef __cplusplus
 }
 #endif
