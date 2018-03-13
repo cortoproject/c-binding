@@ -73,7 +73,7 @@ char* c_binding_cppId(
     buffer[0] = '\0';
     for (i = 1; stack[i] != NULL; i ++) {
         corto_id id;
-        strcat(buffer, "::");
+        if (i > 1) strcat(buffer, "::");
         strcat(buffer, g_oid(g, stack[i], id));
     }
     return buffer;
