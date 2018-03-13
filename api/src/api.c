@@ -9,7 +9,11 @@
 #include "driver/gen/c/common/common.h"
 
 /* Walk all types */
-static corto_int16 c_apiWalkType(corto_type o, c_apiWalk_t* data) {
+static
+int16_t c_apiWalkType(
+    corto_type o,
+    c_apiWalk_t* data)
+{
 
     /* Generate __create function */
     if (c_apiTypeCreateChild(o, data)) {
@@ -32,7 +36,11 @@ error:
 }
 
 /* Walk non-void types */
-static corto_int16 c_apiWalkNonVoid(corto_type o, c_apiWalk_t* data) {
+static
+int16_t c_apiWalkNonVoid(
+    corto_type o,
+    c_apiWalk_t* data)
+{
 
     /* Generate __set function */
     if (c_apiTypeSet(o, data)) {
@@ -45,7 +53,11 @@ error:
 }
 
 /* Forward objects for which code will be generated. */
-static int c_apiWalk(corto_object o, void* userData) {
+static
+int c_apiWalk(
+    corto_object o,
+    void* userData)
+{
     c_apiWalk_t* data = userData;
 
     if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
@@ -121,7 +133,12 @@ error:
     return 0;
 }
 
-void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id) {
+void c_apiLocalDefinition(
+    corto_type t,
+    c_apiWalk_t *data,
+    char *func,
+    char *id)
+{
     corto_id localId, buildingMacro;
 
     c_buildingMacro(data->g, buildingMacro);
@@ -136,7 +153,10 @@ void c_apiLocalDefinition(corto_type t, c_apiWalk_t *data, char *func, char *id)
 }
 
 /* Open headerfile, write standard header. */
-static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
+static
+g_file c_apiHeaderOpen(
+    c_apiWalk_t *data)
+{
     g_file result;
     corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
@@ -210,8 +230,10 @@ static g_file c_apiHeaderOpen(c_apiWalk_t *data) {
 }
 
 /* Close headerfile */
-static void c_apiHeaderClose(g_file file) {
-
+static
+void c_apiHeaderClose(
+    g_file file)
+{
     /* Print standard comments and includes */
     g_fileWrite(file, "\n");
     g_fileWrite(file, "#ifdef __cplusplus\n");
@@ -221,7 +243,10 @@ static void c_apiHeaderClose(g_file file) {
 }
 
 /* Open sourcefile */
-static g_file c_apiSourceOpen(g_generator g) {
+static
+g_file c_apiSourceOpen(
+    g_generator g)
+{
     g_file result;
     corto_id sourceFileName;
     corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
@@ -285,26 +310,88 @@ error:
     return NULL;
 }
 
-static int c_apiVariableWalk(void *o, void *userData) {
+static
+int c_apiVariableWalk(
+    void *o,
+    void *userData)
+{
     c_apiWalk_t *data = userData;
-    corto_id varId, typeId, packageId;
-    corto_fullpath(packageId, g_getCurrent(data->g));
-    c_varId(data->g, o, varId);
-    c_typeret(data->g, corto_typeof(o), C_ByReference, false, typeId);
-    g_fileWrite(data->source, "corto_type _%s;\n", varId);
-    g_fileWrite(
-        data->source,
-        "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n",
-        varId, varId, varId, varId, packageId, varId);
-    g_fileWrite(data->source, "\n");
+
+    corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
+    corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
+
+    if (!corto_isbuiltin(o) && (!g_mustParse(data->g, o) || (!app && !local))) {
+        corto_id varId, typeId, packageId;
+        corto_fullpath(packageId, g_getCurrent(data->g));
+        c_varId(data->g, o, varId);
+        c_typeret(data->g, corto_typeof(o), C_ByReference, false, typeId);
+        g_fileWrite(data->source, "corto_type _%s;\n", varId);
+        g_fileWrite(
+            data->source,
+            "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n",
+            varId, varId, varId, varId, packageId, varId);
+        g_fileWrite(data->source, "\n");
+    }
 
     return 1;
 }
 
-static int c_apiWalkPackages(corto_object o, void* userData) {
+static
+int c_apiVariableHasVariableDefs(
+    void *o,
+    void *userData)
+{
     c_apiWalk_t *data = userData;
+
     corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(data->g, "app"), "true");
+
+    if (!corto_isbuiltin(o) && (!g_mustParse(data->g, o) || (!app && !local))) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static
+int16_t c_apiAddDependent_item(
+    corto_walk_opt *opt,
+    corto_value *info,
+    void *userData)
+{
+    corto_type t = corto_value_typeof(info);
+    corto_ll types = userData;
+
+    if (t->kind != CORTO_PRIMITIVE) {
+        if (!corto_ll_hasObject(types, t)) {
+            corto_ll_append(types, t);
+        }
+    }
+
+    return 0;
+}
+
+static
+void c_apiAddDependentTypes(
+    corto_ll types)
+{
+    corto_walk_opt opt;
+    corto_walk_init(&opt);
+    opt.metaprogram[CORTO_MEMBER] = c_apiAddDependent_item;
+    opt.metaprogram[CORTO_ELEMENT] = c_apiAddDependent_item;
+    corto_iter it = corto_ll_iter(types);
+    while (corto_iter_hasNext(&it)) {
+        corto_type t = corto_iter_next(&it);
+        corto_metawalk(&opt, t, types);
+    }
+}
+
+static
+int c_apiWalkPackages(
+    corto_object o,
+    void* userData)
+{
+    c_apiWalk_t *data = userData;
     corto_bool bootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
 
     CORTO_UNUSED(o);
@@ -327,11 +414,18 @@ static int c_apiWalkPackages(corto_object o, void* userData) {
 
     /* Define local variables for package objects if functions are generated in
      * a separate package (to prevent cyclic dependencies between libs) */
-    if (!app && !local && !bootstrap) {
+    if (!bootstrap) {
         data->types = c_findType(data->g, corto_type_o);
-        if (data->types && corto_ll_count(data->types)) {
-            g_fileWrite(data->source, "static corto_dl _package;\n");
+
+        /* For all types, collect non-primitive dependent types that are not in
+         * this package, as we will need object variables for those too. */
+        c_apiAddDependentTypes(data->types);
+        int has_defs = !corto_ll_walk(data->types, c_apiVariableHasVariableDefs, data);
+        if (data->types && has_defs) {
+            g_fileWrite(data->source, "corto_dl _package;\n");
             corto_ll_walk(data->types, c_apiVariableWalk, data);
+        }
+        if (data->types) {
             corto_ll_free(data->types);
         }
     }
@@ -354,7 +448,7 @@ error:
 }
 
 /* Generator main */
-corto_int16 genmain(g_generator g) {
+int16_t genmain(g_generator g) {
     corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
     bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
