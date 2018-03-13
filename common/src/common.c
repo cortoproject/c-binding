@@ -9,8 +9,10 @@
 #include "ctype.h"
 
 /* Escape language keywords */
-static int c_typeKeywordEscape(corto_string inputName, corto_string buffer) {
-
+int c_escape_keyword(
+    char *inputName,
+    corto_id buffer)
+{
     if( !strcmp(inputName, "alignas") ||
         !strcmp(inputName, "alignof") ||
         !strcmp(inputName, "and") ||
@@ -142,7 +144,7 @@ corto_string corto_genId(corto_string str, corto_id id) {
     *idptr = '\0';
 
     /* Check for C-keywords */
-    c_typeKeywordEscape(id, id);
+    c_escape_keyword(id, id);
 
     return id;
 }
@@ -531,9 +533,9 @@ char* _c_typeId(g_generator g, corto_type t, char *specifier) {
 }
 
 char* c_escapeString(corto_string str) {
-    size_t length = stresc(NULL, 0, str);
+    size_t length = stresc(NULL, 0, '"', str);
     corto_string out = corto_alloc(length + 1);
-    stresc(out, length + 1, str);
+    stresc(out, length + 1, '"', str);
     return out;
 }
 
@@ -876,6 +878,7 @@ int c_includeDependencies(g_generator g, g_file result, corto_string header) {
     corto_iter it = corto_ll_iter(g->imports);
     while (corto_iter_hasNext(&it)) {
         corto_object import = corto_iter_next(&it);
+
         if (import != corto_o) {
             corto_id import_id;
             corto_path(import_id, root_o, import, "/");
@@ -888,14 +891,32 @@ int c_includeDependencies(g_generator g, g_file result, corto_string header) {
                     count ++;
                 }
             } else {
+                bool is_binding = false;
                 char *import_name = strrchr(import_id, '/');
+
                 if (import_name) {
                     import_name ++;
                 } else {
                     import_name = import_id;
                 }
-                if (corto_file_test(strarg("%s/%s.h", include, import_name))) {
-                    g_fileWrite(result, "#include <%s/%s.h>\n", import_id, import_name);
+
+                /* Special case for nested language packages. Because these are
+                 * generated at the same time the other generators are run,
+                 * headers for these packages might not yet exist. If they are
+                 * included by the package, assume that they will exist. */
+                if (corto_parentof(import) == g_getCurrent(g)) {
+                    if (!strcmp(import_name, "c") ||
+                        !strcmp(import_name, "cpp"))
+                    {
+                        is_binding = true;
+                    }
+                }
+
+                if (is_binding ||
+                    corto_file_test(strarg("%s/%s.h", include, import_name)))
+                {
+                    g_fileWrite(
+                        result, "#include <%s/%s.h>\n", import_id, import_name);
                     count ++;
                 }
             }
@@ -1350,7 +1371,7 @@ char* c_short_id(
 }
 
 /* Function builds a scope-stack from root to module */
-static void
+void
 cpp_scopeStack(
     corto_object module,
     corto_object* stack /* corto_object[SD_MAX_SCOPE_DEPTH] */)
@@ -1371,6 +1392,8 @@ cpp_scopeStack(
         corto_error("cpp_scopeStack: unsupported scope-depth (depth=%d, max=%d).", count, CORTO_MAX_SCOPE_DEPTH);
     }
     corto_assert(count <= CORTO_MAX_SCOPE_DEPTH, "MAX_SCOPE_DEPTH overflow.");
+
+    stack[count] = NULL;
 
     /* Fill module stack */
     ptr = module;

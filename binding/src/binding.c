@@ -4,7 +4,6 @@
 typedef struct c_binding_t {
     g_generator g;
     g_file header;
-    g_file source;
     bool firstComma;
 } c_binding_t;
 
@@ -436,74 +435,13 @@ int c_binding_typeCastMacro(
     return 0;
 }
 
-static
-int c_binding_cppTypedefs(
-    corto_object o,
-    void *userData)
-{
-    c_binding_t* data = userData;
-
-    if (corto_instanceof(corto_type_o, o) &&
-        corto_check_attr(o, CORTO_ATTR_NAMED) &&
-        corto_childof(root_o, o) &&
-        o != g_getCurrent(data->g))
-    {
-        corto_id id, cpp_id, meta_id;
-        c_id(data->g, id, o);
-        c_typeId(data->g, corto_typeof(o), meta_id);
-        corto_path(cpp_id, g_getCurrent(data->g), o, "_");
-        g_fileWrite(data->header, "typedef ::%s %s;\n", id, cpp_id);
-        g_fileWrite(data->header, "extern %s %s_o;\n", meta_id, cpp_id);
-        g_fileWrite(data->source, "%s %s_o = %s_o;\n", meta_id, cpp_id, id);
-    }
-
-    return 1;
-}
-
-static
-int c_binding_typeSafeHelper(
-    corto_object o,
-    void *userData)
-{
-    c_binding_t* data = userData;
-
-    if (corto_instanceof(corto_type_o, o) &&
-        corto_check_attr(o, CORTO_ATTR_NAMED) &&
-        corto_childof(root_o, o) &&
-        o != g_getCurrent(data->g))
-    {
-        corto_id cpp_id, id, ptr_id, meta_id;
-        c_typeptr(data->g, o, false, ptr_id);
-        c_typeId(data->g, corto_typeof(o), meta_id);
-        c_id(data->g, id, o);
-        corto_path(cpp_id, g_getCurrent(data->g), o, "_");
-
-        g_fileWrite(data->header, "class %s_t {\n", cpp_id);
-        g_fileWrite(data->header, "public:\n");
-        g_fileIndent(data->header);
-        g_fileWrite(data->header, "typedef ::%s _ref;\n", ptr_id);
-        g_fileWrite(data->header, "static %s _o;\n", meta_id);
-        g_fileDedent(data->header);
-        g_fileWrite(data->header, "};\n");
-
-        g_fileWrite(data->source, "%s %s_t::_o = %s_o;\n", meta_id, cpp_id, id);
-    }
-
-    return 1;
-}
-
 int genmain(g_generator g) {
     c_binding_t walkdata;
     corto_id building_macro;
 
     walkdata.g = g;
     walkdata.header = c_headerOpen(g, "binding");
-    walkdata.source = g_hiddenFileOpen(g, "_binding.cpp");
     walkdata.firstComma = false;
-
-    /* Add mainheader to source file */
-    corto_id mainheader;
-    g_fileWrite(walkdata.source, "#include <%s>\n\n", c_mainheader(g, mainheader));
 
     c_buildingMacro(g, building_macro);
 
@@ -564,30 +502,6 @@ int genmain(g_generator g) {
     if (!g_walkAll(g, c_binding_shortVariableTranslateWalk, &walkdata)) {
         goto error;
     }
-
-    /* #8 Typedef types in namespace for convenience in C++ applications */
-    g_fileWrite(walkdata.header, "\n/* -- C++ namespaced typedefs and objects -- */\n");
-    g_fileWrite(walkdata.header, "#ifdef __cplusplus\n");
-    cpp_openScope(walkdata.header, true, g_getCurrent(g));
-    cpp_openScope(walkdata.source, true, g_getCurrent(g));
-    if (!g_walkAll(g, c_binding_cppTypedefs, &walkdata)) {
-        goto error;
-    }
-    cpp_closeScope(walkdata.source);
-    cpp_closeScope(walkdata.header);
-    g_fileWrite(walkdata.header, "#endif\n");
-
-    /* #9 Objects that allow for compile-time checked corto API */
-    g_fileWrite(walkdata.header, "\n/* -- Helpers that enable compile-time type safety -- */\n");
-    g_fileWrite(walkdata.header, "#ifdef __cplusplus\n");
-    cpp_openScope(walkdata.header, true, g_getCurrent(g));
-    cpp_openScope(walkdata.source, true, g_getCurrent(g));
-    if (!g_walkAll(g, c_binding_typeSafeHelper, &walkdata)) {
-        goto error;
-    }
-    cpp_closeScope(walkdata.source);
-    cpp_closeScope(walkdata.header);
-    g_fileWrite(walkdata.header, "#endif\n");
 
     g_fileWrite(walkdata.header, "\n");
     c_headerClose(walkdata.header);

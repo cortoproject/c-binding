@@ -2,7 +2,10 @@
 #include <corto/corto.h>
 #include "driver/gen/c/common/common.h"
 
-static uint32_t c_projectCountPackagesToLoad(g_generator g) {
+static
+uint32_t c_projectCountPackagesToLoad(
+    g_generator g)
+{
     uint32_t result = 0;
     if (g->imports && corto_ll_count(g->imports)) {
         corto_iter iter = corto_ll_iter(g->imports);
@@ -18,8 +21,11 @@ static uint32_t c_projectCountPackagesToLoad(g_generator g) {
 }
 
 /* Load dependencies */
-static void c_projectLoadPackages(g_generator g, g_file file) {
-
+static
+void c_projectLoadPackages(
+    g_generator g,
+    g_file file)
+{
     if (g->imports && c_projectCountPackagesToLoad(g)) {
         corto_id id;
         if (g_getPackage(g)) {
@@ -33,7 +39,7 @@ static void c_projectLoadPackages(g_generator g, g_file file) {
             corto_object o = corto_iter_next(&iter);
 
             /* Filter out generated language packages */
-            if (strcmp(corto_idof(o), "c")) {
+            if (strcmp(corto_idof(o), "c") && strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
                     "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
@@ -44,12 +50,48 @@ static void c_projectLoadPackages(g_generator g, g_file file) {
     }
 }
 
+/* Load dependencies */
+static
+void c_projectLoadGeneratedPackages(
+    g_generator g,
+    g_file file)
+{
+    if (g->imports && c_projectCountPackagesToLoad(g)) {
+        corto_id id;
+        if (g_getPackage(g)) {
+            corto_path(id, root_o, g_getPackage(g), "_");
+        } else {
+            strcpy(id, g_getProjectName(g));
+        }
+        g_fileWrite(file, "corto_log_push(\"load-gen-deps:%s\");\n", id);
+        corto_iter iter = corto_ll_iter(g->imports);
+        while (corto_iter_hasNext(&iter)) {
+            corto_object o = corto_iter_next(&iter);
+
+            /* Filter out generated language packages */
+            if (!strcmp(corto_idof(o), "c") || !strcmp(corto_idof(o), "cpp")) {
+                g_fileWrite(
+                    file,
+                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
+                    corto_path(NULL, NULL, o, "/"));
+            } else {
+                continue;
+            }
+        }
+        g_fileWrite(file, "corto_log_pop();\n");
+    }
+}
+
 /* Generate file containing loader */
-static corto_int16 c_projectGenerateMainFile(g_generator g) {
+static
+int16_t c_projectGenerateMainFile(
+    g_generator g)
+{
     corto_id filename;
     g_file file;
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
     corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    corto_bool local = strcmp(g_getAttribute(g, "public"), "true");
     corto_bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
 
     sprintf(filename, "_project.%s", cpp ? "cpp" : "c");
@@ -79,7 +121,12 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
     }
 
     if (g_getCurrent(g)) {
-        g_fileWrite(file, "int %s_load(void);\n", corto_path(NULL, root_o, g_getPackage(g), "_"));
+        g_fileWrite(file, "int %s_load(void);\n",
+            corto_path(NULL, root_o, g_getPackage(g), "_"));
+        if ((app | local) && cpp) {
+            g_fileWrite(file, "int %s_cppinit(void);\n",
+                corto_path(NULL, root_o, g_getPackage(g), "_"));
+        }
         g_fileWrite(file, "\n");
     }
 
@@ -97,6 +144,8 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
         file,
         "corto_start(\"%s\"); /* Pass application name for logging framework */\n",
         g_getName(g));
+
+    /* Load dependencies before loading main package */
     c_projectLoadPackages(g, file);
 
     g_fileWrite(file, "int ret = 0;\n");
@@ -107,6 +156,15 @@ static corto_int16 c_projectGenerateMainFile(g_generator g) {
         g_fileWrite(file, "ret = %s_load();\n", id);
         g_fileWrite(file, "corto_log_pop();\n");
     }
+
+    /* If a C++ application that has a package, initialize C++ variables */
+    if (app && cpp && g_getCurrent(g)) {
+        g_fileWrite(file, "%s_cppinit();\n",
+            corto_path(NULL, root_o, g_getPackage(g), "_"));
+    }
+
+    /* Load generated language packages after loading main package */
+    c_projectLoadGeneratedPackages(g, file);
 
     if (app) {
         /* Load configuration only for application projects */
@@ -129,7 +187,10 @@ error:
 }
 
 /* Generate interface header with macro's for exporting */
-static corto_int16 c_genInterfaceHeader(g_generator g) {
+static
+int16_t c_genInterfaceHeader(
+    g_generator g)
+{
     corto_id interfaceHeaderName;
 
     sprintf(interfaceHeaderName, "_project.h");
@@ -186,7 +247,7 @@ error:
 }
 
 /* Generator main */
-corto_int16 genmain(g_generator g) {
+int genmain(g_generator g) {
 
     /* Create source and include directories */
     corto_mkdir("include");

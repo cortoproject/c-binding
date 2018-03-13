@@ -527,10 +527,10 @@ int16_t c_initPrimitive(
     } else if (corto_primitive(t)->kind == CORTO_TEXT) {
         corto_string v = *(corto_string*)ptr;
         if (v) {
-            size_t n = stresc(NULL, 0, v);
+            size_t n = stresc(NULL, 0, '"', v);
             str = malloc(strlen("corto_strdup(\"\")") + n + 1);
             strcpy(str, "corto_strdup(\"");
-            stresc(str + strlen("corto_strdup(\""), n + 1, v);
+            stresc(str + strlen("corto_strdup(\""), n + 1, '"', v);
             strcat(str, "\")");
         } else {
             str = corto_strdup("NULL");

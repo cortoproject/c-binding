@@ -15,6 +15,10 @@
 extern "c" {
 #endif
 
+int c_escape_keyword(
+    char *inputName,
+    corto_id buffer);
+
 /* Translate id to C-id */
 char* corto_genId(char* str, corto_id id);
 
@@ -163,6 +167,11 @@ cpp_openScope(
 
 /* Close a namespace */
 void cpp_closeScope(g_file file);
+
+void
+cpp_scopeStack(
+    corto_object module,
+    corto_object* stack /* corto_object[SD_MAX_SCOPE_DEPTH] */);
 
 #ifdef __cplusplus
 }

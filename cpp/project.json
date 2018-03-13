@@ -1,0 +1,12 @@
+{
+    "id": "driver/gen/c/cpp",
+    "type": "package",
+    "value": {
+        "description": "C++ extensions",
+        "author": "Sander Mertens",
+        "version": "1.0.0",
+        "language": "c",
+        "managed": false,
+        "use": ["corto", "corto/g", "driver/gen/c/common"]
+    }
+}

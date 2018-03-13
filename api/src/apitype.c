@@ -281,11 +281,11 @@ static corto_int16 c_apiCastMacroSet(
     /* optional SetCond macro */
     g_fileWrite(
       data->header,
-      "#define %s__optional_set_cond(cond",
+      "#define %s__optional_set_cond(__cond",
       id);
     c_apiPrintArgs(data->args, 1, 1, data->header);
 
-    g_fileWrite(data->header, " cond ? (%s*)%s__assign((%s*)corto_ptr_new(%s)", id, id, id, typeId);
+    g_fileWrite(data->header, " __cond ? (%s*)%s__assign((%s*)corto_ptr_new(%s)", id, id, id, typeId);
     c_apiPrintArgs(data->args, 1, 1, data->header);
     g_fileWrite(data->header, " : NULL\n");
 
