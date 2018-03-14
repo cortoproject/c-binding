@@ -80,6 +80,21 @@ void c_projectLoadGeneratedPackages(
         }
         g_fileWrite(file, "corto_log_pop();\n");
     }
+
+    /* If a c4cpp package, load own generated cpp package */
+    bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    if (cpp && g_getCurrent(g)) {
+        corto_id id;
+        if (g_getPackage(g)) {
+            corto_path(id, NULL, g_getPackage(g), "/");
+        } else {
+            strcpy(id, g_getProjectName(g));
+        }
+        g_fileWrite(
+            file,
+            "if (corto_use(\"%s/cpp\", 0, NULL)) {return -1;}\n",
+            id);
+    }
 }
 
 /* Generate file containing loader */
@@ -89,10 +104,10 @@ int16_t c_projectGenerateMainFile(
 {
     corto_id filename;
     g_file file;
-    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
-    corto_bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
-    corto_bool local = strcmp(g_getAttribute(g, "public"), "true");
-    corto_bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
+    bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
+    bool local = strcmp(g_getAttribute(g, "public"), "true");
+    bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
 
     sprintf(filename, "_project.%s", cpp ? "cpp" : "c");
 

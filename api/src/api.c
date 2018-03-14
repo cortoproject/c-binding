@@ -446,7 +446,7 @@ int c_apiWalkPackages(
         /* Walk over collected types */
         int has_defs = !corto_ll_walk(data->types, c_apiVariableHasVariableDefs, data);
         if (data->types && has_defs) {
-            g_fileWrite(data->source, "corto_dl _package;\n");
+            g_fileWrite(data->source, "static corto_dl _package;\n");
             corto_ll_walk(data->types, c_apiVariableWalk, data);
         }
         if (data->types) {
