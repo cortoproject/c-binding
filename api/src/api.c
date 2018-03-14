@@ -354,6 +354,28 @@ int c_apiVariableHasVariableDefs(
 }
 
 static
+bool c_api_typeInList(
+    corto_ll types,
+    corto_type t)
+{
+    corto_iter it = corto_ll_iter(types);
+    while (corto_iter_hasNext(&it)) {
+        corto_type type_in_list = corto_iter_next(&it);
+        if (type_in_list == t) {
+            return true;
+        } else
+        if (!corto_check_attr(t, CORTO_ATTR_NAMED) &&
+            !corto_check_attr(type_in_list, CORTO_ATTR_NAMED))
+        {
+            if (corto_compare(type_in_list, t) == CORTO_EQ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static
 int16_t c_apiAddDependent_item(
     corto_walk_opt *opt,
     corto_value *info,
@@ -363,7 +385,7 @@ int16_t c_apiAddDependent_item(
     corto_ll types = userData;
 
     if (t->kind != CORTO_PRIMITIVE) {
-        if (!corto_ll_hasObject(types, t)) {
+        if (!c_api_typeInList(types, t)) {
             corto_ll_append(types, t);
         }
     }
@@ -420,6 +442,8 @@ int c_apiWalkPackages(
         /* For all types, collect non-primitive dependent types that are not in
          * this package, as we will need object variables for those too. */
         c_apiAddDependentTypes(data->types);
+
+        /* Walk over collected types */
         int has_defs = !corto_ll_walk(data->types, c_apiVariableHasVariableDefs, data);
         if (data->types && has_defs) {
             g_fileWrite(data->source, "corto_dl _package;\n");

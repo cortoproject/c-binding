@@ -442,6 +442,7 @@ corto_int16 c_interfaceHeaderWrite(
     bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     bool local = !strcmp(g_getAttribute(g, "local"), "true");
     bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    bool c4cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     bool error = FALSE;
     corto_id path;
@@ -525,8 +526,14 @@ corto_int16 c_interfaceHeaderWrite(
         if (mainHeader && !bootstrap) {
             if (local || app) {
                 c_includeFrom(g, result, from, "_api.h");
+                if (c4cpp) {
+                    c_includeFrom(g, result, from, "_cpp.h");
+                }
             } else {
                 c_includeFrom(g, result, from, "c/_api.h");
+                if (c4cpp) {
+                    c_includeFrom(g, result, from, "cpp/cpp.h");
+                }
             }
         }
     }
