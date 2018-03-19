@@ -83,13 +83,17 @@ void c_projectLoadGeneratedPackages(
 
     /* If a c4cpp package, load own generated cpp package */
     bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
-    if (cpp && g_getCurrent(g)) {
+    bool local = !strcmp(g_getAttribute(g, "local"), "true");
+    bool app = !strcmp(g_getAttribute(g, "app"), "true");
+
+    if (cpp && g_getCurrent(g) && !local && !app) {
         corto_id id;
         if (g_getPackage(g)) {
             corto_path(id, NULL, g_getPackage(g), "/");
         } else {
             strcpy(id, g_getProjectName(g));
         }
+
         g_fileWrite(
             file,
             "if (corto_use(\"%s/cpp\", 0, NULL)) {return -1;}\n",
@@ -106,7 +110,7 @@ int16_t c_projectGenerateMainFile(
     g_file file;
     bool app = !strcmp(g_getAttribute(g, "app"), "true");
     bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
-    bool local = strcmp(g_getAttribute(g, "public"), "true");
+    bool local = !strcmp(g_getAttribute(g, "local"), "true");
     bool cppbinding = !strcmp(g_getAttribute(g, "lang"), "cpp");
 
     sprintf(filename, "_project.%s", cpp ? "cpp" : "c");
