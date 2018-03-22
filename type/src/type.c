@@ -550,7 +550,7 @@ static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userDat
         result = c_typeIterator(s, v, userData);
         break;
     default:
-        corto_throw("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant(corto_typeKind_o, t->kind)));
+        corto_throw("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant_from_value(corto_typeKind_o, t->kind)));
         goto error;
     }
 

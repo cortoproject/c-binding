@@ -372,6 +372,15 @@ g_file c_loadSourceFileOpen(
     g_fileDedent(result);
     g_fileWrite(result, "}\n\n");
 
+    g_fileWrite(result, "static\ncorto_object DECLARE_RECURSIVE(const char *id, corto_object type)\n");
+    g_fileWrite(result, "{\n");
+    g_fileIndent(result);
+    g_fileWrite(result, "struct corto_action action = {};\n");
+    g_fileWrite(result, "action.parent = root_o; action.id = id; action.type = type;\n");
+    g_fileWrite(result, "return corto(CORTO_DECLARE|CORTO_RECURSIVE_DECLARE|CORTO_FORCE_TYPE, action);\n");
+    g_fileDedent(result);
+    g_fileWrite(result, "}\n\n");
+
     g_fileWrite(result, "static\nint16_t DEFINE(corto_object object)\n");
     g_fileWrite(result, "{\n");
     g_fileIndent(result);
@@ -520,7 +529,7 @@ int16_t c_initPrimitive(
         corto_id enumId;
 
         /* Convert constant-name to language id */
-        str = corto_strdup(c_constantId(data->g, corto_enum_constant(corto_enum(t), *(uint32_t*)ptr), enumId));
+        str = corto_strdup(c_constantId(data->g, corto_enum_constant_from_value(corto_enum(t), *(uint32_t*)ptr), enumId));
     } else if (corto_primitive(t)->kind == CORTO_BITMASK) {
         str = corto_alloc(11);
         sprintf(str, "0x%x", *(uint32_t*)ptr);
@@ -873,6 +882,8 @@ int c_loadDeclare(
          g_fileWrite(data->source, "prevAttr = corto_set_attr(CORTO_ATTR_PERSISTENT);\n");
     }
 
+    bool extern_resolved = false;
+
     if (!corto_check_attr(o, CORTO_ATTR_NAMED) || !corto_childof(root_o, o)) {
         g_fileWrite(data->source, "%s = %s(corto_declare(NULL, NULL, ", varId, typeCast);
     } else {
@@ -880,28 +891,40 @@ int c_loadDeclare(
             return 1;
         }
 
-        if (g_mustParse(data->g, corto_parentof(o))) {
-            c_varId(data->g, corto_parentof(o), parentId);
+        if (g_getCurrent(data->g) == o) {
+            corto_id full_id;
+            corto_fullpath(full_id, o);
+            escapedName = c_escapeString(full_id);
+            g_fileWrite(data->source,
+                "%s = %s(DECLARE_RECURSIVE(\"%s\", ",
+                varId,
+                typeCast,
+                escapedName);
+            free(escapedName);
         } else {
-            g_fileWrite(data->source, "_e_ = corto_lookup(NULL, \"%s\");\n",
-                corto_fullpath(NULL, corto_parentof(o)));
-            strcpy(parentId, "_e_");
+            if (g_mustParse(data->g, corto_parentof(o))) {
+                c_varId(data->g, corto_parentof(o), parentId);
+            } else {
+                g_fileWrite(data->source, "_e_ = corto_lookup(NULL, \"%s\");\n",
+                    corto_fullpath(NULL, corto_parentof(o)));
+                strcpy(parentId, "_e_");
+                g_fileWrite(data->source, "if (!_e_) {\n");
+                g_fileIndent(data->source);
+                g_fileWrite(data->source, "corto_throw(\"failed to lookup '%s'\");\n", corto_fullpath(NULL, corto_parentof(o)));
+                g_fileWrite(data->source, "goto error;\n");
+                g_fileDedent(data->source);
+                g_fileWrite(data->source, "}\n");
+                extern_resolved = true;
+            }
 
-            g_fileWrite(data->source, "if (!_e_) {\n");
-            g_fileIndent(data->source);
-            g_fileWrite(data->source, "corto_throw(\"failed to lookup '%s'\");\n", corto_fullpath(NULL, corto_parentof(o)));
-            g_fileWrite(data->source, "goto error;\n");
-            g_fileDedent(data->source);
-            g_fileWrite(data->source, "}\n");
+            escapedName = c_escapeString(corto_idof(o));
+            g_fileWrite(data->source, "%s = %s(DECLARE(%s, \"%s\", ",
+                varId,
+                typeCast,
+                parentId,
+                escapedName);
+            corto_dealloc(escapedName);
         }
-
-        escapedName = c_escapeString(corto_idof(o));
-        g_fileWrite(data->source, "%s = %s(DECLARE(%s, \"%s\", ",
-            varId,
-            typeCast,
-            parentId,
-            escapedName);
-        corto_dealloc(escapedName);
     }
 
     /* Declaration */
@@ -913,7 +936,7 @@ int c_loadDeclare(
             c_varId(data->g, corto_typeof(o), typeId));
     }
 
-    if (corto_check_attr(o, CORTO_ATTR_NAMED) && corto_parentof(o) && !g_mustParse(data->g, corto_parentof(o))) {
+    if (extern_resolved) {
         g_fileWrite(data->source, "corto_release(_e_);\n");
     }
 
