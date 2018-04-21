@@ -532,7 +532,9 @@ corto_int16 c_interfaceHeaderWrite(
             } else {
                 c_includeFrom(g, result, from, "c/_api.h");
                 if (c4cpp) {
+                    g_fileWrite(result, "#ifdef __cplusplus\n");
                     c_includeFrom(g, result, from, "cpp/cpp.h");
+                    g_fileWrite(result, "#endif\n");
                 }
             }
         }
