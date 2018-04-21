@@ -871,57 +871,96 @@ void c_includeFrom(
     free(str);
 }
 
-int c_includeDependencies(g_generator g, g_file result, corto_string header) {
+static
+int c_includeDependency(
+    g_generator g,
+    g_file result,
+    corto_string header,
+    corto_object import)
+{
     int count = 0;
 
-    /* Add include files of managed dependencies with models */
-    corto_iter it = corto_ll_iter(g->imports);
-    while (corto_iter_hasNext(&it)) {
-        corto_object import = corto_iter_next(&it);
+    if (import != corto_o) {
+        corto_id import_id;
+        corto_path(import_id, root_o, import, "/");
+        const char *include = corto_locate(
+            import_id, NULL, CORTO_LOCATE_INCLUDE);
 
-        if (import != corto_o) {
-            corto_id import_id;
-            corto_path(import_id, root_o, import, "/");
-            const char *include = corto_locate(
-                import_id, NULL, CORTO_LOCATE_INCLUDE);
+        if (header) {
+            if (corto_file_test(strarg("%s/%s", include, header))) {
+                g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
+                count ++;
+            }
+        } else {
+            bool is_binding = false;
+            char *import_name = strrchr(import_id, '/');
 
-            if (header) {
-                if (corto_file_test(strarg("%s/%s", include, header))) {
-                    g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
-                    count ++;
-                }
+            if (import_name) {
+                import_name ++;
             } else {
-                bool is_binding = false;
-                char *import_name = strrchr(import_id, '/');
+                import_name = import_id;
+            }
 
-                if (import_name) {
-                    import_name ++;
-                } else {
-                    import_name = import_id;
-                }
-
-                /* Special case for nested language packages. Because these are
-                 * generated at the same time the other generators are run,
-                 * headers for these packages might not yet exist. If they are
-                 * included by the package, assume that they will exist. */
-                if (corto_parentof(import) == g_getCurrent(g)) {
-                    if (!strcmp(import_name, "c") ||
-                        !strcmp(import_name, "cpp"))
-                    {
-                        is_binding = true;
-                    }
-                }
-
-                if (is_binding ||
-                    corto_file_test(strarg("%s/%s.h", include, import_name)))
+            /* Special case for nested language packages. Because these are
+             * generated at the same time the other generators are run,
+             * headers for these packages might not yet exist. If they are
+             * included by the package, assume that they will exist. */
+            if (corto_parentof(import) == g_getCurrent(g)) {
+                if (!strcmp(import_name, "c") ||
+                    !strcmp(import_name, "cpp"))
                 {
-                    g_fileWrite(
-                        result, "#include <%s/%s.h>\n", import_id, import_name);
-                    count ++;
+                    is_binding = true;
                 }
+            }
+
+            if (is_binding ||
+                corto_file_test(strarg("%s/%s.h", include, import_name)))
+            {
+                g_fileWrite(
+                    result, "#include <%s/%s.h>\n", import_id, import_name);
+                count ++;
             }
         }
     }
+
+    return count;
+}
+
+int c_includeDependencies(
+    g_generator g,
+    g_file result,
+    corto_string header)
+{
+    int count = 0;
+    corto_iter it;
+
+    /* Add include files of managed dependencies with models */
+    if (corto_ll_count(g->imports)) {
+        g_fileWrite(result, "/* Public dependencies */\n");
+        it = corto_ll_iter(g->imports);
+        while (corto_iter_hasNext(&it)) {
+            corto_object import = corto_iter_next(&it);
+            count += c_includeDependency(g, result, header, import);
+        }
+    }
+
+    /* Add includes of private dependencies. Only include when building project,
+     * not when building dependencies of project */
+    corto_id building_macro;
+    c_buildingMacro(g, building_macro);
+
+    if (corto_ll_count(g->private_imports)) {
+        g_fileWrite(result, "\n");
+        g_fileWrite(result, "/* Private dependencies */\n");
+        g_fileWrite(result, "#ifdef %s\n", building_macro);
+        it = corto_ll_iter(g->private_imports);
+        while (corto_iter_hasNext(&it)) {
+            corto_object import = corto_iter_next(&it);
+            count += c_includeDependency(g, result, header, import);
+        }
+        g_fileWrite(result, "#endif\n");
+    }
+
     return count;
 }
 
