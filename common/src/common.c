@@ -936,7 +936,6 @@ int c_includeDependencies(
 
     /* Add include files of managed dependencies with models */
     if (corto_ll_count(g->imports)) {
-        g_fileWrite(result, "/* Public dependencies */\n");
         it = corto_ll_iter(g->imports);
         while (corto_iter_hasNext(&it)) {
             corto_object import = corto_iter_next(&it);

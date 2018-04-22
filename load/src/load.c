@@ -395,7 +395,13 @@ g_file c_loadSourceFileOpen(
     g_fileIndent(result);
     g_fileWrite(result, "struct corto_action action = {};\n");
     g_fileWrite(result, "action.parent = parent; action.id = id;\n");
-    g_fileWrite(result, "return corto(CORTO_LOOKUP, action);\n");
+    g_fileWrite(result, "corto_object result = corto(CORTO_LOOKUP, action);\n");
+    g_fileWrite(result, "if (!result) {\n");
+    g_fileIndent(result);
+    g_fileWrite(result, "corto_throw(\"could not lookup '%%s'\", id);\n");
+    g_fileDedent(result);
+    g_fileWrite(result, "}\n");
+    g_fileWrite(result, "return result;\n");
     g_fileDedent(result);
     g_fileWrite(result, "}\n");
 
