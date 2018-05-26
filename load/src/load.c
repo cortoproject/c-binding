@@ -185,7 +185,7 @@ char* c_loadMemberId(
 
             /* Reference member using it's name. */
             corto_id memberId;
-            strcat(out, g_id(data->g, corto_idof(stack[count]->is.member.t), memberId));
+            strcat(out, g_id(data->g, corto_idof(stack[count]->is.member.member), memberId));
             break;
 
         /* Element */
@@ -199,7 +199,7 @@ char* c_loadMemberId(
 
             /* Array element, use array operator. */
             case CORTO_ARRAY:
-                sprintf(arrayIndex, "[%d]", stack[count]->is.element.t.index);
+                sprintf(arrayIndex, "[%d]", stack[count]->is.element.index);
                 strcat(out, arrayIndex);
                 break;
 
@@ -210,7 +210,7 @@ char* c_loadMemberId(
                 } else {
                     strcat(out, ".");
                 }
-                sprintf(arrayIndex, "buffer[%d]", stack[count]->is.element.t.index);
+                sprintf(arrayIndex, "buffer[%d]", stack[count]->is.element.index);
                 strcat(out, arrayIndex);
                 break;
 
@@ -622,7 +622,7 @@ int16_t c_initMember(
     corto_value* v,
     void* userData)
 {
-    corto_member m = v->is.member.t;
+    corto_member m = v->is.member.member;
     c_typeWalk_t* data = userData;
 
     if (m->modifiers & CORTO_OPTIONAL) {

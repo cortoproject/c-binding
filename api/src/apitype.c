@@ -399,7 +399,7 @@ static corto_int16 c_apiAssignMember(corto_walk_opt* s, corto_value* v, void* us
     CORTO_UNUSED(s);
 
     if (v->kind == CORTO_MEMBER) {
-        m = v->is.member.t;
+        m = v->is.member.member;
         data = userData;
         corto_id ptr, lvalue, type;
         corto_bool isUnionCase =
@@ -433,7 +433,7 @@ static corto_int16 c_apiParamMember(corto_walk_opt* s, corto_value* v, void* use
     CORTO_UNUSED(s);
 
     if (v->kind == CORTO_MEMBER) {
-        m = v->is.member.t;
+        m = v->is.member.member;
         data = userData;
         corto_bool isOptional = m->modifiers & CORTO_OPTIONAL;
         corto_bool requiresPtr = isOptional;

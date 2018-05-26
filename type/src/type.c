@@ -24,17 +24,17 @@ static corto_int16 c_typeConstant(corto_walk_opt* s, corto_value* v, void* userD
 
     data = userData;
 
-    switch(corto_primitive(corto_parentof(v->is.constant.t))->kind) {
+    switch(corto_primitive(corto_parentof(v->is.constant.constant))->kind) {
     case CORTO_ENUM:
         if (data->prefixComma) {
             g_fileWrite(data->header, ",\n");
         } else {
             data->prefixComma = TRUE;
         }
-        g_fileWrite(data->header, "%s = %d", c_constantId(data->g, v->is.constant.t, constantId), *v->is.constant.t);
+        g_fileWrite(data->header, "%s = %d", c_constantId(data->g, v->is.constant.constant, constantId), *v->is.constant.constant);
         break;
     case CORTO_BITMASK:
-        g_fileWrite(data->header, "#define %s (0x%x)\n", c_constantId(data->g, v->is.constant.t, constantId), *v->is.constant.t);
+        g_fileWrite(data->header, "#define %s (0x%x)\n", c_constantId(data->g, v->is.constant.constant, constantId), *v->is.constant.constant);
         break;
     default:
         corto_throw("c_typeConstant: invalid constant parent-type.");
@@ -57,7 +57,7 @@ static corto_int16 c_typeMember(corto_walk_opt* s, corto_value* v, void* userDat
 
     if (v->kind == CORTO_MEMBER) {
         data = userData;
-        m = v->is.member.t;
+        m = v->is.member.member;
 
         /* Get typespecifier */
         if (c_specifierId(data->g, m->type, specifier, NULL, postfix)) {
