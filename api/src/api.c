@@ -59,6 +59,9 @@ int c_apiWalk(
     void* userData)
 {
     c_apiWalk_t* data = userData;
+    corto_id building_macro;
+
+    c_buildingMacro(data->g, building_macro);
 
     if (corto_class_instanceof(corto_type_o, o) && !corto_instanceof(corto_native_type_o, o)) {
         g_fileWrite(data->header, "/* %s */\n", corto_fullpath(NULL, o));
@@ -97,6 +100,30 @@ int c_apiWalk(
                     g_fileWrite(data->header, "#define %s__set %s__set\n", localId, id);
                     g_fileWrite(data->header, "#define %s__unset %s__unset\n", localId, id);
                 }
+            }
+        }
+
+        if (corto_instanceof(corto_interface_o, o) &&
+            corto_check_attr(o, CORTO_ATTR_NAMED) &&
+            corto_parentof(o) == g_getCurrent(data->g))
+        {
+            corto_id objectId;
+            strcpy(objectId, corto_idof(o));
+            objectId[0] = toupper(objectId[0]);
+
+            if (strcmp(localId, objectId)) {
+                g_fileWrite(data->header, "\n");
+                g_fileWrite(data->header, "#ifdef %s\n", building_macro);
+                g_fileWrite(data->header, "#define %s__create %s__create\n", objectId, id);
+                g_fileWrite(data->header, "#define %s__create_auto %s__create_auto\n", objectId, id);
+                g_fileWrite(data->header, "#define %s__declare %s__declare\n", objectId, id);
+                g_fileWrite(data->header, "#define %s__update %s__update\n", objectId, id);
+                if (corto_type(o)->kind != CORTO_VOID || corto_type(o)->reference) {
+                    g_fileWrite(data->header, "#define %s__assign %s__assign\n", objectId, id);
+                    g_fileWrite(data->header, "#define %s__set %s__set\n", objectId, id);
+                    g_fileWrite(data->header, "#define %s__unset %s__unset\n", objectId, id);
+                }
+                g_fileWrite(data->header, "#endif\n");
             }
         }
 

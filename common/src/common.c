@@ -1368,7 +1368,8 @@ char* c_id_intern(
     if (corto_instanceof(corto_constant_o, o) && parent && corto_instanceof(corto_enum_o, parent)) {
         switch (mode) {
         case 0: return c_constantId(g, o, id);
-        case 1: return c_shortConstantId(g, o, id); /* short constants not supported */
+        case 1: return c_shortConstantId(g, o, id);
+        /* short constants not supported */
         default: return NULL;
         }
     } else {

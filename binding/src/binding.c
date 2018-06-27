@@ -196,6 +196,59 @@ int c_binding_shortIdentifierTranslateWalk(
 }
 
 static
+int c_binding_implIdentifierTranslateWalk(
+    corto_object o,
+    void *userData)
+{
+    c_binding_t* data = userData;
+    
+    if (corto_parentof(o) == g_getCurrent(data->g) &&
+        corto_check_attr(o, CORTO_ATTR_NAMED) &&
+        (corto_instanceof(corto_interface_o, o) ||
+        corto_instanceof(corto_method_o, o)))
+    {
+        corto_id impl_id, short_impl_id;
+
+        c_short_id(data->g, impl_id, o);
+
+        if (corto_instanceof(corto_interface_o, o)) {
+            /* Interface */
+            strcpy(short_impl_id, corto_idof(o));
+            short_impl_id[0] = toupper(short_impl_id[0]);
+        } else {
+            corto_id sig_name;
+
+            corto_sig_name(corto_idof(o), sig_name);
+
+            /* Method */
+            strcpy(short_impl_id, corto_idof(corto_parentof(o)));
+            strcat(short_impl_id, "_");
+            strcat(short_impl_id, sig_name);
+        }
+
+
+        if (strcmp(impl_id, short_impl_id)) {
+            g_fileWrite(data->header, "#define %s %s\n", short_impl_id, impl_id);
+            if (corto_instanceof(corto_function_o, o)) {
+                g_fileWrite(data->header, "#define safe_%s safe_%s\n", short_impl_id, impl_id);
+            }
+
+            if (corto_instanceof(corto_function_o, o) && corto_function(o)->overridable) {
+                /* Remove _v */
+                int len = strlen(short_impl_id);
+                short_impl_id[len - 2] = '\0';
+                len = strlen(impl_id);
+                impl_id[len - 2] = '\0';
+                g_fileWrite(data->header, "#define %s %s\n", short_impl_id, impl_id);
+                g_fileWrite(data->header, "#define safe_%s safe_%s\n", short_impl_id, impl_id);
+            }
+        }
+    }
+
+    return 1;
+}
+
+static
 int c_binding_localProcedureTranslateWalk(
     corto_object o,
     void *userData)
@@ -496,6 +549,14 @@ int genmain(g_generator g) {
     if (!g_walkAll(g, c_binding_shortIdentifierTranslateWalk, &walkdata)) {
         goto error;
     }
+
+    /* #6 Macro's that translate between impl and full identifiers */
+    g_fileWrite(walkdata.header, "\n/* -- Local only short identifier translation -- */\n");
+    g_fileWrite(walkdata.header, "#ifdef %s\n", building_macro);
+    if (!g_walkAll(g, c_binding_implIdentifierTranslateWalk, &walkdata)) {
+        goto error;
+    }
+    g_fileWrite(walkdata.header, "#endif\n");
 
     /* #7 Macro's that translate between short and full variables */
     g_fileWrite(walkdata.header, "\n/* -- Short object variable translation -- */\n");
