@@ -194,6 +194,13 @@ int16_t c_projectGenerateMainFile(
         g_fileWrite(file, "ret = cortomain(argc, argv);\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n");
+        g_fileWrite(file, "char *keep_alive = corto_getenv(\"CORTO_KEEP_ALIVE\");\n");
+        g_fileWrite(file, "if (keep_alive && !stricmp(keep_alive, \"true\")) {\n");
+        g_fileIndent(file);
+        g_fileWrite(file, "corto_info(\"Keeping process alive, press CTRL-C to exit\");\n");
+        g_fileWrite(file, "while (true) { corto_sleep(1, 0); }\n");
+        g_fileDedent(file);
+        g_fileWrite(file, "}\n");
         g_fileWrite(file, "corto_stop();\n");
     }
     g_fileWrite(file, "return ret;\n");
@@ -273,14 +280,14 @@ int genmain(g_generator g) {
     corto_mkdir("src");
 
     if (c_projectGenerateMainFile(g)) {
-        if (!corto_lasterr()) {
+        if (!corto_raised()) {
             corto_throw("failed to create main sourcefile");
         }
         goto error;
     }
 
     if (c_genInterfaceHeader(g)) {
-        if (!corto_lasterr()) {
+        if (!corto_raised()) {
             corto_throw("failed to create interface header");
         }
         goto error;
