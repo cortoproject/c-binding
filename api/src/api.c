@@ -60,6 +60,7 @@ int c_apiWalk(
 {
     c_apiWalk_t* data = userData;
     corto_id building_macro;
+    bool bootstrap = !strcmp(g_getAttribute(data->g, "bootstrap"), "true");
 
     c_buildingMacro(data->g, building_macro);
 
@@ -88,7 +89,7 @@ int c_apiWalk(
         c_short_id(data->g, localId, o);
         c_id(data->g, id, o);
 
-        if (strcmp(g_getAttribute(data->g, "bootstrap"), "true") && corto_parentof(o) != root_o) {
+        if (!bootstrap && corto_parentof(o) != root_o) {
             if (strcmp(id, localId)) {
                 g_fileWrite(data->header, "\n");
                 g_fileWrite(data->header, "#define %s__create %s__create\n", localId, id);
@@ -103,7 +104,7 @@ int c_apiWalk(
             }
         }
 
-        if (corto_instanceof(corto_interface_o, o) &&
+        if (!bootstrap && corto_instanceof(corto_interface_o, o) &&
             corto_check_attr(o, CORTO_ATTR_NAMED) &&
             corto_parentof(o) == g_getCurrent(data->g))
         {
