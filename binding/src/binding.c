@@ -201,7 +201,7 @@ int c_binding_implIdentifierTranslateWalk(
     void *userData)
 {
     c_binding_t* data = userData;
-    
+
     if (corto_parentof(o) == g_getCurrent(data->g) &&
         corto_check_attr(o, CORTO_ATTR_NAMED) &&
         (corto_instanceof(corto_interface_o, o) ||
@@ -491,6 +491,7 @@ int c_binding_typeCastMacro(
 int genmain(g_generator g) {
     c_binding_t walkdata;
     corto_id building_macro;
+    bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
     walkdata.g = g;
     walkdata.header = c_headerOpen(g, "binding");
@@ -551,12 +552,14 @@ int genmain(g_generator g) {
     }
 
     /* #6 Macro's that translate between impl and full identifiers */
-    g_fileWrite(walkdata.header, "\n/* -- Local only short identifier translation -- */\n");
-    g_fileWrite(walkdata.header, "#ifdef %s\n", building_macro);
-    if (!g_walkAll(g, c_binding_implIdentifierTranslateWalk, &walkdata)) {
-        goto error;
+    if (!bootstrap) {
+        g_fileWrite(walkdata.header, "\n/* -- Local only short identifier translation -- */\n");
+        g_fileWrite(walkdata.header, "#ifdef %s\n", building_macro);
+        if (!g_walkAll(g, c_binding_implIdentifierTranslateWalk, &walkdata)) {
+            goto error;
+        }
+        g_fileWrite(walkdata.header, "#endif\n");
     }
-    g_fileWrite(walkdata.header, "#endif\n");
 
     /* #7 Macro's that translate between short and full variables */
     g_fileWrite(walkdata.header, "\n/* -- Short object variable translation -- */\n");
