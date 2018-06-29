@@ -435,29 +435,29 @@ int16_t c_specifierId_intern(
         switch(corto_type(t)->kind) {
         case CORTO_COLLECTION: {
             corto_id _specifier, _postfix;
-            corto_type elementType = corto_collection(t)->elementType;
+            corto_type element_type = corto_collection(t)->element_type;
 
-            /* Get specifier of elementType */
-            if (elementType->kind == CORTO_PRIMITIVE && corto_check_attr(elementType, CORTO_ATTR_NAMED)) {
+            /* Get specifier of element_type */
+            if (element_type->kind == CORTO_PRIMITIVE && corto_check_attr(element_type, CORTO_ATTR_NAMED)) {
                 if (mode == 0) {
-                    g_fullOid(g, elementType, _specifier);
+                    g_fullOid(g, element_type, _specifier);
                 } else if (mode == 1) {
-                    g_shortOid(g, elementType, _specifier);
+                    g_shortOid(g, element_type, _specifier);
                 }
-            } else if (c_specifierId_intern(g, elementType, _specifier, NULL, _postfix, mode)) {
+            } else if (c_specifierId_intern(g, element_type, _specifier, NULL, _postfix, mode)) {
                 goto error;
             }
 
             switch(corto_collection(t)->kind) {
             case CORTO_ARRAY:
-                if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_ARRAY)) {
+                if ((element_type->kind == CORTO_COLLECTION) && (corto_collection(element_type)->kind == CORTO_ARRAY)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
                     sprintf(specifier, "%sArray%d", _specifier, corto_collection(t)->max);
                 }
                 break;
             case CORTO_SEQUENCE:
-                if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_SEQUENCE)) {
+                if ((element_type->kind == CORTO_COLLECTION) && (corto_collection(element_type)->kind == CORTO_SEQUENCE)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
                     if (corto_collection(t)->max) {
@@ -468,7 +468,7 @@ int16_t c_specifierId_intern(
                 }
                 break;
             case CORTO_LIST:
-                if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_LIST)) {
+                if ((element_type->kind == CORTO_COLLECTION) && (corto_collection(element_type)->kind == CORTO_LIST)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
                     if (corto_collection(t)->max) {
@@ -479,7 +479,7 @@ int16_t c_specifierId_intern(
                 }
                 break;
             case CORTO_MAP:
-                if ((elementType->kind == CORTO_COLLECTION) && (corto_collection(elementType)->kind == CORTO_LIST)) {
+                if ((element_type->kind == CORTO_COLLECTION) && (corto_collection(element_type)->kind == CORTO_LIST)) {
                     sprintf(specifier, "%s_%d", _specifier, corto_collection(t)->max);
                 } else {
                     if (corto_collection(t)->max) {
@@ -541,10 +541,10 @@ char* c_escapeString(corto_string str) {
 
 bool c_procedureHasThis(corto_function o) {
     corto_procedure t = corto_procedure(corto_typeof(o));
-    return t->hasThis;
+    return t->has_this;
 }
 
-corto_string c_paramName(corto_string name, corto_string buffer) {
+corto_string c_param_name(corto_string name, corto_string buffer) {
 
     if (*name == '$') {
         if (!strcmp(name, "$__line")) {
@@ -563,7 +563,7 @@ corto_string c_paramName(corto_string name, corto_string buffer) {
 }
 
 /* Translate parameter type to C */
-char* c_paramType(g_generator g, corto_parameter *p, char* buffer) {
+char* c_param_type(g_generator g, corto_parameter *p, char* buffer) {
     if (p->type->kind == CORTO_PRIMITIVE &&
         corto_primitive(p->type)->kind == CORTO_TEXT)
     {
@@ -586,11 +586,11 @@ char* c_paramType(g_generator g, corto_parameter *p, char* buffer) {
 }
 
 /* Translate parameter type to C */
-char* c_impl_paramType(g_generator g, corto_parameter *p, char* buffer) {
+char* c_impl_param_type(g_generator g, corto_parameter *p, char* buffer) {
     if (p->type->kind == CORTO_PRIMITIVE &&
         corto_primitive(p->type)->kind == CORTO_TEXT)
     {
-        return c_paramType(g, p, buffer);
+        return c_param_type(g, p, buffer);
     }
     else
     {
@@ -606,7 +606,7 @@ char* c_impl_paramType(g_generator g, corto_parameter *p, char* buffer) {
 
 bool c_paramRequiresPtr(corto_parameter *p) {
     return (!p->type->reference &&
-           (p->passByReference || (p->type->kind == CORTO_COMPOSITE))) ||
+           (p->is_reference || (p->type->kind == CORTO_COMPOSITE))) ||
            p->inout == CORTO_OUT ||
            p->inout == CORTO_INOUT;
 }
@@ -633,9 +633,9 @@ corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, bool impl, co
         (corto_collection(t)->kind == CORTO_ARRAY)))
     {
         if (!impl) {
-            g_fullOid(g, corto_collection(t)->elementType, id);
+            g_fullOid(g, corto_collection(t)->element_type, id);
         } else {
-            g_shortOid(g, corto_collection(t)->elementType, id);
+            g_shortOid(g, corto_collection(t)->element_type, id);
         }
         strcat(id, "*");
     } else {
@@ -987,12 +987,12 @@ static corto_equalityKind c_compareCollections(corto_collection c1, corto_collec
     corto_equalityKind result = CORTO_EQ;
     if (c1->kind != c2->kind) {
         result = CORTO_NEQ;
-    } else if (c1->elementType != c2->elementType) {
+    } else if (c1->element_type != c2->element_type) {
         result = CORTO_NEQ;
     } else if (c1->max != c2->max) {
         result = CORTO_NEQ ;
     } else if (c1->kind == CORTO_MAP) {
-        if (corto_map(c1)->keyType != corto_map(c2)->keyType) {
+        if (corto_map(c1)->key_type != corto_map(c2)->key_type) {
             result = CORTO_NEQ;
         }
     }
@@ -1008,8 +1008,8 @@ static int c_checkDuplicates(void* o, void* userData) {
                 corto_collection(o),
                 corto_collection(userData)) != CORTO_EQ;
         } else if (corto_instanceof(corto_iterator_o, o) && corto_instanceof(corto_iterator_o, userData)) {
-            return corto_iterator(o)->elementType ==
-                corto_iterator(userData)->elementType;
+            return corto_iterator(o)->element_type ==
+                corto_iterator(userData)->element_type;
         } else {
             return 1;
         }
@@ -1140,9 +1140,9 @@ int c_param(
     }
 
     if (!data->impl) {
-        c_paramType(data->g, o, type);
+        c_param_type(data->g, o, type);
     } else {
-        c_impl_paramType(data->g, o, type);
+        c_impl_param_type(data->g, o, type);
     }
 
     corto_buffer_append(data->buffer, "%s", type);
@@ -1151,7 +1151,7 @@ int c_param(
     }
 
     /* Write to source */
-    corto_buffer_append(data->buffer, "%s", c_paramName(o->name, name));
+    corto_buffer_append(data->buffer, "%s", c_param_name(o->name, name));
 
     data->firstComma++;
 
@@ -1212,7 +1212,7 @@ corto_int16 c_decl(
     bool impl)
 {
     corto_id functionName, returnSpec;
-    corto_type returnType;
+    corto_type return_type;
     c_paramWalk_t walkData;
 
     walkData.g = g;
@@ -1221,9 +1221,9 @@ corto_int16 c_decl(
     walkData.impl = impl;
 
     /* Generate function-return type string */
-    returnType = ((corto_function)o)->returnType;
-    if (returnType) {
-        c_typeret(g, returnType, C_ByValue, impl, returnSpec);
+    return_type = ((corto_function)o)->return_type;
+    if (return_type) {
+        c_typeret(g, return_type, C_ByValue, impl, returnSpec);
     } else {
         strcpy(returnSpec, "void");
     }
@@ -1247,8 +1247,8 @@ corto_int16 c_decl(
 
     /* Add 'this' parameter to methods */
     if (c_procedureHasThis(o)) {
-        corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
-        if (!thisType || thisType->reference) {
+        corto_type this_type = corto_procedure(corto_typeof(o))->this_type;
+        if (!this_type || this_type->reference) {
             c_paramThis(g, buffer, cpp, impl, corto_parentof(o));
         } else {
             if (!cpp) {

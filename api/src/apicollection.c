@@ -1,10 +1,10 @@
 
 #include "api.h"
 
-static corto_bool c_apiElementRequiresInit(corto_type elementType) {
+static corto_bool c_apiElementRequiresInit(corto_type element_type) {
     corto_bool result = FALSE;
 
-    if ((elementType->kind != CORTO_PRIMITIVE) && !elementType->reference) {
+    if ((element_type->kind != CORTO_PRIMITIVE) && !element_type->reference) {
         result = TRUE;
     }
 
@@ -12,9 +12,9 @@ static corto_bool c_apiElementRequiresInit(corto_type elementType) {
 }
 
 /* Initialize or deinitialize element */
-static corto_int16 c_apiElementInit(corto_type elementType, corto_string element, corto_bool isInit, c_apiWalk_t* data) {
+static corto_int16 c_apiElementInit(corto_type element_type, corto_string element, corto_bool isInit, c_apiWalk_t* data) {
     corto_id varId;
-    c_varId(data->g, elementType, varId);
+    c_varId(data->g, element_type, varId);
 
     g_fileWrite(data->source, "{\n");
     g_fileIndent(data->source);
@@ -33,11 +33,11 @@ static corto_int16 c_apiElementInit(corto_type elementType, corto_string element
 static corto_int16 c_apiSequenceTypeAppendAlloc(corto_sequence o, c_apiWalk_t* data) {
     corto_id id, elementId, varId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-    c_varId(data->g, elementType, varId);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
+    c_varId(data->g, element_type, varId);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -50,10 +50,10 @@ static corto_int16 c_apiSequenceTypeAppendAlloc(corto_sequence o, c_apiWalk_t* d
     g_fileWrite(data->source, "corto_uint32 size;\n");
     g_fileWrite(data->source, "seq->length++;\n");
     g_fileWrite(data->source, "seq->buffer = (%s*)corto_realloc(seq->buffer, seq->length * (size=corto_type_sizeof(corto_type(%s))));\n", elementId, varId);
-    g_fileWrite(data->source, "memset(%sseq->buffer[seq->length-1], 0, size);\n", elementType->reference?"":"&");
-    if (c_apiElementRequiresInit(elementType)) {
-        if (!elementType->reference) {
-            c_apiElementInit(elementType, "&seq->buffer[seq->length-1]", TRUE, data);
+    g_fileWrite(data->source, "memset(%sseq->buffer[seq->length-1], 0, size);\n", element_type->reference?"":"&");
+    if (c_apiElementRequiresInit(element_type)) {
+        if (!element_type->reference) {
+            c_apiElementInit(element_type, "&seq->buffer[seq->length-1]", TRUE, data);
         }
     }
     g_fileWrite(data->source, "return &seq->buffer[seq->length-1];\n");
@@ -67,11 +67,11 @@ static corto_int16 c_apiSequenceTypeAppendAlloc(corto_sequence o, c_apiWalk_t* d
 static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) {
     corto_id id, elementId, varId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-    c_varId(data->g, elementType, varId);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
+    c_varId(data->g, element_type, varId);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -84,13 +84,13 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
     g_fileWrite(data->source, "corto_uint32 size;\n");
     g_fileWrite(data->source, "seq->length++;\n");
     g_fileWrite(data->source, "seq->buffer = (%s*)corto_realloc(seq->buffer, seq->length * (size=corto_type_sizeof(corto_type(%s))));\n", elementId, varId);
-    g_fileWrite(data->source, "memset(%sseq->buffer[seq->length-1], 0, size);\n", elementType->reference?"":"&");
-    if (c_apiElementRequiresInit(elementType)) {
-        if (!elementType->reference) {
-            c_apiElementInit(elementType, "&seq->buffer[seq->length-1]", TRUE, data);
+    g_fileWrite(data->source, "memset(%sseq->buffer[seq->length-1], 0, size);\n", element_type->reference?"":"&");
+    if (c_apiElementRequiresInit(element_type)) {
+        if (!element_type->reference) {
+            c_apiElementInit(element_type, "&seq->buffer[seq->length-1]", TRUE, data);
         }
     }
-    if (elementType->reference) {
+    if (element_type->reference) {
         g_fileWrite(data->source, "corto_set_ref(&seq->buffer[seq->length-1], element);\n");
     } else {
         g_fileWrite(data->source, "corto_ptr_copy(&seq->buffer[seq->length-1], %s, &element);\n", varId);
@@ -107,11 +107,11 @@ static corto_int16 c_apiSequenceTypeAppend(corto_sequence o, c_apiWalk_t* data) 
 static corto_int16 c_apiSequenceTypeResize(corto_sequence o, c_apiWalk_t* data) {
     corto_id id, elementId, varId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-    c_varId(data->g, elementType, varId);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
+    c_varId(data->g, element_type, varId);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -123,13 +123,13 @@ static corto_int16 c_apiSequenceTypeResize(corto_sequence o, c_apiWalk_t* data) 
     g_fileWrite(data->source, "corto_uint32 size;\n");
 
     /* Deinitialize old elements if new size is smaller than old size - only valid for non-primitive types */
-    if (c_apiElementRequiresInit(elementType)) {
+    if (c_apiElementRequiresInit(element_type)) {
         g_fileWrite(data->source, "if (length < seq->length) {\n");
         g_fileIndent(data->source);
         g_fileWrite(data->source, "corto_uint32 i;\n");
         g_fileWrite(data->source, "for(i=length; i<seq->length; i++) {\n");
         g_fileIndent(data->source);
-        c_apiElementInit(elementType, "&seq->buffer[i]", FALSE, data);
+        c_apiElementInit(element_type, "&seq->buffer[i]", FALSE, data);
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
         g_fileDedent(data->source);
@@ -142,14 +142,14 @@ static corto_int16 c_apiSequenceTypeResize(corto_sequence o, c_apiWalk_t* data) 
     /* Initialize new elements */
     g_fileWrite(data->source, "if (length > seq->length) {\n");
     g_fileIndent(data->source);
-    if (elementType->kind != CORTO_PRIMITIVE) {
+    if (element_type->kind != CORTO_PRIMITIVE) {
         g_fileWrite(data->source, "corto_uint32 i;\n");
     }
     g_fileWrite(data->source, "memset(&seq->buffer[seq->length], 0, size * (length - seq->length));\n");
-    if (elementType->kind != CORTO_PRIMITIVE) {
+    if (element_type->kind != CORTO_PRIMITIVE) {
         g_fileWrite(data->source, "for(i=seq->length; i<length; i++) {\n");
         g_fileIndent(data->source);
-        c_apiElementInit(elementType, "&seq->buffer[i]", FALSE, data);
+        c_apiElementInit(element_type, "&seq->buffer[i]", FALSE, data);
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
     }
@@ -168,10 +168,10 @@ static corto_int16 c_apiSequenceTypeResize(corto_sequence o, c_apiWalk_t* data) 
 static corto_int16 c_apiSequenceTypeClear(corto_sequence o, c_apiWalk_t* data) {
     corto_id id, elementId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -242,11 +242,11 @@ static corto_string corto_operationToApi(corto_string operation, corto_id id) {
 static corto_int16 c_apiListTypeInsertAlloc(corto_list o, corto_string operation, c_apiWalk_t* data) {
     corto_id id, elementId, api, varId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-    c_varId(data->g, elementType, varId);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
+    c_varId(data->g, element_type, varId);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -262,7 +262,7 @@ static corto_int16 c_apiListTypeInsertAlloc(corto_list o, corto_string operation
         varId);
 
     /* Initialize element */
-    c_apiElementInit(elementType, "result", TRUE, data);
+    c_apiElementInit(element_type, "result", TRUE, data);
 
     /* Insert element to list */
     g_fileWrite(data->source, "%s(list, result);\n", corto_operationToApi(operation, api));
@@ -279,17 +279,17 @@ static corto_int16 c_apiListTypeInsertAlloc(corto_list o, corto_string operation
 static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operation, c_apiWalk_t* data) {
     corto_id id, elementId, api, varId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
-    corto_bool requiresAlloc = corto_collection_requiresAlloc(elementType);
-    corto_bool ptr = c_typeRequiresPtr(elementType);
+    corto_type element_type = corto_collection(o)->element_type;
+    corto_bool requires_alloc = corto_collection_requires_alloc(element_type);
+    corto_bool ptr = c_typeRequiresPtr(element_type);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-    c_varId(data->g, elementType, varId);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
+    c_varId(data->g, element_type, varId);
 
     c_writeExport(data->g, data->header);
 
-    if (requiresAlloc) {
+    if (requires_alloc) {
         g_fileWrite(data->header, " %s* ", elementId);
         g_fileWrite(data->source, "%s* ", elementId);
     } else {
@@ -308,11 +308,11 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
     g_fileIndent(data->source);
 
     /* Insert element to list */
-    if (requiresAlloc) {
+    if (requires_alloc) {
         g_fileWrite(data->source, "%s *result = %s%s_alloc(list);\n", elementId, id, operation);
         g_fileWrite(data->source, "corto_ptr_copy(result, %s, %selement);\n", varId, ptr ? "" : "&");
     } else {
-        if ((elementType->kind == CORTO_PRIMITIVE) && (corto_primitive(elementType)->kind == CORTO_TEXT)) {
+        if ((element_type->kind == CORTO_PRIMITIVE) && (corto_primitive(element_type)->kind == CORTO_TEXT)) {
             g_fileWrite(data->source, "if (element) {\n");
             g_fileIndent(data->source);
             g_fileWrite(data->source, "%s(list, (void*)corto_strdup(element));\n", corto_operationToApi(operation, api));
@@ -321,7 +321,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
             g_fileWrite(data->source, "%s(list, (void*)element);\n", corto_operationToApi(operation, api));
             g_fileWrite(data->source, "}\n");
         } else {
-            if (elementType->kind == CORTO_PRIMITIVE || elementType->reference) {
+            if (element_type->kind == CORTO_PRIMITIVE || element_type->reference) {
                 g_fileWrite(data->source, "%s(list, (void*)(corto_word)element);\n", corto_operationToApi(operation, api));
             } else {
                 g_fileWrite(data->source, "%s%s result;\n", elementId, ptr ? "*" : "");
@@ -330,7 +330,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
                 g_fileWrite(data->source, "%s(list, result);\n", corto_operationToApi(operation, api));
             }
         }
-        if (elementType->reference) {
+        if (element_type->reference) {
             g_fileWrite(data->source, "if (element) {\n");
             g_fileIndent(data->source);
             g_fileWrite(data->source, "corto_claim(element);\n");
@@ -339,7 +339,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
         }
     }
 
-    if (requiresAlloc) {
+    if (requires_alloc) {
         g_fileWrite(data->source, "return result;\n");
     }
 
@@ -354,7 +354,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
 static corto_int16 c_apiListTypeInsert(corto_list o, corto_string operation, c_apiWalk_t* data) {
     corto_int16 result;
 
-    if (corto_collection_requiresAlloc(corto_collection(o)->elementType)) {
+    if (corto_collection_requires_alloc(corto_collection(o)->element_type)) {
         result = c_apiListTypeInsertAlloc(o, operation, data);
         result = c_apiListTypeInsertNoAlloc(o, operation, data);
     } else {
@@ -368,10 +368,10 @@ static corto_int16 c_apiListTypeInsert(corto_list o, corto_string operation, c_a
 static corto_int16 c_apiListTypeRemove(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
 
     c_writeExport(data->g, data->header);
 
@@ -402,11 +402,11 @@ static corto_int16 c_apiListTypeRemove(corto_list o, c_apiWalk_t* data) {
 static corto_int16 c_apiListTypeTake(corto_list o, corto_string operation, c_apiWalk_t* data) {
     corto_id id, elementId, api;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
-    corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
+    corto_type element_type = corto_collection(o)->element_type;
+    corto_bool allocRequired = corto_collection_requires_alloc(element_type);
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -429,12 +429,12 @@ static corto_int16 c_apiListTypeTake(corto_list o, corto_string operation, c_api
 static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
-    corto_bool allocRequired = corto_collection_requiresAlloc(elementType);
-    corto_bool deref = (!elementType->reference && (elementType->kind == CORTO_COMPOSITE));
+    corto_type element_type = corto_collection(o)->element_type;
+    corto_bool allocRequired = corto_collection_requires_alloc(element_type);
+    corto_bool deref = (!element_type->reference && (element_type->kind == CORTO_COMPOSITE));
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -458,7 +458,7 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
         g_fileWrite(
           data->source,
           "return %s(%s%s)corto_ll_get(list, index);\n",
-          (elementType->kind == CORTO_PRIMITIVE) ? "*" : "",
+          (element_type->kind == CORTO_PRIMITIVE) ? "*" : "",
           elementId,
           allocRequired ? "*" : "");
     } else {
@@ -478,11 +478,11 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
 static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     corto_id id, elementId, varId;
     corto_bool prefix;
-    corto_type elementType = corto_collection(o)->elementType;
+    corto_type element_type = corto_collection(o)->element_type;
 
     c_specifierId(data->g, corto_type(o), id, NULL, NULL);
-    c_specifierId(data->g, corto_type(elementType), elementId, &prefix, NULL);
-    c_varId(data->g, elementType, varId);
+    c_specifierId(data->g, corto_type(element_type), elementId, &prefix, NULL);
+    c_varId(data->g, element_type, varId);
 
     /* Function declaration */
     c_writeExport(data->g, data->header);
@@ -497,11 +497,11 @@ static corto_int16 c_apiListTypeClear(corto_list o, c_apiWalk_t* data) {
     g_fileIndent(data->source);
     g_fileWrite(data->source, "void *ptr = corto_iter_next(&iter);\n");
 
-    if (elementType->reference) {
+    if (element_type->reference) {
         g_fileWrite(data->source, "corto_release(ptr);\n");
     } else {
         g_fileWrite(data->source, "corto_ptr_deinit(ptr, %s);\n", varId);
-        if (corto_collection_requiresAlloc(elementType)) {
+        if (corto_collection_requires_alloc(element_type)) {
             g_fileWrite(data->source, "corto_dealloc(ptr);\n");
         }
     }
@@ -530,7 +530,7 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
         goto error;
     }
 
-    if (corto_collection(o)->elementType->reference) {
+    if (corto_collection(o)->element_type->reference) {
         if (c_apiListTypeRemove(o, data)) {
             goto error;
         }
@@ -562,7 +562,7 @@ static corto_int16 c_apiWalkList(corto_list o, c_apiWalk_t* data) {
             g_fileWrite(data->header, "#define %s__insert %s__insert\n", localId, id);
             g_fileWrite(data->header, "#define %s__append %s__append\n", localId, id);
             g_fileWrite(data->header, "#define %s__append_alloc %s__append_alloc\n", localId, id);
-            if (corto_collection(o)->elementType->reference) {
+            if (corto_collection(o)->element_type->reference) {
                 g_fileWrite(data->header, "#define %s__remove %s__remove\n", localId, id);
             }
             g_fileWrite(data->header, "#define %s__takeFirst %s__takeFirst\n", localId, id);

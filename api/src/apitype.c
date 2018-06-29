@@ -33,7 +33,7 @@ static void c_apiCastMacroAddThis(corto_ll args, corto_string name, corto_type t
         arg->move = FALSE;
         if (!isobject && (type->kind == CORTO_COLLECTION && corto_collection(type)->kind == CORTO_ARRAY)) {
             corto_id elemId;
-            c_typeId(g, corto_collection(type)->elementType, elemId);
+            c_typeId(g, corto_collection(type)->element_type, elemId);
             strcat(elemId, "*");
             arg->nativeCast = corto_strdup(elemId);
         } else {
@@ -314,7 +314,7 @@ static corto_int16 c_apiCastMacroSet(
 static corto_int16 c_apiAssign(
     corto_type t,
     corto_bool ptr,
-    corto_modifier modifiers,
+    corto_modifierMask modifiers,
     corto_string lvalue,
     corto_string rvalue,
     c_apiWalk_t *data)
@@ -608,7 +608,7 @@ corto_int16 c_apiType_init_collection(corto_type t, c_apiWalk_t *data) {
         data->parameterCount += 2;
     }
 
-    c_specifierId(data->g, corto_collection(t)->elementType, elementId, &prefix, NULL);
+    c_specifierId(data->g, corto_collection(t)->element_type, elementId, &prefix, NULL);
 
     g_fileWrite(data->header, "corto_uint32 length, %s* elements", elementId);
     g_fileWrite(data->source, "corto_uint32 length, %s* elements", elementId);
@@ -788,7 +788,7 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, corto_string _this, c
 /* Assign collection */
 corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWalk_t *data) {
     corto_id id, cVar, lvalue;
-    corto_type elementType = corto_collection(t)->elementType;
+    corto_type element_type = corto_collection(t)->element_type;
 
     g_fullOid(data->g, t, id);
 
@@ -806,10 +806,10 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
 
         /* c_apiAssign expects value as parameter while elements[i] points to
          * the value directly. Compensate with a & */
-        if (c_typeRequiresPtr(elementType)) {
-            c_apiAssign(elementType, FALSE, 0, lvalue, "&elements[i]", data);
+        if (c_typeRequiresPtr(element_type)) {
+            c_apiAssign(element_type, FALSE, 0, lvalue, "&elements[i]", data);
         } else {
-            c_apiAssign(elementType, FALSE, 0, lvalue, "elements[i]", data);
+            c_apiAssign(element_type, FALSE, 0, lvalue, "elements[i]", data);
         }
         g_fileDedent(data->source);
         g_fileWrite(data->source, "}\n");
@@ -822,7 +822,7 @@ corto_int16 c_apiTypeAssignCollection(corto_type t, corto_string _this, c_apiWal
 
         /* Append expects value as regular parameter while elements[i] points to
          * the value directly. Compensate with a & */
-        if (c_typeRequiresPtr(elementType)) {
+        if (c_typeRequiresPtr(element_type)) {
             g_fileWrite(data->source, "%s__append(*%s, &elements[i]);\n", id, cVar);
         } else {
             g_fileWrite(data->source, "%s__append(*%s, elements[i]);\n", id, cVar);
@@ -1157,8 +1157,8 @@ corto_int16 c_apiDelegateInitCallback(
     }
 
     g_fullOid(data->g, t, id);
-    g_fullOid(data->g, t->returnType, returnId);
-    c_varId(data->g, t->returnType, returnVarId);
+    g_fullOid(data->g, t->return_type, returnId);
+    c_varId(data->g, t->return_type, returnVarId);
 
     c_writeExport(data->g, data->header);
     if (!instance) {
@@ -1217,7 +1217,7 @@ corto_int16 c_apiDelegateInitCallback(
     }
     g_fileWrite(data->source, "d->super.procedure = corto_declare(NULL, NULL, corto_function_o);\n");
     g_fileWrite(data->source, "d->super.procedure->kind = CORTO_PROCEDURE_CDECL;\n", id);
-    g_fileWrite(data->source, "corto_set_ref(&d->super.procedure->returnType, %s);\n", returnVarId);
+    g_fileWrite(data->source, "corto_set_ref(&d->super.procedure->return_type, %s);\n", returnVarId);
     g_fileWrite(
         data->source, "corto_function_parseParamString(d->super.procedure, \"(");
 
@@ -1251,10 +1251,10 @@ error:
 }
 
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
-    corto_id returnId, id, paramType, paramName;
-    g_fullOid(data->g, t->returnType, returnId);
+    corto_id returnId, id, param_type, param_name;
+    g_fullOid(data->g, t->return_type, returnId);
     g_fullOid(data->g, t, id);
-    corto_bool hasReturn = t->returnType->reference || (t->returnType->kind != CORTO_VOID);
+    corto_bool hasReturn = t->return_type->reference || (t->return_type->kind != CORTO_VOID);
 
     g_fileWrite(data->header, "corto_int16 %s__call(%s *_delegate", id, id);
     g_fileWrite(data->source, "corto_int16 %s__call(%s *_delegate", id, id);
@@ -1267,11 +1267,11 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     corto_int32 i;
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
-        c_paramType(data->g, p, paramType);
-        g_id(data->g, p->name, paramName);
+        c_param_type(data->g, p, param_type);
+        g_id(data->g, p->name, param_name);
 
-        g_fileWrite(data->header, ", %s %s", paramType, paramName);
-        g_fileWrite(data->source, ", %s %s", paramType, paramName);
+        g_fileWrite(data->header, ", %s %s", param_type, param_name);
+        g_fileWrite(data->source, ", %s %s", param_type, param_name);
     }
 
     g_fileWrite(data->header, ");\n");
@@ -1289,9 +1289,9 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
-        g_fullOid(data->g, p->type, paramType);
-        g_id(data->g, p->name, paramName);
-        g_fileWrite(data->source, ", %s", paramName);
+        g_fullOid(data->g, p->type, param_type);
+        g_id(data->g, p->name, param_name);
+        g_fileWrite(data->source, ", %s", param_name);
     }
     g_fileWrite(data->source, ");\n");
     g_fileDedent(data->source);
@@ -1304,8 +1304,8 @@ corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     }
     for (i = 0; i < t->parameters.length; i++) {
         corto_parameter *p = &t->parameters.buffer[i];
-        g_id(data->g, p->name, paramName);
-        g_fileWrite(data->source, ", %s", paramName);
+        g_id(data->g, p->name, param_name);
+        g_fileWrite(data->source, ", %s", param_name);
     }
     g_fileWrite(data->source, ");\n");
     g_fileDedent(data->source);

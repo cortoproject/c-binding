@@ -58,7 +58,7 @@ int c_interfaceParamNameSource(
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ", ");
     }
-    g_fileWrite(data->wrapper, "%s", c_paramName(o->name, name));
+    g_fileWrite(data->wrapper, "%s", c_param_name(o->name, name));
     data->firstComma++;
     return 1;
 }
@@ -73,7 +73,7 @@ int c_interfaceParamTypeSource(
     if (data->firstComma) {
         g_fileWrite(data->wrapper, ", ");
     }
-    g_fileWrite(data->wrapper, "%s", c_paramType(data->g, o, type));
+    g_fileWrite(data->wrapper, "%s", c_param_type(data->g, o, type));
     data->firstComma++;
     return 1;
 }
@@ -137,7 +137,7 @@ int c_interfaceGenerateVirtual(
     corto_method o,
     c_interfaceWalk_t* data)
 {
-    corto_id id, returnTypeId, typeVarId, methodVarId, typeId;
+    corto_id id, return_typeId, typeVarId, methodVarId, typeId;
     bool returnsValue;
     char *nameString = NULL;
     bool isInterface = corto_interface(corto_parentof(o))->kind == CORTO_INTERFACE;
@@ -148,15 +148,15 @@ int c_interfaceGenerateVirtual(
         c_varId(data->g, o, methodVarId);
         c_varId(data->g, corto_parentof(o), typeVarId);
 
-        if (((corto_function)o)->returnType &&
-            ((corto_function(o)->returnType->kind != CORTO_VOID) ||
-             corto_function(o)->returnType->reference))
+        if (((corto_function)o)->return_type &&
+            ((corto_function(o)->return_type->kind != CORTO_VOID) ||
+             corto_function(o)->return_type->reference))
         {
             returnsValue = TRUE;
-            c_typeret(data->g, corto_function(o)->returnType, C_ByValue, false, returnTypeId);
+            c_typeret(data->g, corto_function(o)->return_type, C_ByValue, false, return_typeId);
         } else {
             returnsValue = FALSE;
-            strcpy(returnTypeId, "void");
+            strcpy(return_typeId, "void");
         }
 
         /* Create a wrapper file if it was not already created */
@@ -197,7 +197,7 @@ int c_interfaceGenerateVirtual(
         g_fileWrite(data->wrapper, "static corto_uint32 _methodId;\n");
         g_fileWrite(data->wrapper, "corto_method _method;\n");
         if (returnsValue) {
-            g_fileWrite(data->wrapper, "%s _result;\n", returnTypeId);
+            g_fileWrite(data->wrapper, "%s _result;\n", return_typeId);
         }
         g_fileWrite(data->wrapper, "corto_interface _abstract;\n\n");
 
@@ -206,9 +206,9 @@ int c_interfaceGenerateVirtual(
         g_fileWrite(data->wrapper, "if (!_methodId) {\n");
         g_fileIndent(data->wrapper);
         if (!isInterface) {
-            g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(_abstract, \"%s\");\n", nameString);
+            g_fileWrite(data->wrapper, "_methodId = corto_interface_resolve_method_id(_abstract, \"%s\");\n", nameString);
         } else {
-            g_fileWrite(data->wrapper, "_methodId = corto_interface_resolveMethodId(%s, \"%s\");\n", typeVarId, nameString);
+            g_fileWrite(data->wrapper, "_methodId = corto_interface_resolve_method_id(%s, \"%s\");\n", typeVarId, nameString);
         }
         g_fileDedent(data->wrapper);
         g_fileWrite(data->wrapper, "}\n");
@@ -218,10 +218,10 @@ int c_interfaceGenerateVirtual(
           nameString);
         g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
         if (isInterface) {
-            g_fileWrite(data->wrapper, "_method = corto_class_resolveInterfaceMethod((corto_class)_abstract, %s, _methodId);\n",
+            g_fileWrite(data->wrapper, "_method = corto_class_resolve_interface_method((corto_class)_abstract, %s, _methodId);\n",
                 typeVarId);
         } else {
-            g_fileWrite(data->wrapper, "_method = corto_interface_resolveMethodById(_abstract, _methodId);\n");
+            g_fileWrite(data->wrapper, "_method = corto_interface_resolve_method_by_id(_abstract, _methodId);\n");
         }
         g_fileWrite(data->wrapper,
           "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(_this), _methodId);\n\n",
@@ -233,7 +233,7 @@ int c_interfaceGenerateVirtual(
             g_fileWrite(data->wrapper, "_result = ");
         }
         data->firstComma = 1;
-        g_fileWrite(data->wrapper, "((%s ___ (*)(corto_object", returnTypeId);
+        g_fileWrite(data->wrapper, "((%s ___ (*)(corto_object", return_typeId);
         if (!c_paramWalk(o, c_interfaceParamTypeSource, data)) {
             goto error;
         }
@@ -288,7 +288,7 @@ int c_interfaceProcedure(
     /* Only generate code for procedures */
     if (corto_class_instanceof(corto_procedure_o, corto_typeof(o))) {
         corto_id fullname, functionName;
-        corto_type returnType = corto_function(o)->returnType;
+        corto_type return_type = corto_function(o)->return_type;
         corto_string doStubs = g_getAttribute(data->g, "stubs");
         bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
         bool isInterface = false;
@@ -357,23 +357,23 @@ int c_interfaceProcedure(
                     corto_uint32 i;
                     corto_parameter *p;
 
-                    if ((returnType->kind != CORTO_VOID) || (returnType->reference)) {
+                    if ((return_type->kind != CORTO_VOID) || (return_type->reference)) {
                         corto_id specifier;
-                        c_typeret(data->g, returnType, C_ByValue, false, specifier);
+                        c_typeret(data->g, return_type, C_ByValue, false, specifier);
                         cdiff_file_write(data->source, "%s _result;\n", specifier);
                     } else {
-                        returnType = NULL;
+                        return_type = NULL;
                     }
 
                     /* If function is already defined, it is already implemented. The generator will generate a stub instead. */
                     cdiff_file_write(data->source, "corto_invoke(corto_function(%s_o)", g_fullOid(data->g, o, id));
-                    if (returnType) {
+                    if (return_type) {
                         cdiff_file_write(data->source, ",&_result");
                     } else {
                         cdiff_file_write(data->source, ",NULL");
                     }
                     if (corto_class_instanceof(corto_interface_o, corto_parentof(o))) {
-                        if (corto_procedure(corto_typeof(o))->hasThis) {
+                        if (corto_procedure(corto_typeof(o))->has_this) {
                             if (!cpp) {
                                 cdiff_file_write(data->source, ",this");
                             } else {
@@ -386,7 +386,7 @@ int c_interfaceProcedure(
                         cdiff_file_write(data->source, ",%s", g_id(data->g, p->name, id));
                     }
                     cdiff_file_write(data->source, ");\n");
-                    if (returnType) {
+                    if (return_type) {
                         cdiff_file_write(data->source, "return _result;\n");
                     }
                     cdiff_file_dedent(data->source);

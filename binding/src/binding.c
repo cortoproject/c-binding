@@ -36,7 +36,7 @@ int c_interfaceParamCastDef(
         if (data->firstComma) {
             g_fileWrite(data->header, ", ");
         }
-        g_fileWrite(data->header, "%s", c_paramName(o->name, name));
+        g_fileWrite(data->header, "%s", c_param_name(o->name, name));
         data->firstComma++;
     }
 
@@ -69,10 +69,10 @@ int c_interfaceParamCastWalk(
             g_fileWrite(data->header, "#%s", o->name + 1);
         }
     } else {
-        if (c_interfaceParamRequiresCast(o->type, o->passByReference, o->inout)) {
+        if (c_interfaceParamRequiresCast(o->type, o->is_reference, o->inout)) {
             g_fileWrite(data->header, "%s(%s)", specifier, o->name);
         } else {
-            g_fileWrite(data->header, "%s", c_paramName(o->name, name));
+            g_fileWrite(data->header, "%s", c_param_name(o->name, name));
         }
     }
 
@@ -111,8 +111,8 @@ int c_binding_argCastMacro(
     g_fileWrite(data->header, ") _%s(", functionName);
 
     if (c_procedureHasThis(o)) {
-        corto_type thisType = corto_procedure(corto_typeof(o))->thisType;
-        if (!thisType || thisType->reference) {
+        corto_type this_type = corto_procedure(corto_typeof(o))->this_type;
+        if (!this_type || this_type->reference) {
             corto_id classId;
             corto_type parentType = corto_parentof(o);
             g_fullOid(data->g, parentType, classId);
@@ -226,8 +226,8 @@ int c_binding_implIdentifierTranslateWalk(
             strcat(short_impl_id, sig_name);
         }
 
-
         if (strcmp(impl_id, short_impl_id)) {
+            g_fileWrite(data->header, "#ifndef __cplusplus\n");
             g_fileWrite(data->header, "#define %s %s\n", short_impl_id, impl_id);
             if (corto_instanceof(corto_function_o, o)) {
                 g_fileWrite(data->header, "#define safe_%s safe_%s\n", short_impl_id, impl_id);
@@ -242,6 +242,7 @@ int c_binding_implIdentifierTranslateWalk(
                 g_fileWrite(data->header, "#define %s %s\n", short_impl_id, impl_id);
                 g_fileWrite(data->header, "#define safe_%s safe_%s\n", short_impl_id, impl_id);
             }
+            g_fileWrite(data->header, "#endif\n");
         }
     }
 
@@ -264,7 +265,7 @@ int c_binding_localProcedureTranslateWalk(
 }
 
 static
-int c_binding_paramType(
+int c_binding_param_type(
     corto_parameter *o,
     void *userData)
 {
@@ -273,13 +274,13 @@ int c_binding_paramType(
     if (data->firstComma) {
         g_fileWrite(data->header, ", ");
     }
-    g_fileWrite(data->header, "%s", c_paramType(data->g, o, type));
+    g_fileWrite(data->header, "%s", c_param_type(data->g, o, type));
     data->firstComma++;
     return 1;
 }
 
 static
-int c_binding_paramName(
+int c_binding_param_name(
     corto_parameter *o,
     void *userData)
 {
@@ -288,7 +289,7 @@ int c_binding_paramName(
     if (data->firstComma) {
         g_fileWrite(data->header, ", ");
     }
-    g_fileWrite(data->header, "%s", c_paramName(o->name, name));
+    g_fileWrite(data->header, "%s", c_param_name(o->name, name));
     data->firstComma++;
     return 1;
 }
@@ -308,36 +309,36 @@ int c_binding_overridableMethodWalk(
 
         /* If this is an interface method */
         if (interface->kind != CORTO_INTERFACE) {
-            corto_id returnTypeId, typeVarId, methodVarId, typeId;
+            corto_id return_typeId, typeVarId, methodVarId, typeId;
             bool returnsValue;
 
             g_fullOid(data->g, corto_parentof(o), typeId);
             c_varId(data->g, o, methodVarId);
             c_varId(data->g, corto_parentof(o), typeVarId);
 
-            if (((corto_function)o)->returnType &&
-                ((corto_function(o)->returnType->kind != CORTO_VOID) ||
-                 corto_function(o)->returnType->reference))
+            if (((corto_function)o)->return_type &&
+                ((corto_function(o)->return_type->kind != CORTO_VOID) ||
+                 corto_function(o)->return_type->reference))
             {
                 returnsValue = TRUE;
-                c_typeret(data->g, corto_function(o)->returnType, C_ByValue, false, returnTypeId);
+                c_typeret(data->g, corto_function(o)->return_type, C_ByValue, false, return_typeId);
             } else {
                 returnsValue = FALSE;
-                strcpy(returnTypeId, "void");
+                strcpy(return_typeId, "void");
             }
 
             g_fileWrite(data->header, "#define %s(_this", id);
             data->firstComma = 1;
-            if (!c_paramWalk(o, c_binding_paramName, data)) {
+            if (!c_paramWalk(o, c_binding_param_name, data)) {
                 goto error;
             }
 
-            corto_id returnTypeCastId;
-            c_typeret(data->g, corto_function(o)->returnType, C_Cast, false, returnTypeCastId);
+            corto_id return_typeCastId;
+            c_typeret(data->g, corto_function(o)->return_type, C_Cast, false, return_typeCastId);
             g_fileWrite(data->header, ") ( \\\n");
             g_fileWrite(data->header, "    ((corto_function)%s)->kind == CORTO_PROCEDURE_CDECL \\\n", methodVarId);
-            g_fileWrite(data->header, "    ? ((%s (*)(corto_object", returnTypeCastId);
-            if (!c_paramWalk(o, c_binding_paramType, data)) {
+            g_fileWrite(data->header, "    ? ((%s (*)(corto_object", return_typeCastId);
+            if (!c_paramWalk(o, c_binding_param_type, data)) {
                 goto error;
             }
             g_fileWrite(
@@ -353,9 +354,9 @@ int c_binding_overridableMethodWalk(
                 g_fileWrite(
                     data->header,
                     "    : *(%s*)corto_invoke(((corto_interface)corto_typeof(_this))->methods.buffer[((corto_method)%s)->index - 1], alloca(sizeof(%s)), %s(_this)",
-                    returnTypeId,
+                    return_typeId,
                     methodVarId,
-                    returnTypeId,
+                    return_typeId,
                     typeId);
             } else {
                 g_fileWrite(

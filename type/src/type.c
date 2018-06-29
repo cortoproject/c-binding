@@ -385,7 +385,7 @@ static corto_int16 c_typeArray(corto_walk_opt* s, corto_value* v, void* userData
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
+    c_specifierId(data->g, corto_type(corto_collection(t)->element_type), id3, NULL, postfix2);
     g_fileWrite(data->header, "typedef %s %s[%d];\n",
             id3,
             id,
@@ -406,7 +406,7 @@ static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userD
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    c_specifierId(data->g, corto_type(corto_collection(t)->elementType), id3, NULL, postfix2);
+    c_specifierId(data->g, corto_type(corto_collection(t)->element_type), id3, NULL, postfix2);
 
     if (corto_check_attr(t, CORTO_ATTR_NAMED)) {
         g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",

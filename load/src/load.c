@@ -112,7 +112,7 @@ char* c_loadMemberId(
     uint32_t count;
     corto_value *ptr;
     corto_object o;
-    corto_type thisType;
+    corto_type this_type;
     bool objectDeref, derefMemberOperator;
 
     *out = '\0';
@@ -147,14 +147,14 @@ char* c_loadMemberId(
 
     /* If the first found object-value in the value-stack is not of the type of the object,
      * cast it. This happens when using inheritance. */
-    thisType = corto_value_typeof(ptr);
-    if (corto_type(thisType) != corto_typeof(o)) {
+    this_type = corto_value_typeof(ptr);
+    if (corto_type(this_type) != corto_typeof(o)) {
         corto_id id, parentId, objectId;
         /* Use standard C-style cast to prevent assertType macro, and more
          * importantly, accidentally using symbols from nested dependencies */
         sprintf(id, "((%s%s)%s)",
-                g_fullOid(data->g, thisType, parentId),
-                thisType->reference ? "" : "*",
+                g_fullOid(data->g, this_type, parentId),
+                this_type->reference ? "" : "*",
                 c_varId(data->g, corto_value_objectof(v), objectId));
         strcat(out, id);
     } else {
@@ -655,7 +655,7 @@ int16_t c_initElement(
 {
     c_typeWalk_t* data = userData;
     corto_collection t = corto_collection(corto_value_typeof(v->parent));
-    bool requiresAlloc = corto_collection_requiresAlloc(t->elementType);
+    bool requires_alloc = corto_collection_requires_alloc(t->element_type);
 
     /* Allocate space for element */
     switch (t->kind) {
@@ -664,8 +664,8 @@ int16_t c_initElement(
         corto_id elementId, specifier, postfix;
         g_fileWrite(data->source, "\n");
 
-        if (requiresAlloc) {
-            c_specifierId(data->g, t->elementType, specifier, NULL, postfix);
+        if (requires_alloc) {
+            c_specifierId(data->g, t->element_type, specifier, NULL, postfix);
             g_fileWrite(data->source, "%s = corto_alloc(sizeof(%s%s));\n",
                 c_loadElementId(v, elementId, 0), specifier, postfix);
         }
@@ -685,7 +685,7 @@ int16_t c_initElement(
         corto_id parentId, elementId;
         g_fileWrite(data->source, "corto_ll_append(%s, %s%s);\n",
                 c_loadMemberId(data, v->parent, parentId, FALSE),
-                requiresAlloc ? "" : "(void*)(intptr_t)", c_loadElementId(v, elementId, 0));
+                requires_alloc ? "" : "(void*)(intptr_t)", c_loadElementId(v, elementId, 0));
         break;
     }
     case CORTO_MAP: /*{
@@ -740,7 +740,7 @@ int16_t c_initCollection(
                 length);
 
         /* Get type-specifier */
-        c_specifierId(data->g, t->elementType, specifier, NULL, postfix);
+        c_specifierId(data->g, t->element_type, specifier, NULL, postfix);
 
         /* Allocate buffer */
         if (!length) {
@@ -773,7 +773,7 @@ int16_t c_initCollection(
         /* Create map object */
         if (*(corto_rb*)ptr) {
             /*g_fileWrite(data->source, "%s = corto_rb_new(%s);\n",
-                    c_loadMemberId(data, v, memberId, FALSE), g_fullOid(data->g, corto_rb_keyType(*(corto_rb*)ptr), keyId));*/
+                    c_loadMemberId(data, v, memberId, FALSE), g_fullOid(data->g, corto_rb_key_type(*(corto_rb*)ptr), keyId));*/
         } else {
             g_fileWrite(data->source, "%s = NULL;\n", c_loadMemberId(data, v, memberId, FALSE));
         }
@@ -787,15 +787,15 @@ int16_t c_initCollection(
         switch (t->kind) {
         case CORTO_LIST:
         case CORTO_MAP: {
-            corto_id elementId, elementTypeId;
+            corto_id elementId, element_typeId;
             g_fileWrite(data->source, "{\n");
             g_fileIndent(data->source);
 
             g_fileWrite(
                 data->source,
                 "%s%s %s;\n",
-                g_fullOid(data->g, t->elementType, elementTypeId),
-                corto_collection_requiresAlloc(t->elementType) ? "*" : "",
+                g_fullOid(data->g, t->element_type, element_typeId),
+                corto_collection_requires_alloc(t->element_type) ? "*" : "",
                 c_loadElementId(v, elementId, 1));
 
             break;
