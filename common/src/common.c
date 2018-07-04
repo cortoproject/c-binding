@@ -433,6 +433,23 @@ int16_t c_specifierId_intern(
         }
     } else {
         switch(corto_type(t)->kind) {
+        case CORTO_ITERATOR: {
+            corto_id _specifier, _postfix;
+            corto_type element_type = corto_iterator(t)->element_type;
+
+            /* Get specifier of element_type */
+            if (element_type->kind == CORTO_PRIMITIVE && corto_check_attr(element_type, CORTO_ATTR_NAMED)) {
+                if (mode == 0) {
+                    g_fullOid(g, element_type, _specifier);
+                } else if (mode == 1) {
+                    g_shortOid(g, element_type, _specifier);
+                }
+            } else if (c_specifierId_intern(g, element_type, _specifier, NULL, _postfix, mode)) {
+                goto error;
+            }
+            sprintf(specifier, "%sIter", _specifier);
+            break;
+        }
         case CORTO_COLLECTION: {
             corto_id _specifier, _postfix;
             corto_type element_type = corto_collection(t)->element_type;
