@@ -807,7 +807,11 @@ char* c_filename(
         corto_path(path, package, o, "_");
         sprintf(fileName, "%s.%s", path, ext);
     } else {
-        sprintf(fileName, "%s.%s", corto_idof(package), ext);
+        if (strcmp(ext, "h")) {
+            sprintf(fileName, "main.%s", ext);
+        } else {
+            sprintf(fileName, "%s.%s", corto_idof(package), ext);
+        }
     }
 
     return fileName;

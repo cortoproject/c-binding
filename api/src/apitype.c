@@ -1252,6 +1252,7 @@ error:
 
 corto_int16 c_apiDelegateCall(corto_delegate t, c_apiWalk_t *data) {
     corto_id returnId, id, param_type, param_name;
+
     g_fullOid(data->g, t->return_type, returnId);
     g_fullOid(data->g, t, id);
     corto_bool hasReturn = t->return_type->reference || (t->return_type->kind != CORTO_VOID);

@@ -624,7 +624,6 @@ error:
 static
 corto_int16 c_interfaceWriteMain(
     cdiff_file source,
-    corto_string id,
     c_interfaceWalk_t* data)
 {
     CORTO_UNUSED(data);
@@ -638,7 +637,7 @@ corto_int16 c_interfaceWriteMain(
     if (cpp) {
         cdiff_file_write(source, "extern \"C\"\n");
     }
-    cdiff_file_write(source, "int cortomain(int argc, char *argv[]) {", id);
+    cdiff_file_write(source, "int cortomain(int argc, char *argv[]) {");
     cdiff_file_headerEnd(source);
 
     if (!cdiff_file_bodyBegin(source)) {
@@ -704,7 +703,7 @@ corto_int16 c_interfaceObject(
     /* If top level file, generate main function */
     if (isTopLevelObject && !isBootstrap) {
         data->mainWritten = TRUE;
-        if (c_interfaceWriteMain(data->source, g_getProjectName(data->g), data)) {
+        if (c_interfaceWriteMain(data->source, data)) {
             goto error;
         }
     }
@@ -876,7 +875,7 @@ corto_int16 c_interfaceWriteMainSource(
     corto_id fileName, header;
     bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
 
-    sprintf(fileName, "%s.%s", g_getProjectName(data->g), cpp ? "cpp" : "c");
+    sprintf(fileName, "main.%s", cpp ? "cpp" : "c");
     cdiff_file file = c_interfaceSourceFileOpen(NULL, fileName, data);
     if (!file) {
         goto error;
@@ -884,7 +883,7 @@ corto_int16 c_interfaceWriteMainSource(
 
     cdiff_file_write(file, "#include <%s>\n", c_mainheader(data->g, header));
 
-    if (c_interfaceWriteMain(file, g_getProjectName(data->g), data)) {
+    if (c_interfaceWriteMain(file, data)) {
         goto error;
     }
 
@@ -898,14 +897,44 @@ error:
     return -1;
 }
 
+void c_oldmain(
+    g_generator g,
+    char *fileName,
+    corto_object o,
+    const char *ext)
+{
+    corto_object package = c_findPackage(g, o);
+    if (package) {
+        sprintf(fileName, "src/%s.%s", corto_idof(package), ext);
+    } else {
+        sprintf(fileName, "src/%s.%s", g_getProjectName(g), ext);
+    }
+}
+
 /* Entry point for generator */
 int genmain(g_generator g) {
     c_interfaceWalk_t walkData;
     bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
+    bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     /* Create source and include directories */
     corto_mkdir("src");
     corto_mkdir("include");
+
+    /* Check if an old-style main projectfile exists, and if it does rename it
+     * to main */
+    corto_id oldMain;
+    c_oldmain(g, oldMain, g_getCurrent(g), cpp ? "cpp" : "c");
+    if (corto_file_test(oldMain) == 1) {
+        corto_id newMain;
+        sprintf(newMain, "src/main.%s", cpp ? "cpp" : "c");
+        if (corto_file_test(newMain) == 0) {
+            corto_info("renaming %s to %s", oldMain, newMain);
+
+            /* Old main exists, new main doesn't. Rename! */
+            corto_rename(oldMain, newMain);
+        }
+    }
 
     walkData.existedBeforeGenerating = corto_opendir("src");
 
