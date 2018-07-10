@@ -24,8 +24,10 @@ int c_binding_cppTypedefs(
         c_typeId(data->g, corto_typeof(o), meta_id);
         corto_path(cpp_id, g_getCurrent(data->g), o, "_");
         g_fileWrite(data->header, "extern %s %s_o;\n", meta_id, cpp_id);
-        c_escape_keyword(cpp_id, cpp_id);
-        g_fileWrite(data->header, "typedef ::%s %s;\n", id, cpp_id);
+        if (!corto_instanceof(corto_native_type_o, o)) {
+            c_escape_keyword(cpp_id, cpp_id);
+            g_fileWrite(data->header, "typedef ::%s %s;\n", id, cpp_id);
+        }
     }
 
     return 1;
