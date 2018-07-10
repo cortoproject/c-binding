@@ -42,7 +42,7 @@ void c_projectLoadPackages(
             if (strcmp(corto_idof(o), "c") && strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
-                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
+                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); corto_raise(); return -1;}\n",
                     corto_path(NULL, NULL, o, "/"));
             }
         }
@@ -72,7 +72,7 @@ void c_projectLoadGeneratedPackages(
             if (!strcmp(corto_idof(o), "c") || !strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
-                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); return -1;}\n",
+                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); corto_raise(); return -1;}\n",
                     corto_path(NULL, NULL, o, "/"));
             } else {
                 continue;
@@ -96,7 +96,7 @@ void c_projectLoadGeneratedPackages(
 
         g_fileWrite(
             file,
-            "if (corto_use(\"%s/cpp\", 0, NULL)) {return -1;}\n",
+            "if (corto_use(\"%s/cpp\", 0, NULL)) {corto_raise(); return -1;}\n",
             id);
     }
 }
