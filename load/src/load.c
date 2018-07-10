@@ -434,6 +434,7 @@ void c_sourceWriteLoadStart(
     g_fileWrite(file, "(void)DECLARE;\n");
     g_fileWrite(file, "(void)DEFINE;\n");
     g_fileWrite(file, "(void)LOOKUP;\n");
+    g_fileWrite(file, "(void)DECLARE_RECURSIVE;\n");
 
     g_fileWrite(file, "_a_ = NULL;\n\n");
     g_fileWrite(file, "corto_attr prevAttr = corto_get_attr();\n\n");
