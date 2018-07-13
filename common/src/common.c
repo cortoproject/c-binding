@@ -414,7 +414,7 @@ int16_t c_specifierId_intern(
 
     /* Check if object is scoped */
     if (corto_check_attr(t, CORTO_ATTR_NAMED) && corto_childof(root_o, t)) {
-        if (t->kind == CORTO_PRIMITIVE &&
+        if (!t->reference && t->kind == CORTO_PRIMITIVE &&
             corto_primitive(t)->kind != CORTO_ENUM &&
             corto_primitive(t)->kind != CORTO_BITMASK &&
             corto_primitive(t)->kind != CORTO_TEXT)
@@ -661,10 +661,10 @@ corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, bool impl, co
             c_specifierId_intern(g, t, id, NULL, postfix, impl);
         } else {
             corto_id fullId;
-            if (t->kind == CORTO_PRIMITIVE) {
+            if (t->kind == CORTO_PRIMITIVE && !t->reference) {
                 g_fullOid(g, t, fullId);
             } else if (t->kind == CORTO_VOID && !t->reference) {
-                strcpy(fullId, "corto_void");
+                strcpy(fullId, "void");
             } else {
                 c_specifierId_intern(g, t, fullId, NULL, postfix, impl);
             }

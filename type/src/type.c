@@ -217,7 +217,10 @@ static corto_int16 c_typePrimitive(corto_walk_opt* s, corto_value* v, void* user
             data->header, "/* %s %s */\n",
             corto_fullpath(NULL, corto_typeof(t)),
             corto_path(NULL, root_o, t, "/"));
-        g_fileWrite(data->header, "typedef %s %s;\n", buff, c_typeId(data->g, t, id));
+        g_fileWrite(data->header, "typedef %s %s%s;\n",
+            buff,
+            t->reference ? "*" : "",
+            c_typeId(data->g, t, id));
         break;
     }
 

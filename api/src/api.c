@@ -14,7 +14,6 @@ int16_t c_apiWalkType(
     corto_type o,
     c_apiWalk_t* data)
 {
-
     /* Generate __create function */
     if (c_apiTypeCreateChild(o, data)) {
         goto error;
