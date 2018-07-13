@@ -646,6 +646,7 @@ corto_string c_typeptr(g_generator g, corto_type t, bool impl, corto_id id) {
 }
 
 corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, bool impl, corto_id id) {
+
     if ((t->kind == CORTO_COLLECTION &&
         (corto_collection(t)->kind == CORTO_ARRAY)))
     {
@@ -664,7 +665,7 @@ corto_string c_typeret(g_generator g, corto_type t, c_refKind ref, bool impl, co
             if (t->kind == CORTO_PRIMITIVE && !t->reference) {
                 g_fullOid(g, t, fullId);
             } else if (t->kind == CORTO_VOID && !t->reference) {
-                strcpy(fullId, "void");
+                strcpy(fullId, "corto_void");
             } else {
                 c_specifierId_intern(g, t, fullId, NULL, postfix, impl);
             }
