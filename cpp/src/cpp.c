@@ -194,7 +194,7 @@ int genmain(g_generator g) {
         corto_chdir("cpp");
 
         walkdata.header = g_fileOpen(g, "cpp.h");
-        walkdata.source = g_fileOpen(g, "cpp.cpp");
+        walkdata.source = g_fileOpen(g, "main.cpp");
     } else {
         walkdata.header = g_fileOpen(g, "_cpp.h");
         walkdata.source = g_hiddenFileOpen(g, "_cpp.cpp");
