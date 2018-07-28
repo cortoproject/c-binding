@@ -31,10 +31,18 @@ static corto_int16 c_typeConstant(corto_walk_opt* s, corto_value* v, void* userD
         } else {
             data->prefixComma = TRUE;
         }
-        g_fileWrite(data->header, "%s = %d", c_constantId(data->g, v->is.constant.constant, constantId), *v->is.constant.constant);
+        g_fileWrite(
+            data->header,
+            "%s = %d",
+            c_constantId(data->g, v->is.constant.constant, constantId),
+            *v->is.constant.constant);
         break;
     case CORTO_BITMASK:
-        g_fileWrite(data->header, "#define %s (0x%x)\n", c_constantId(data->g, v->is.constant.constant, constantId), *v->is.constant.constant);
+        g_fileWrite(
+            data->header,
+            "#define %s (0x%x)\n",
+            c_constantId(data->g, v->is.constant.constant, constantId),
+            *v->is.constant.constant);
         break;
     default:
         corto_throw("c_typeConstant: invalid constant parent-type.");
@@ -509,8 +517,10 @@ static corto_int16 c_typeIterator(corto_walk_opt* s, corto_value* v, void* userD
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "typedef corto_iter %s;\n",
-            id);
+    g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
+    g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+    g_fileWrite(data->header, "typedef corto_iter %s;\n", id);
+    g_fileWrite(data->header, "#endif\n");
 
     return 0;
 }
@@ -565,6 +575,7 @@ error:
 }
 
 /* Metawalk-serializer for types */
+static
 corto_walk_opt c_typeSerializer(void) {
     corto_walk_opt s;
 
@@ -584,7 +595,11 @@ corto_walk_opt c_typeSerializer(void) {
 }
 
 /* Print native type typedefs */
-static int c_typeNativeTypedefWalk(corto_object o, void* userData) {
+static
+int c_typeNativeDefWalk(
+    corto_object o,
+    void* userData)
+{
     c_typeWalk_t* data;
 
     data = userData;
@@ -598,14 +613,32 @@ static int c_typeNativeTypedefWalk(corto_object o, void* userData) {
             id[strlen(id) - 1] = '\0';
         }
 
-        g_fileWrite(data->header, "typedef void* %s;\n", id);
+        if (corto_native_type(o)->is_ptr) {
+            g_fileWrite(data->header, "#define %s void\n", id);
+        } else {
+            g_fileWrite(data->header, "#define %s void*\n", id);
+        }
     }
 
+    return 1;
+}
+
+static
+int c_nativeCollect(
+    corto_object o,
+    void *userData)
+{
+    if (corto_instanceof(corto_native_type_o, o)) {
+        corto_ll_append(userData, o);
+    }
     return 0;
 }
 
 /* Open headerfile, write standard header. */
-static g_file c_typeHeaderFileOpen(g_generator g) {
+static
+g_file c_typeHeaderFileOpen(
+    g_generator g)
+{
     g_file result;
     bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
 
@@ -737,19 +770,28 @@ corto_int16 genmain(g_generator g) {
     walkData.g = g;
     walkData.prefixComma = FALSE;
 
-    /* Define native types as void* if _type.h is used by itself */
-    corto_id path;
-    corto_path(path, root_o, g_getCurrent(g), "_");
-    strupper(path);
-    g_fileWrite(walkData.header, "\n");
-    g_fileWrite(walkData.header, "/* -- Native types -- */\n");
-    g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
-    if (corto_genTypeDepWalk(g, NULL, c_typeNativeTypedefWalk, NULL, &walkData)) {
+    /* Collect native types */
+    corto_ll native_types = corto_ll_new();
+    if (corto_genTypeDepWalk(g, NULL, c_nativeCollect, NULL, native_types)) {
         goto error;
     }
-    g_fileWrite(walkData.header, "#endif\n");
 
-    g_fileWrite(walkData.header, "\n\n");
+    /* Define native types as void* if _type.h is used by itself */
+    if (corto_ll_count(native_types)) {
+        corto_id path;
+        corto_path(path, root_o, g_getCurrent(g), "_");
+        strupper(path);
+        g_fileWrite(walkData.header, "\n");
+        g_fileWrite(walkData.header, "/* -- Native types -- */\n");
+        g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
+        if (!corto_ll_walk(native_types, c_typeNativeDefWalk, &walkData)) {
+            goto error;
+        }
+        g_fileWrite(walkData.header, "#endif\n");
+    }
+    corto_ll_free(native_types);
+
+    g_fileWrite(walkData.header, "\n");
     g_fileWrite(walkData.header, "/* -- Type definitions -- */\n\n");
 
     /* Walk objects */

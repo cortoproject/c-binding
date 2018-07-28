@@ -54,7 +54,11 @@ int c_binding_typeSafeHelper(
         g_fileWrite(data->header, "class %s_t {\n", cpp_id);
         g_fileWrite(data->header, "public:\n");
         g_fileIndent(data->header);
-        g_fileWrite(data->header, "typedef ::%s _ref;\n", ptr_id);
+        if (!corto_instanceof(corto_native_type_o, o)) {
+            g_fileWrite(data->header, "typedef ::%s _ref;\n", ptr_id);
+        } else {
+            g_fileWrite(data->header, "typedef %s _ref;\n", ptr_id);
+        }
         g_fileWrite(data->header, "static %s _o;\n", meta_id);
         g_fileDedent(data->header);
         g_fileWrite(data->header, "};\n");
