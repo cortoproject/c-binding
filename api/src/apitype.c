@@ -1047,6 +1047,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         g_fileWrite(data->source, ") {\n");
         g_fileIndent(data->source);
         g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
+        g_fileWrite(data->source, "CORTO_UNUSED(_package);\n");
 
         /* Write cast macro */
         if (!isSet || isUnion) {

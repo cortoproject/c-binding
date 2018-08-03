@@ -444,13 +444,26 @@ int c_binding_nonExpandingTypedef(
     {
         corto_id id;
         c_typeId(data->g, o, id);
-        bool named = corto_check_attr(o, CORTO_ATTR_NAMED);
-        if (!named) {
+
+        int len = strlen(id);
+        bool protect = false;
+
+        if (!strcmp(&id[len - 3], "Seq") ||
+            !strcmp(&id[len - 4], "List") ||
+            !strcmp(&id[len - 3], "Map") ||
+            !strcmp(&id[len - 4], "Iter"))
+        {
+            protect = true;
+        }
+
+        if (protect) {
             g_fileWrite(data->header, "#ifndef _type_%s_DEFINED\n", id);
             g_fileWrite(data->header, "#define _type_%s_DEFINED\n", id);
         }
+
         g_fileWrite(data->header, "typedef %s _type_%s;\n", id, id);
-        if (!named) {
+
+        if (protect) {
             g_fileWrite(data->header, "#endif\n");
         }
     }

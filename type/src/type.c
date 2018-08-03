@@ -16,7 +16,7 @@ typedef struct c_typeWalk_t {
 } c_typeWalk_t;
 
 /* Enumeration constant */
-static corto_int16 c_typeConstant(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeConstant(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id constantId;
 
@@ -56,7 +56,7 @@ error:
 }
 
 /* Member */
-static corto_int16 c_typeMember(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeMember(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_member m;
     corto_id specifier, postfix, memberId;
@@ -90,7 +90,7 @@ error:
 
 
 /* Enumeration object */
-static corto_int16 c_typePrimitiveEnum(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typePrimitiveEnum(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_enum t;
     corto_id id;
@@ -119,7 +119,7 @@ error:
 }
 
 /* Bitmask object */
-static corto_int16 c_typePrimitiveBitmask(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typePrimitiveBitmask(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_enum t;
     corto_id id;
@@ -144,7 +144,7 @@ error:
 }
 
 /* Void object */
-static corto_int16 c_typeVoid(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeVoid(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id;
@@ -165,7 +165,7 @@ static corto_int16 c_typeVoid(corto_walk_opt* s, corto_value* v, void* userData)
 }
 
 /* Void object */
-static corto_int16 c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id;
@@ -184,7 +184,7 @@ static corto_int16 c_typeAny(corto_walk_opt* s, corto_value* v, void* userData) 
 }
 
 /* Primitive object */
-static corto_int16 c_typePrimitive(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typePrimitive(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_char buff[16];
     corto_type t;
     corto_id id;
@@ -238,7 +238,7 @@ error:
 }
 
 /* Struct object */
-static corto_int16 c_typeStruct(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeStruct(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id id, type_id;
     corto_type t;
@@ -299,7 +299,7 @@ error:
 }
 
 /* Union object */
-static corto_int16 c_typeUnion(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeUnion(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_id id;
     corto_type t;
@@ -345,7 +345,7 @@ error:
 }
 
 /* Abstract object */
-static corto_int16 c_typeAbstract(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeAbstract(corto_walk_opt* s, corto_value* v, void* userData) {
     CORTO_UNUSED(s);
     CORTO_UNUSED(v);
     CORTO_UNUSED(userData);
@@ -354,7 +354,7 @@ static corto_int16 c_typeAbstract(corto_walk_opt* s, corto_value* v, void* userD
 }
 
 /* Composite object */
-static corto_int16 c_typeComposite(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeComposite(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     t = corto_value_typeof(v);
@@ -385,7 +385,7 @@ error:
 }
 
 /* Array object */
-static corto_int16 c_typeArray(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeArray(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, id3, postfix, postfix2;
@@ -406,7 +406,12 @@ static corto_int16 c_typeArray(corto_walk_opt* s, corto_value* v, void* userData
 }
 
 /* Sequence object */
-static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userData) {
+static
+int16_t c_typeSequence(
+    corto_walk_opt* s,
+    corto_value* v,
+    void* userData)
+{
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, id3, postfix, postfix2;
@@ -419,14 +424,22 @@ static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userD
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
     c_specifierId(data->g, corto_type(corto_collection(t)->element_type), id3, NULL, postfix2);
 
-    if (corto_check_attr(t, CORTO_ATTR_NAMED)) {
-        g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
-            id, id3, id);
-    } else {
+    int len = strlen(id);
+    bool protect = false;
+
+    if (!strcmp(&id[len - 3], "Seq")) {
+        protect = true;
+    }
+
+    if (protect) {
         g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
         g_fileWrite(data->header, "#define %s_DEFINED\n", id);
-        g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
-            id, id3, id);
+    }
+
+    g_fileWrite(data->header, "typedef struct %s {uint32_t length; %s *buffer;} %s;\n",
+        id, id3, id);
+
+    if (protect) {
         g_fileWrite(data->header, "#endif\n");
     }
 
@@ -434,7 +447,7 @@ static corto_int16 c_typeSequence(corto_walk_opt* s, corto_value* v, void* userD
 }
 
 /* List object */
-static corto_int16 c_typeList(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeList(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, postfix;
@@ -445,17 +458,31 @@ static corto_int16 c_typeList(corto_walk_opt* s, corto_value* v, void* userData)
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
-    g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+
+    int len = strlen(id);
+    bool protect = false;
+
+    if (!strcmp(&id[len - 4], "List")) {
+        protect = true;
+    }
+
+    if (protect) {
+        g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
+        g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+    }
+
     g_fileWrite(data->header, "typedef corto_ll %s;\n",
             id);
-    g_fileWrite(data->header, "#endif\n");
+
+    if (protect) {
+        g_fileWrite(data->header, "#endif\n");
+    }
 
     return 0;
 }
 
 /* Map object */
-static corto_int16 c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
     c_typeWalk_t* data;
     corto_id id, postfix;
@@ -466,13 +493,30 @@ static corto_int16 c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) 
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
+
+    int len = strlen(id);
+    bool protect = false;
+
+    if (!strcmp(&id[len - 3], "Map")) {
+        protect = true;
+    }
+
+    if (protect) {
+        g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
+        g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+    }
+
     g_fileWrite(data->header, "typedef corto_rb %s;\n", id);
+
+    if (protect) {
+        g_fileWrite(data->header, "#endif\n");
+    }
 
     return 0;
 }
 
 /* Collection object */
-static corto_int16 c_typeCollection(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeCollection(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     t = corto_value_typeof(v);
@@ -505,7 +549,7 @@ error:
 }
 
 /* Iterator object */
-static corto_int16 c_typeIterator(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeIterator(corto_walk_opt* s, corto_value* v, void* userData) {
     corto_type t;
 
     CORTO_UNUSED(s);
@@ -517,19 +561,33 @@ static corto_int16 c_typeIterator(corto_walk_opt* s, corto_value* v, void* userD
     data = userData;
     t = corto_value_typeof(v);
     c_specifierId(data->g, corto_type(t), id, NULL, postfix);
-    g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
-    g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+
+    int len = strlen(id);
+    bool protect = false;
+
+    if (!strcmp(&id[len - 4], "Iter")) {
+        protect = true;
+    }
+
+    if (protect) {
+        g_fileWrite(data->header, "#ifndef %s_DEFINED\n", id);
+        g_fileWrite(data->header, "#define %s_DEFINED\n", id);
+    }
+
     g_fileWrite(data->header, "typedef corto_iter %s;\n", id);
-    g_fileWrite(data->header, "#endif\n");
+
+    if (protect) {
+        g_fileWrite(data->header, "#endif\n");
+    }
 
     return 0;
 }
 
 /* Type object */
-static corto_int16 c_typeObject(corto_walk_opt* s, corto_value* v, void* userData) {
+static int16_t c_typeObject(corto_walk_opt* s, corto_value* v, void* userData) {
     c_typeWalk_t* data;
     corto_type t;
-    corto_int16 result;
+    int16_t result;
 
     data = userData;
     t = corto_type(corto_value_typeof(v));
@@ -758,7 +816,7 @@ static int c_typeDeclareDefine(corto_object o, void* userData) {
 }
 
 /* Generator main */
-corto_int16 genmain(g_generator g) {
+int16_t genmain(g_generator g) {
     c_typeWalk_t walkData;
 
     /* Prepare walkdata, open headerfile */
