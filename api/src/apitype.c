@@ -1005,6 +1005,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     corto_string func = isUpdate ? doUpdate ? "__update" : "__assign" : "__define";
     corto_bool isSet = isUpdate ? doUpdate ? FALSE : TRUE : FALSE;
     g_generator g = data->g;
+    corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
@@ -1047,7 +1048,10 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         g_fileWrite(data->source, ") {\n");
         g_fileIndent(data->source);
         g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
-        g_fileWrite(data->source, "CORTO_UNUSED(_package);\n");
+
+        if (!app) {
+            g_fileWrite(data->source, "CORTO_UNUSED(_package);\n");
+        }
 
         /* Write cast macro */
         if (!isSet || isUnion) {
