@@ -1,10 +1,10 @@
 {
-    "id": "driver/gen/c/interface",
+    "id": "driver.gen.c.interface",
     "type": "package",
     "value": {
         "author": "Sander Mertens",
         "description": "Generate implementation files for interfaces",
         "managed": false,
-        "use": ["corto", "corto/g", "corto/cdiff", "driver/gen/c/common"]
+        "use": ["corto", "corto.g", "corto.util.cdiff", "driver.gen.c.common"]
     }
 }

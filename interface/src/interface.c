@@ -7,7 +7,7 @@
 
 #include <corto/corto.h>
 #include <driver/gen/c/common/common.h>
-#include <corto/cdiff/cdiff.h>
+#include <corto/util/cdiff/cdiff.h>
 
 #define GENERATED_MARKER "This is a managed file. Do not delete this comment."
 
