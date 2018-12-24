@@ -5,9 +5,7 @@
  *      Author: sander
  */
 
-#include <corto/corto.h>
-#include <driver/gen/c/common/common.h>
-#include <corto/util/cdiff/cdiff.h>
+#include <driver.gen.c.interface>
 
 #define GENERATED_MARKER "This is a managed file. Do not delete this comment."
 
@@ -28,9 +26,9 @@ struct c_interfaceWalk_t {
     bool generateHeader;
     bool generateSource;
     corto_id sizeExpr;
-    corto_ll generated;
+    ut_ll generated;
     bool mainWritten;
-    corto_ll existedBeforeGenerating;
+    ut_ll existedBeforeGenerating;
 };
 
 static
@@ -42,7 +40,7 @@ cdiff_file c_interfaceOpenFile(
     char *filename = g_filePath(data->g, filepath, "%s", name);
     cdiff_file result = cdiff_file_open(filename);
     if (result) {
-        corto_ll_append(data->generated, corto_strdup(name));
+        ut_ll_append(data->generated, ut_strdup(name));
         cdiff_file_write(result, "/* %s */\n\n", GENERATED_MARKER);
     }
     return result;
@@ -108,20 +106,20 @@ g_file c_interfaceWrapperFileOpen(
     g_fileWrite(result, " */\n\n");
 
     if (!bootstrap) {
-        corto_buffer include = CORTO_BUFFER_INIT;
+        ut_strbuf include = UT_STRBUF_INIT;
         c_include_toBuffer(g, &include, g_getCurrent(g));
-        char *includeStr = corto_buffer_str(&include);
+        char *includeStr = ut_strbuf_get(&include);
         g_fileWrite(result, includeStr);
         free(includeStr);
 
         c_includeFrom_toBuffer(g, &include, g_getCurrent(g), "_load.h");
-        includeStr = corto_buffer_str(&include);
+        includeStr = ut_strbuf_get(&include);
         g_fileWrite(result, includeStr);
         free(includeStr);
     } else {
-        corto_buffer include = CORTO_BUFFER_INIT;
+        ut_strbuf include = UT_STRBUF_INIT;
         c_include_toBuffer(g, &include, corto_o);
-        char *includeStr = corto_buffer_str(&include);
+        char *includeStr = ut_strbuf_get(&include);
         g_fileWrite(result, includeStr);
         free(includeStr);
     }
@@ -167,7 +165,7 @@ int c_interfaceGenerateVirtual(
             }
         }
 
-        corto_buffer declBuffer = CORTO_BUFFER_INIT;
+        ut_strbuf declBuffer = UT_STRBUF_INIT;
         if (c_decl(
             data->g,
             &declBuffer,
@@ -179,7 +177,7 @@ int c_interfaceGenerateVirtual(
             goto error;
         }
 
-        char *decl = corto_buffer_str(&declBuffer);
+        char *decl = ut_strbuf_get(&declBuffer);
 
         /* Write casting macro to header */
         c_writeExport(data->g, data->interfaceHeader);
@@ -214,7 +212,7 @@ int c_interfaceGenerateVirtual(
         g_fileWrite(data->wrapper, "}\n");
         g_fileWrite(
           data->wrapper,
-          "corto_assert(_methodId, \"method '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr() ? \": \" : \"\", corto_lasterr() ? corto_lasterr() : \"\");\n\n",
+          "ut_assert(_methodId, \"method '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr() ? \": \" : \"\", corto_lasterr() ? corto_lasterr() : \"\");\n\n",
           nameString);
         g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
         if (isInterface) {
@@ -224,7 +222,7 @@ int c_interfaceGenerateVirtual(
             g_fileWrite(data->wrapper, "_method = corto_interface_resolve_method_by_id(_abstract, _methodId);\n");
         }
         g_fileWrite(data->wrapper,
-          "corto_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(_this), _methodId);\n\n",
+          "ut_assert(_method != NULL, \"unresolved method '%%s::%s@%%d'\", corto_idof(_this), _methodId);\n\n",
           nameString);
 
         g_fileWrite(data->wrapper, "if (corto_function(_method)->kind == CORTO_PROCEDURE_CDECL) {\n");
@@ -319,11 +317,11 @@ int c_interfaceProcedure(
             c_writeExport(data->g, data->interfaceHeader);
             g_fileWrite(data->interfaceHeader, "\n");
 
-            corto_buffer declBuffer = CORTO_BUFFER_INIT;
+            ut_strbuf declBuffer = UT_STRBUF_INIT;
             if (c_decl(data->g, &declBuffer, corto_function(o), FALSE, TRUE /* never use 'this' in public headers */, FALSE)) {
                 goto error;
             }
-            char *decl = corto_buffer_str(&declBuffer);
+            char *decl = ut_strbuf_get(&declBuffer);
             g_fileWrite(data->interfaceHeader, "%s;\n", decl);
             free(decl);
 
@@ -337,7 +335,7 @@ int c_interfaceProcedure(
             if (c_decl(data->g, &declBuffer, corto_function(o), FALSE, cpp, TRUE)) {
                 goto error;
             }
-            decl = corto_buffer_str(&declBuffer);
+            decl = ut_strbuf_get(&declBuffer);
 
             cdiff_file_headerBegin(data->source);
             cdiff_file_write(data->source, "%s\n{", decl);
@@ -709,7 +707,7 @@ corto_int16 c_interfaceObject(
     }
 
     if (cdiff_file_close(data->source)) {
-        corto_throw(NULL);
+        ut_throw(NULL);
         goto error;
     }
 
@@ -760,7 +758,7 @@ static
 bool c_interfaceIsGenerated(
     corto_string file)
 {
-    corto_string content = corto_file_load(file);
+    corto_string content = ut_file_load(file);
     bool result = FALSE;
 
     if (content) {
@@ -783,10 +781,10 @@ bool c_interfaceWasGeneratedNow(
     corto_string name,
     c_interfaceWalk_t *data)
 {
-    corto_iter iter = corto_ll_iter(data->generated);
+    ut_iter iter = ut_ll_iter(data->generated);
 
-    while(corto_iter_hasNext(&iter)) {
-        corto_string file = corto_iter_next(&iter);
+    while(ut_iter_hasNext(&iter)) {
+        corto_string file = ut_iter_next(&iter);
         if (!strcmp(file, name)) {
             return TRUE;
         }
@@ -800,10 +798,10 @@ bool c_interfaceFileExistedBeforeGenerating(
     corto_string name,
     c_interfaceWalk_t *data)
 {
-    corto_iter iter = corto_ll_iter(data->existedBeforeGenerating);
+    ut_iter iter = ut_ll_iter(data->existedBeforeGenerating);
 
-    while(corto_iter_hasNext(&iter)) {
-        corto_string file = corto_iter_next(&iter);
+    while(ut_iter_hasNext(&iter)) {
+        corto_string file = ut_iter_next(&iter);
         if (!strcmp(file, name)) {
             return TRUE;
         }
@@ -817,11 +815,11 @@ static
 int c_interfaceMarkUnusedFiles(
     c_interfaceWalk_t *data)
 {
-    corto_ll files = corto_opendir("./src");
-    corto_iter iter = corto_ll_iter(files);
+    ut_ll files = ut_opendir("./src");
+    ut_iter iter = ut_ll_iter(files);
 
-    while(corto_iter_hasNext(&iter)) {
-        corto_string file = corto_iter_next(&iter);
+    while(ut_iter_hasNext(&iter)) {
+        corto_string file = ut_iter_next(&iter);
         corto_id id;
         sprintf(id, "./src/%s", file);
         if (c_interfaceIsGenerated(id)) {
@@ -829,8 +827,8 @@ int c_interfaceMarkUnusedFiles(
                 if (!strstr(id, ".old")) {
                     corto_id newname;
                     sprintf(newname, "src/%s.old", file);
-                    corto_rename (id, newname);
-                    corto_info("stale file, please remove (renamed to %s.old)", file, file);
+                    ut_rename (id, newname);
+                    ut_info("stale file, please remove (renamed to %s.old)", file, file);
                 } else {
                     id[strlen(id) - 4] = '\0';
                     char *orig = strrchr(id, '/');
@@ -843,27 +841,27 @@ int c_interfaceMarkUnusedFiles(
                     if (c_interfaceWasGeneratedNow(orig, data) &&
                         !c_interfaceFileExistedBeforeGenerating(orig, data))
                     {
-                        corto_info("restoring '%s' to '%s'", file, orig);
-                        corto_rm(strarg("src/%s", orig));
-                        corto_rename(
+                        ut_info("restoring '%s' to '%s'", file, orig);
+                        ut_rm(strarg("src/%s", orig));
+                        ut_rename(
                             strarg("src/%s", file),
                             strarg("src/%s", orig)
                         );
                     } else {
-                        corto_info("%s: stale file, please remove", file);
+                        ut_info("%s: stale file, please remove", file);
                     }
                 }
             }
         }
     }
 
-    iter = corto_ll_iter(data->generated);
-    while (corto_iter_hasNext(&iter)) {
-        corto_dealloc(corto_iter_next(&iter));
+    iter = ut_ll_iter(data->generated);
+    while (ut_iter_hasNext(&iter)) {
+        corto_dealloc(ut_iter_next(&iter));
     }
 
-    corto_closedir(files);
-    corto_ll_free(data->generated);
+    ut_closedir(files);
+    ut_ll_free(data->generated);
 
     return 0;
 }
@@ -888,7 +886,7 @@ corto_int16 c_interfaceWriteMainSource(
     }
 
     if (cdiff_file_close(file)) {
-        corto_throw(NULL);
+        ut_throw(NULL);
         goto error;
     }
 
@@ -918,25 +916,25 @@ int genmain(g_generator g) {
     bool cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
 
     /* Create source and include directories */
-    corto_mkdir("src");
-    corto_mkdir("include");
+    ut_mkdir("src");
+    ut_mkdir("include");
 
     /* Check if an old-style main projectfile exists, and if it does rename it
      * to main */
     corto_id oldMain;
     c_oldmain(g, oldMain, g_getCurrent(g), cpp ? "cpp" : "c");
-    if (corto_file_test(oldMain) == 1) {
+    if (ut_file_test(oldMain) == 1) {
         corto_id newMain;
         sprintf(newMain, "src/main.%s", cpp ? "cpp" : "c");
-        if (corto_file_test(newMain) == 0) {
-            corto_info("renaming %s to %s", oldMain, newMain);
+        if (ut_file_test(newMain) == 0) {
+            ut_info("renaming %s to %s", oldMain, newMain);
 
             /* Old main exists, new main doesn't. Rename! */
-            corto_rename(oldMain, newMain);
+            ut_rename(oldMain, newMain);
         }
     }
 
-    walkData.existedBeforeGenerating = corto_opendir("src");
+    walkData.existedBeforeGenerating = ut_opendir("src");
 
     /* Prepare walkData, create header- and sourcefile */
     walkData.g = g;
@@ -944,7 +942,7 @@ int genmain(g_generator g) {
     walkData.wrapper = NULL;
     walkData.mainHeader = NULL;
     walkData.interfaceHeader = NULL;
-    walkData.generated = corto_ll_new();
+    walkData.generated = ut_ll_new();
     walkData.mainWritten = FALSE;
 
     if (!bootstrap) {
@@ -955,7 +953,7 @@ int genmain(g_generator g) {
 
         g_file mainHeader = g_fileOpen(g, headerFileName);
         if (!mainHeader) {
-            corto_throw("failed to open file '%s'", headerFileName);
+            ut_throw("failed to open file '%s'", headerFileName);
             goto error;
         }
 
@@ -1026,7 +1024,7 @@ int genmain(g_generator g) {
 
     c_interfaceMarkUnusedFiles(&walkData);
 
-    corto_closedir(walkData.existedBeforeGenerating);
+    ut_closedir(walkData.existedBeforeGenerating);
 
     return 0;
 error:

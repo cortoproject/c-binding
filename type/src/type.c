@@ -6,7 +6,7 @@
  */
 
 #include "type.h"
-#include <driver/gen/c/common/common.h>
+#include <driver.gen.c.common>
 
 typedef struct c_typeWalk_t {
     g_generator g;
@@ -45,7 +45,7 @@ static int16_t c_typeConstant(corto_walk_opt* s, corto_value* v, void* userData)
             *v->is.constant.constant);
         break;
     default:
-        corto_throw("c_typeConstant: invalid constant parent-type.");
+        ut_throw("c_typeConstant: invalid constant parent-type.");
         goto error;
         break;
     }
@@ -471,7 +471,7 @@ static int16_t c_typeList(corto_walk_opt* s, corto_value* v, void* userData) {
         g_fileWrite(data->header, "#define %s_DEFINED\n", id);
     }
 
-    g_fileWrite(data->header, "typedef corto_ll %s;\n",
+    g_fileWrite(data->header, "typedef ut_ll %s;\n",
             id);
 
     if (protect) {
@@ -506,7 +506,7 @@ static int16_t c_typeMap(corto_walk_opt* s, corto_value* v, void* userData) {
         g_fileWrite(data->header, "#define %s_DEFINED\n", id);
     }
 
-    g_fileWrite(data->header, "typedef corto_rb %s;\n", id);
+    g_fileWrite(data->header, "typedef ut_rb %s;\n", id);
 
     if (protect) {
         g_fileWrite(data->header, "#endif\n");
@@ -574,7 +574,7 @@ static int16_t c_typeIterator(corto_walk_opt* s, corto_value* v, void* userData)
         g_fileWrite(data->header, "#define %s_DEFINED\n", id);
     }
 
-    g_fileWrite(data->header, "typedef corto_iter %s;\n", id);
+    g_fileWrite(data->header, "typedef ut_iter %s;\n", id);
 
     if (protect) {
         g_fileWrite(data->header, "#endif\n");
@@ -621,7 +621,7 @@ static int16_t c_typeObject(corto_walk_opt* s, corto_value* v, void* userData) {
         result = c_typeIterator(s, v, userData);
         break;
     default:
-        corto_throw("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant_from_value(corto_typeKind_o, t->kind)));
+        ut_throw("c_typeObject: typeKind '%s' not handled by code-generator.", corto_idof(corto_enum_constant_from_value(corto_typeKind_o, t->kind)));
         goto error;
     }
 
@@ -687,7 +687,7 @@ int c_nativeCollect(
     void *userData)
 {
     if (corto_instanceof(corto_native_type_o, o)) {
-        corto_ll_append(userData, o);
+        ut_ll_append(userData, o);
     }
     return 0;
 }
@@ -772,7 +772,7 @@ static int c_typeDeclare(corto_object o, void* userData) {
         }
         break;
     default:
-        corto_throw("c_typeDeclare: only composite types can be forward declared.");
+        ut_throw("c_typeDeclare: only composite types can be forward declared.");
         goto error;
         break;
     }
@@ -829,25 +829,25 @@ int16_t genmain(g_generator g) {
     walkData.prefixComma = FALSE;
 
     /* Collect native types */
-    corto_ll native_types = corto_ll_new();
+    ut_ll native_types = ut_ll_new();
     if (corto_genTypeDepWalk(g, NULL, c_nativeCollect, NULL, native_types)) {
         goto error;
     }
 
     /* Define native types as void* if _type.h is used by itself */
-    if (corto_ll_count(native_types)) {
+    if (ut_ll_count(native_types)) {
         corto_id path;
         corto_path(path, root_o, g_getCurrent(g), "_");
         strupper(path);
         g_fileWrite(walkData.header, "\n");
         g_fileWrite(walkData.header, "/* -- Native types -- */\n");
         g_fileWrite(walkData.header, "#ifndef %s_H\n", path);
-        if (!corto_ll_walk(native_types, c_typeNativeDefWalk, &walkData)) {
+        if (!ut_ll_walk(native_types, c_typeNativeDefWalk, &walkData)) {
             goto error;
         }
         g_fileWrite(walkData.header, "#endif\n");
     }
-    corto_ll_free(native_types);
+    ut_ll_free(native_types);
 
     g_fileWrite(walkData.header, "\n");
     g_fileWrite(walkData.header, "/* -- Type definitions -- */\n\n");

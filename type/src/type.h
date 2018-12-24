@@ -8,7 +8,7 @@
 #ifndef C_TYPE_H_
 #define C_TYPE_H_
 
-#include <corto/corto.h>
+#include <corto>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,10 +1,9 @@
 {
-    "id": "driver/gen/c/common",
+    "id": "driver.gen.c.common",
     "type": "package",
     "value": {
         "author": "Sander Mertens",
         "description": "Common functionality for C binding",
-        "managed": false,
-        "use": ["corto", "corto/g"]
+        "use": ["corto", "corto.g"]
     }
 }

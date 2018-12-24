@@ -1,6 +1,6 @@
 
 #include "api.h"
-#include "driver/gen/c/common/common.h"
+#include <driver.gen.c.common>
 #include "ctype.h"
 
 typedef struct c_arg {
@@ -12,73 +12,73 @@ typedef struct c_arg {
     corto_bool isobject;
 } c_arg;
 
-static void c_apiCastMacroAddArg(corto_ll args, corto_string name, corto_type type, corto_bool optional) {
+static void c_apiCastMacroAddArg(ut_ll args, corto_string name, corto_type type, corto_bool optional) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
-        arg->name = corto_strdup(name);
+        arg->name = ut_strdup(name);
         arg->type = type;
         arg->move = FALSE;
         arg->nativeCast = NULL;
         arg->optional = optional;
         arg->isobject = type && type->reference && (type->kind != CORTO_VOID);
-        corto_ll_append(args, arg);
+        ut_ll_append(args, arg);
     }
 }
 
-static void c_apiCastMacroAddThis(corto_ll args, corto_string name, corto_type type, corto_bool optional, corto_bool isobject, g_generator g) {
+static void c_apiCastMacroAddThis(ut_ll args, corto_string name, corto_type type, corto_bool optional, corto_bool isobject, g_generator g) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
-        arg->name = corto_strdup(name);
+        arg->name = ut_strdup(name);
         arg->type = type;
         arg->move = FALSE;
         if (!isobject && (type->kind == CORTO_COLLECTION && corto_collection(type)->kind == CORTO_ARRAY)) {
             corto_id elemId;
             c_typeId(g, corto_collection(type)->element_type, elemId);
             strcat(elemId, "*");
-            arg->nativeCast = corto_strdup(elemId);
+            arg->nativeCast = ut_strdup(elemId);
         } else {
             arg->nativeCast = NULL;
         }
         arg->optional = optional;
         arg->isobject = isobject;
-        corto_ll_append(args, arg);
+        ut_ll_append(args, arg);
     }
 }
 
-static void c_apiCastMacroAddArgNativeCast(corto_ll args, corto_string name, corto_string type) {
+static void c_apiCastMacroAddArgNativeCast(ut_ll args, corto_string name, corto_string type) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
-        arg->name = corto_strdup(name);
+        arg->name = ut_strdup(name);
         arg->type = NULL;
         arg->move = FALSE;
-        arg->nativeCast = corto_strdup(type);
+        arg->nativeCast = ut_strdup(type);
         arg->optional = FALSE;
         arg->isobject = FALSE;
-        corto_ll_append(args, arg);
+        ut_ll_append(args, arg);
     }
 }
 
-static void c_apiCastMacroAddArgMove(corto_ll args, corto_string name, corto_type type, corto_bool optional) {
+static void c_apiCastMacroAddArgMove(ut_ll args, corto_string name, corto_type type, corto_bool optional) {
     if (args) {
         c_arg *arg = corto_alloc(sizeof(c_arg));
-        arg->name = corto_strdup(name);
+        arg->name = ut_strdup(name);
         arg->type = type;
         arg->move = TRUE;
         arg->nativeCast = NULL;
         arg->optional = optional;
         arg->isobject = type && type->reference && (type->kind != CORTO_VOID);
-        corto_ll_append(args, arg);
+        ut_ll_append(args, arg);
     }
 }
 
-static void c_apiCastMacroFreeArgs(corto_ll args) {
-    corto_iter iter = corto_ll_iter(args);
-    while (corto_iter_hasNext(&iter)) {
-        c_arg *arg = corto_iter_next(&iter);
+static void c_apiCastMacroFreeArgs(ut_ll args) {
+    ut_iter iter = ut_ll_iter(args);
+    while (ut_iter_hasNext(&iter)) {
+        c_arg *arg = ut_iter_next(&iter);
         corto_dealloc(arg->name);
         corto_dealloc(arg);
     }
-    corto_ll_free(args);
+    ut_ll_free(args);
 }
 
 static corto_int16 c_apiCastAuto(
@@ -105,9 +105,9 @@ static corto_int16 c_apiCastAuto(
         count = 1;
     }
 
-    corto_iter iter = corto_ll_iter(data->args);
-    while (corto_iter_hasNext(&iter)) {
-        c_arg *arg = corto_iter_next(&iter);
+    ut_iter iter = ut_ll_iter(data->args);
+    while (ut_iter_hasNext(&iter)) {
+        c_arg *arg = ut_iter_next(&iter);
         if (count) {
             g_fileWrite(data->header, ", ");
         }
@@ -125,17 +125,17 @@ static corto_int16 c_apiCastAuto(
         m ? corto_idof(m) : "",
         scoped ? "_parent, #_id" : "");
 
-    iter = corto_ll_iter(data->args);
+    iter = ut_ll_iter(data->args);
     count = 0;
 
     if (scoped) {
-        corto_iter_hasNext(&iter) ? corto_iter_next(&iter) : 0; /* _parent */
-        corto_iter_hasNext(&iter) ? corto_iter_next(&iter) : 0; /* _id */
+        ut_iter_hasNext(&iter) ? ut_iter_next(&iter) : 0; /* _parent */
+        ut_iter_hasNext(&iter) ? ut_iter_next(&iter) : 0; /* _id */
         count = 2;
     }
 
-    while (corto_iter_hasNext(&iter)) {
-        c_arg *arg = corto_iter_next(&iter);
+    while (ut_iter_hasNext(&iter)) {
+        c_arg *arg = ut_iter_next(&iter);
         if (count) {
             g_fileWrite(data->header, ", ");
         }
@@ -161,10 +161,10 @@ static corto_int16 c_apiCastMacroCall(
       m ? corto_idof(m) : "");
 
     corto_bool cpp = !strcmp(g_getAttribute(data->g, "c4cpp"), "true");
-    corto_iter iter = corto_ll_iter(data->args);
+    ut_iter iter = ut_ll_iter(data->args);
     corto_uint32 count = 0;
-    while (corto_iter_hasNext(&iter)) {
-        c_arg *arg = corto_iter_next(&iter);
+    while (ut_iter_hasNext(&iter)) {
+        c_arg *arg = ut_iter_next(&iter);
         corto_id argName;
         if (arg->type && arg->optional) {
             corto_id typeId;
@@ -218,9 +218,9 @@ static corto_int16 c_apiCastMacro(
       m ? "_" : "",
       m ? corto_idof(m) : "");
 
-    corto_iter iter = corto_ll_iter(data->args);
-    while (corto_iter_hasNext(&iter)) {
-        c_arg *arg = corto_iter_next(&iter);
+    ut_iter iter = ut_ll_iter(data->args);
+    while (ut_iter_hasNext(&iter)) {
+        c_arg *arg = ut_iter_next(&iter);
         if (count) {
             g_fileWrite(data->header, ", ");
         }
@@ -235,15 +235,15 @@ static corto_int16 c_apiCastMacro(
     return 0;
 }
 
-static void c_apiPrintArgs(corto_ll args, corto_uint32 count, corto_uint32 skip, g_file file) {
-    corto_iter iter = corto_ll_iter(args);
+static void c_apiPrintArgs(ut_ll args, corto_uint32 count, corto_uint32 skip, g_file file) {
+    ut_iter iter = ut_ll_iter(args);
     corto_uint32 i;
 
     for (i = 0; i < skip; i ++) {
-        corto_iter_next(&iter);
+        ut_iter_next(&iter);
     }
-    while (corto_iter_hasNext(&iter)) {
-        c_arg *arg = corto_iter_next(&iter);
+    while (ut_iter_hasNext(&iter)) {
+        c_arg *arg = ut_iter_next(&iter);
         if (count) {
             g_fileWrite(file, ", ");
         }
@@ -896,7 +896,7 @@ corto_int16 c_apiTypeCreateIntern(
         }
 
         /* Collect arguments for casting macro */
-        data->args = corto_ll_new();
+        data->args = ut_ll_new();
         data->parameterCount = 0;
 
         c_writeExport(data->g, data->header);
@@ -1006,6 +1006,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     corto_bool isSet = isUpdate ? doUpdate ? FALSE : TRUE : FALSE;
     g_generator g = data->g;
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
+    corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
@@ -1016,7 +1017,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
             memberCount ++;
         }
 
-        data->args = corto_ll_new();
+        data->args = ut_ll_new();
         data->parameterCount = 1;
         c_typeId(data->g, t, id);
 
@@ -1049,7 +1050,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         g_fileIndent(data->source);
         g_fileWrite(data->source, "CORTO_UNUSED(_this);\n");
 
-        if (!app) {
+        if (!app && !bootstrap) {
             g_fileWrite(data->source, "CORTO_UNUSED(_package);\n");
         }
 

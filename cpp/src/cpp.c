@@ -1,5 +1,5 @@
 
-#include <driver/gen/c/cpp/cpp.h>
+#include <driver.gen.c.cpp>
 
 typedef struct c_binding_t {
     g_generator g;
@@ -153,16 +153,16 @@ int genmain(g_generator g) {
     c_binding_t walkdata = {0};
     walkdata.g = g;
 
-    char *cwd = corto_strdup(corto_cwd());
+    char *cwd = ut_strdup(ut_cwd());
 
     if ((app || local) && !cpp) {
-        corto_trace("skip generating C++ for a local non-C++ project");
+        ut_trace("skip generating C++ for a local non-C++ project");
         return 0;
     }
 
     /* Create project files */
     if (!local && !app) {
-        if (!corto_file_test("cpp/project.json")) {
+        if (!ut_file_test("cpp/project.json")) {
             corto_int8 ret, sig;
             corto_id cmd;
             sprintf(
@@ -170,16 +170,16 @@ int genmain(g_generator g) {
                 "corto create package %s/cpp --use-cpp --unmanaged --notest --nobuild --silent -o cpp",
                 g_getName(g));
 
-            sig = corto_proc_cmd(cmd, &ret);
+            sig = ut_proc_cmd(cmd, &ret);
             if (sig || ret) {
-                corto_throw("failed to setup project for '%s/c'", g_getName(g));
+                ut_throw("failed to setup project for '%s/c'", g_getName(g));
                 goto error;
             }
 
             /* Overwrite rakefile */
             g_file rakefile = g_fileOpen(g, "cpp/project.json");
             if (!rakefile) {
-                corto_throw("failed to open cpp/project.json");
+                ut_throw("failed to open cpp/project.json");
                 goto error;
             }
             g_fileWrite(rakefile, "{\n");
@@ -195,7 +195,7 @@ int genmain(g_generator g) {
             g_fileClose(rakefile);
         }
 
-        corto_chdir("cpp");
+        ut_chdir("cpp");
 
         walkdata.header = g_fileOpen(g, "cpp.h");
         walkdata.source = g_fileOpen(g, "main.cpp");
@@ -299,7 +299,7 @@ int genmain(g_generator g) {
     g_fileWrite(walkdata.source, "}\n");
 
     if (!local) {
-        corto_chdir(cwd);
+        ut_chdir(cwd);
         corto_dealloc(cwd);
     }
 

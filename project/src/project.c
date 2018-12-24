@@ -1,16 +1,16 @@
 
-#include <corto/corto.h>
-#include "driver/gen/c/common/common.h"
+#include <corto>
+#include <driver.gen.c.common>
 
 static
 uint32_t c_projectCountPackagesToLoad(
     g_generator g)
 {
     uint32_t result = 0;
-    if (g->imports && corto_ll_count(g->imports)) {
-        corto_iter iter = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&iter)) {
-            corto_object o = corto_iter_next(&iter);
+    if (g->imports && ut_ll_count(g->imports)) {
+        ut_iter iter = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&iter)) {
+            corto_object o = ut_iter_next(&iter);
             /* Filter out generated language packages */
             if (strcmp(corto_idof(o), "c")) {
                 result ++;
@@ -34,9 +34,9 @@ void c_projectLoadPackages(
             strcpy(id, g_getProjectName(g));
         }
         g_fileWrite(file, "corto_log_push(\"load-deps:%s\");\n", id);
-        corto_iter iter = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&iter)) {
-            corto_object o = corto_iter_next(&iter);
+        ut_iter iter = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&iter)) {
+            corto_object o = ut_iter_next(&iter);
 
             /* Filter out generated language packages */
             if (strcmp(corto_idof(o), "c") && strcmp(corto_idof(o), "cpp")) {
@@ -64,9 +64,9 @@ void c_projectLoadGeneratedPackages(
             strcpy(id, g_getProjectName(g));
         }
         g_fileWrite(file, "corto_log_push(\"load-gen-deps:%s\");\n", id);
-        corto_iter iter = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&iter)) {
-            corto_object o = corto_iter_next(&iter);
+        ut_iter iter = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&iter)) {
+            corto_object o = ut_iter_next(&iter);
 
             /* Filter out generated language packages */
             if (!strcmp(corto_idof(o), "c") || !strcmp(corto_idof(o), "cpp")) {
@@ -197,7 +197,7 @@ int16_t c_projectGenerateMainFile(
         g_fileWrite(file, "char *keep_alive = corto_getenv(\"CORTO_KEEP_ALIVE\");\n");
         g_fileWrite(file, "if (keep_alive && !stricmp(keep_alive, \"true\")) {\n");
         g_fileIndent(file);
-        g_fileWrite(file, "corto_info(\"Keeping process alive, press CTRL-C to exit\");\n");
+        g_fileWrite(file, "ut_info(\"Keeping process alive, press CTRL-C to exit\");\n");
         g_fileWrite(file, "while (true) { corto_sleep(1, 0); }\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n");
@@ -276,19 +276,19 @@ error:
 int genmain(g_generator g) {
 
     /* Create source and include directories */
-    corto_mkdir("include");
-    corto_mkdir("src");
+    ut_mkdir("include");
+    ut_mkdir("src");
 
     if (c_projectGenerateMainFile(g)) {
-        if (!corto_raised()) {
-            corto_throw("failed to create main sourcefile");
+        if (!ut_raised()) {
+            ut_throw("failed to create main sourcefile");
         }
         goto error;
     }
 
     if (c_genInterfaceHeader(g)) {
-        if (!corto_raised()) {
-            corto_throw("failed to create interface header");
+        if (!ut_raised()) {
+            ut_throw("failed to create interface header");
         }
         goto error;
     }
