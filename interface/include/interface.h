@@ -8,7 +8,7 @@
 #ifndef C_INTERFACE_H_
 #define C_INTERFACE_H_
 
-#include "prebaked.h"
+#include "bake_config.h"
 
 #ifdef __cplusplus
 extern "c" {

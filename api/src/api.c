@@ -355,7 +355,7 @@ int c_apiVariableWalk(
         g_fileWrite(data->source, "corto_type _%s;\n", varId);
         g_fileWrite(
             data->source,
-            "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n",
+            "#define %s _%s ? _%s : (_%s = *(corto_type*)ut_load_sym(\"%s\", &_package, \"%s\"))\n",
             varId, varId, varId, varId, packageId, varId);
         g_fileWrite(data->source, "\n");
     }
@@ -473,7 +473,7 @@ int c_apiWalkPackages(
         /* Walk over collected types */
         int has_defs = !ut_ll_walk(data->types, c_apiVariableHasVariableDefs, data);
         if (data->types && has_defs) {
-            g_fileWrite(data->source, "static corto_dl _package;\n");
+            g_fileWrite(data->source, "static ut_dl _package;\n");
             ut_ll_walk(data->types, c_apiVariableWalk, data);
         }
         if (data->types) {

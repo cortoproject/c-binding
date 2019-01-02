@@ -33,7 +33,7 @@ void c_projectLoadPackages(
         } else {
             strcpy(id, g_getProjectName(g));
         }
-        g_fileWrite(file, "corto_log_push(\"load-deps:%s\");\n", id);
+        g_fileWrite(file, "ut_log_push(\"load-deps:%s\");\n", id);
         ut_iter iter = ut_ll_iter(g->imports);
         while (ut_iter_hasNext(&iter)) {
             corto_object o = ut_iter_next(&iter);
@@ -42,11 +42,11 @@ void c_projectLoadPackages(
             if (strcmp(corto_idof(o), "c") && strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
-                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); corto_raise(); return -1;}\n",
+                    "if (ut_use(\"%s\", 0, NULL)) {ut_log_pop(); ut_raise(); return -1;}\n",
                     corto_path(NULL, NULL, o, "/"));
             }
         }
-        g_fileWrite(file, "corto_log_pop();\n");
+        g_fileWrite(file, "ut_log_pop();\n");
     }
 }
 
@@ -63,7 +63,7 @@ void c_projectLoadGeneratedPackages(
         } else {
             strcpy(id, g_getProjectName(g));
         }
-        g_fileWrite(file, "corto_log_push(\"load-gen-deps:%s\");\n", id);
+        g_fileWrite(file, "ut_log_push(\"load-gen-deps:%s\");\n", id);
         ut_iter iter = ut_ll_iter(g->imports);
         while (ut_iter_hasNext(&iter)) {
             corto_object o = ut_iter_next(&iter);
@@ -72,13 +72,13 @@ void c_projectLoadGeneratedPackages(
             if (!strcmp(corto_idof(o), "c") || !strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
-                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); corto_raise(); return -1;}\n",
+                    "if (ut_use(\"%s\", 0, NULL)) {ut_log_pop(); ut_raise(); return -1;}\n",
                     corto_path(NULL, NULL, o, "/"));
             } else {
                 continue;
             }
         }
-        g_fileWrite(file, "corto_log_pop();\n");
+        g_fileWrite(file, "ut_log_pop();\n");
     }
 
     /* If a c4cpp package, load own generated cpp package */
@@ -96,7 +96,7 @@ void c_projectLoadGeneratedPackages(
 
         g_fileWrite(
             file,
-            "if (corto_use(\"%s/cpp\", 0, NULL)) {corto_raise(); return -1;}\n",
+            "if (ut_use(\"%s/cpp\", 0, NULL)) {ut_raise(); return -1;}\n",
             id);
     }
 }
@@ -171,9 +171,9 @@ int16_t c_projectGenerateMainFile(
     if (g_getCurrent(g)) {
         corto_id id;
         corto_path(id, root_o, g_getPackage(g), "_");
-        g_fileWrite(file, "corto_log_push(\"load-model:%s\");\n", id);
+        g_fileWrite(file, "ut_log_push(\"load-model:%s\");\n", id);
         g_fileWrite(file, "ret = %s_load();\n", id);
-        g_fileWrite(file, "corto_log_pop();\n");
+        g_fileWrite(file, "ut_log_pop();\n");
     }
 
     /* If a C++ application that has a package, initialize C++ variables */
@@ -198,7 +198,7 @@ int16_t c_projectGenerateMainFile(
         g_fileWrite(file, "if (keep_alive && !stricmp(keep_alive, \"true\")) {\n");
         g_fileIndent(file);
         g_fileWrite(file, "ut_info(\"Keeping process alive, press CTRL-C to exit\");\n");
-        g_fileWrite(file, "while (true) { corto_sleep(1, 0); }\n");
+        g_fileWrite(file, "while (true) { ut_sleep(1, 0); }\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n");
         g_fileWrite(file, "corto_stop();\n");

@@ -8,7 +8,7 @@
 #ifndef C_COMMON_H_
 #define C_COMMON_H_
 
-#include "prebaked.h"
+#include "bake_config.h"
 
 #ifdef __cplusplus
 extern "c" {
