@@ -726,7 +726,7 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
         strcpy(buff, g_getName(g));
         char *ptr, ch;
         for (ptr = buff; (ch = *ptr); ptr++) {
-            if (ch == '/') *ptr = '_';
+            if (ch == '.') *ptr = '_';
         }
     }
 
@@ -736,18 +736,22 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
     return buffer;
 }
 
-void c_writeExport(g_generator g, g_file file) {
+void c_writeExport(g_generator g, const char *postfix, g_file file) {
     corto_id upperName;
     if (!strcmp(g_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
         strcpy(upperName, g_getName(g));
         char *ptr, ch;
         for (ptr = upperName; (ch = *ptr); ptr++) {
-            if (ch == '/') *ptr = '_';
+            if (ch == '.') *ptr = '_';
         }
-
     } else {
         corto_path(upperName, root_o, g_getCurrent(g), "_");
     }
+
+    if (postfix) {
+        strcat(upperName, postfix);
+    }
+
     strupper(upperName);
     g_fileWrite(file, "%s_EXPORT", upperName);
 }
@@ -904,18 +908,17 @@ int c_includeDependency(
 
     if (import != corto_o) {
         corto_id import_id;
-        corto_path(import_id, root_o, import, "/");
-        const char *include = ut_locate(
-            import_id, NULL, UT_LOCATE_INCLUDE);
+        corto_path(import_id, root_o, import, ".");
+        const char *include = ut_locate(import_id, NULL, UT_LOCATE_INCLUDE);
 
         if (header) {
             if (ut_file_test(strarg("%s/%s", include, header))) {
-                g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
+                g_fileWrite(result, "#include <%s.dir/%s>\n", import_id, header);
                 count ++;
             }
         } else {
             bool is_binding = false;
-            char *import_name = strrchr(import_id, '/');
+            char *import_name = strrchr(import_id, '.');
 
             if (import_name) {
                 import_name ++;
@@ -1309,17 +1312,7 @@ char* c_mainheader(g_generator g, corto_id header) {
     bool local = !strcmp(g_getAttribute(g, "local"), "true");
 
     if (!app && !local) {
-        corto_id name;
-        char *ptr, ch;
-        strcpy(name, g_getName(g));
-        for (ptr = name; (ch = *ptr); ptr++) {
-            if (ch == ':') {
-                *ptr = '/';
-                ptr++;
-                memmove(ptr, ptr + 1, strlen(ptr));
-            }
-        }
-        sprintf(header, "%s/%s.h", name, g_getProjectName(g));
+        sprintf(header, "%s", g_getName(g));
     } else {
         sprintf(header, "include/%s.h", g_getProjectName(g));
     }

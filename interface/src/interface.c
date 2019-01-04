@@ -180,7 +180,7 @@ int c_interfaceGenerateVirtual(
         char *decl = ut_strbuf_get(&declBuffer);
 
         /* Write casting macro to header */
-        c_writeExport(data->g, data->interfaceHeader);
+        c_writeExport(data->g, NULL, data->interfaceHeader);
         g_fileWrite(data->interfaceHeader, "\n");
         g_fileWrite(data->interfaceHeader, "%s;\n", decl);
         g_fileWrite(data->wrapper, "%s\n", decl);
@@ -212,7 +212,7 @@ int c_interfaceGenerateVirtual(
         g_fileWrite(data->wrapper, "}\n");
         g_fileWrite(
           data->wrapper,
-          "ut_assert(_methodId, \"method '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), corto_lasterr() ? \": \" : \"\", corto_lasterr() ? corto_lasterr() : \"\");\n\n",
+          "ut_assert(_methodId, \"method '%s' not found in '%%s'%%s%%s\", corto_fullpath(NULL, _abstract), ut_lasterr() ? \": \" : \"\", ut_lasterr() ? ut_lasterr() : \"\");\n\n",
           nameString);
         g_fileWrite(data->wrapper, "/* Lookup method-object. */\n");
         if (isInterface) {
@@ -314,7 +314,7 @@ int c_interfaceProcedure(
             }
 
             /* Write forward declaration */
-            c_writeExport(data->g, data->interfaceHeader);
+            c_writeExport(data->g, NULL, data->interfaceHeader);
             g_fileWrite(data->interfaceHeader, "\n");
 
             ut_strbuf declBuffer = UT_STRBUF_INIT;
@@ -441,8 +441,6 @@ corto_int16 c_interfaceHeaderWrite(
     bool local = !strcmp(g_getAttribute(g, "local"), "true");
     bool app = !strcmp(g_getAttribute(g, "app"), "true");
     bool c4cpp = !strcmp(g_getAttribute(g, "c4cpp"), "true");
-
-    bool error = FALSE;
     corto_id path;
 
     CORTO_UNUSED(data);
@@ -450,7 +448,7 @@ corto_int16 c_interfaceHeaderWrite(
     strcpy(path, name);
     strupper(path);
     char *ptr, ch;
-    for (ptr = path; (ch = *ptr); ptr++) if (ch == '/') *ptr = '_';
+    for (ptr = path; (ch = *ptr); ptr++) if (ch == '.') *ptr = '_';
 
     g_fileWrite(result, "/* %s\n", headerFileName);
     if (mainHeader) {
@@ -464,36 +462,19 @@ corto_int16 c_interfaceHeaderWrite(
     g_fileWrite(result, "#ifndef %s_H\n", path);
     g_fileWrite(result, "#define %s_H\n", path);
 
-    int header_count = 0;
-
-    if (bootstrap) {
-        g_fileWrite(result, "\n");
-        g_fileWrite(result, "#include <%s/_project.h>\n", g_getProjectName(g));
-        header_count ++;
-    } else if (mainHeader) {
-        g_fileWrite(result, "\n");
-        if (o && (o != corto_o)) {
-            /* Do not include corto.h in headers of builtin packages */
-            c_includeFrom(g, result, corto_o, "corto.h");
-            header_count ++;
-        }
-        c_includeFrom(g, result, g_getPackage(g), "_project.h");
-        header_count ++;
-    }
-
     if (mainHeader) {
-        if (c_includeDependencies(data->g, result, NULL) || header_count) {
-            g_fileWrite(result, "\n");
-        }
+        g_fileWrite(result, "\n");
+        g_fileWrite(result, "#include \"bake_config.h\"\n", g_getProjectName(g));
     }
 
-    if (error) {
-        goto error;
-    }
+    g_fileWrite(result, "\n");
+    g_fileWrite(result, "#define %s_ETC ut_locate(\"%s\", NULL, UT_LOCATE_ETC)\n",
+        path, name);
 
     /* If a header exists, write it */
     if (mainHeader) {
         corto_string snippet;
+        g_fileWrite(result, "\n");
         if ((snippet = g_fileLookupHeader(result, ""))) {
             g_fileWrite(result, "/* $header()");
             g_fileWrite(result, "%s", snippet);
@@ -506,32 +487,28 @@ corto_int16 c_interfaceHeaderWrite(
     }
 
     if (g_getCurrent(g)) {
-        corto_object from = g_getPackage(g);
-
-        if (bootstrap) {
-            from = g_getCurrent(g);
-        }
 
         g_fileWrite(result, "\n");
 
         if (mainHeader) {
-            c_includeFrom(g, result, from, "_type.h");
-            c_includeFrom(g, result, from, "_interface.h");
-            c_includeFrom(g, result, from, "_load.h");
-            c_includeFrom(g, result, from, "_binding.h");
+            g_fileWrite(result, "#include \"_type.h\"\n");
+            g_fileWrite(result, "#include \"_interface.h\"\n");
+            g_fileWrite(result, "#include \"_load.h\"\n");
+            g_fileWrite(result, "#include \"_binding.h\"\n");
         }
 
         if (mainHeader && !bootstrap) {
+            g_fileWrite(result, "\n");
             if (local || app) {
-                c_includeFrom(g, result, from, "_api.h");
+                g_fileWrite(result, "#include \"_api.h\"\n");
                 if (c4cpp) {
-                    c_includeFrom(g, result, from, "_cpp.h");
+                    g_fileWrite(result, "#include \"_cpp.h\"\n");
                 }
             } else {
-                c_includeFrom(g, result, from, "c/_api.h");
+                g_fileWrite(result, "#include <%s.c>\n", g_getName(g));
                 if (c4cpp) {
                     g_fileWrite(result, "#ifdef __cplusplus\n");
-                    c_includeFrom(g, result, from, "cpp/cpp.h");
+                    g_fileWrite(result, "#include <%s.cpp>\n", g_getName(g));
                     g_fileWrite(result, "#endif\n");
                 }
             }
@@ -561,8 +538,6 @@ corto_int16 c_interfaceHeaderWrite(
     }
 
     return 0;
-error:
-    return -1;
 }
 
 /* Close headerfile */
@@ -822,6 +797,7 @@ int c_interfaceMarkUnusedFiles(
         corto_string file = ut_iter_next(&iter);
         corto_id id;
         sprintf(id, "./src/%s", file);
+
         if (c_interfaceIsGenerated(id)) {
             if (!c_interfaceWasGeneratedNow(file, data)) {
                 if (!strstr(id, ".old")) {
@@ -985,7 +961,7 @@ int genmain(g_generator g) {
         } else {
             corto_path(path, root_o, g_getPackage(g), "_");
         }
-        strcat(path, "/interface");
+        strcat(path, "_interface");
         if (c_interfaceHeaderWrite(
             g,
             walkData.interfaceHeader,

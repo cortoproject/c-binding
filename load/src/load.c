@@ -282,7 +282,7 @@ int c_loadDeclareWalk(
     c_typeret(data->g, t, C_ByReference, false, specifier);
     c_varId(data->g, o, objectId);
 
-    c_writeExport(data->g, data->header);
+    c_writeExport(data->g, NULL, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
     g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);

@@ -744,7 +744,7 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, corto_string _this, c
         g_fileWrite(data->source, "default:\n");
         g_fileIndent(data->source);
         g_fileWrite(data->source,
-          "corto_critical(\"invalid discriminator %%d for field %s\", _d);\n",
+          "ut_critical(\"invalid discriminator %%d for field %s\", _d);\n",
           corto_idof(m));
         g_fileWrite(data->source, "break;\n");
         g_fileDedent(data->source);
@@ -766,7 +766,7 @@ corto_int16 c_apiTypeAssignCompositeMember(corto_member m, corto_string _this, c
         if (caseCount) {
             g_fileIndent(data->source);
             g_fileWrite(data->source,
-              "corto_critical(\"invalid discriminator %%d for field %s\", _d);\n",
+              "ut_critical(\"invalid discriminator %%d for field %s\", _d);\n",
               corto_idof(m));
             g_fileWrite(data->source, "break;\n");
             g_fileDedent(data->source);
@@ -881,6 +881,7 @@ corto_int16 c_apiTypeCreateIntern(
     g_generator g = data->g;
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
 
     /* AND with define, because if function doesn't define the object the code
      * doesn't take into account individual members */
@@ -899,7 +900,7 @@ corto_int16 c_apiTypeCreateIntern(
         data->args = ut_ll_new();
         data->parameterCount = 0;
 
-        c_writeExport(data->g, data->header);
+        c_writeExport(data->g, local ? NULL : "_c", data->header);
         g_fileWrite(data->header, " %s _%s%s%s%s(",
           ret, id, func, member ? "_" : "", member ? corto_idof(member) : "");
 
@@ -1008,6 +1009,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
     corto_bool app = !strcmp(g_getAttribute(g, "app"), "true");
     corto_bool bootstrap = !strcmp(g_getAttribute(g, "bootstrap"), "true");
     corto_bool isUnion = corto_class_instanceof(corto_union_o, t);
+    corto_bool local = !strcmp(g_getAttribute(g, "local"), "true");
     corto_member member = NULL;
     corto_uint32 memberCount = 0;
 
@@ -1021,7 +1023,7 @@ corto_int16 c_apiTypeDefineIntern(corto_type t, c_apiWalk_t *data, corto_bool is
         data->parameterCount = 1;
         c_typeId(data->g, t, id);
 
-        c_writeExport(data->g, data->header);
+        c_writeExport(data->g, local ? NULL : "_c", data->header);
 
         if (isUpdate && !doUpdate) {
             g_fileWrite(data->header, " %s ", c_typeret(g, t, C_ByReference, false, ptr));
@@ -1157,6 +1159,7 @@ corto_int16 c_apiDelegateInitCallback(
 {
     corto_id returnId, id, paramId, returnVarId;
     int i, firstComma = 0;
+    corto_bool local = !strcmp(g_getAttribute(data->g, "local"), "true");
 
     if (c_apiDelegate_init_callbackAuto(t, instance, data)) {
         goto error;
@@ -1166,7 +1169,7 @@ corto_int16 c_apiDelegateInitCallback(
     g_fullOid(data->g, t->return_type, returnId);
     c_varId(data->g, t->return_type, returnVarId);
 
-    c_writeExport(data->g, data->header);
+    c_writeExport(data->g, local ? NULL : "_c", data->header);
     if (!instance) {
         g_fileWrite(data->header, " corto_int16 %s__init_c(%s *d, ", id, id);
         g_fileWrite(data->source, "corto_int16 %s__init_c(%s *d, ", id, id);

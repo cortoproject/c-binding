@@ -76,7 +76,7 @@ char* c_usingConstant(g_generator g, corto_id id);
 char* c_buildingMacro(g_generator g, corto_id buffer);
 
 /* Write library export for symbol */
-void c_writeExport(g_generator g, g_file file);
+void c_writeExport(g_generator g, const char *postfix, g_file file);
 
 /* Get package for object */
 corto_object c_findPackage(g_generator g, corto_object o);

@@ -709,7 +709,7 @@ g_file c_typeHeaderFileOpen(
     /* Don't include this file when generating for the bootstrap */
     if (bootstrap) {
         if (g_getCurrent(g) == corto_lang_o) {
-            c_includeFrom(g, result, corto_o, "platform.h");
+            g_fileWrite(result, "<bake.util>\n");
         } else {
             c_includeFrom(g, result, corto_lang_o, "_type.h");
         }

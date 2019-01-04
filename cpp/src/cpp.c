@@ -167,7 +167,7 @@ int genmain(g_generator g) {
             corto_id cmd;
             sprintf(
                 cmd,
-                "corto create package %s/cpp --use-cpp --unmanaged --notest --nobuild --silent -o cpp",
+                "corto create package %s.cpp --use-cpp --unmanaged --notest --nobuild --silent -o cpp",
                 g_getName(g));
 
             sig = ut_proc_cmd(cmd, &ret);
@@ -183,13 +183,11 @@ int genmain(g_generator g) {
                 goto error;
             }
             g_fileWrite(rakefile, "{\n");
-            g_fileWrite(rakefile, "    \"id\": \"%s/cpp\",\n", g_getName(g));
+            g_fileWrite(rakefile, "    \"id\": \"%s.cpp\",\n", g_getName(g));
             g_fileWrite(rakefile, "    \"type\": \"package\",\n");
             g_fileWrite(rakefile, "    \"value\": {\n");
             g_fileWrite(rakefile, "        \"use\": [\"corto\"],\n");
-            g_fileWrite(rakefile, "        \"language\": \"c\",\n");
-            g_fileWrite(rakefile, "        \"c4cpp\": true,\n");
-            g_fileWrite(rakefile, "        \"managed\": false\n");
+            g_fileWrite(rakefile, "        \"language\": \"c++\"\n");
             g_fileWrite(rakefile, "    }\n");
             g_fileWrite(rakefile, "}\n");
             g_fileClose(rakefile);
@@ -224,7 +222,7 @@ int genmain(g_generator g) {
     g_fileWrite(walkdata.header, " */\n\n");
     g_fileWrite(walkdata.header, "#ifndef %s__CPPAPI_H\n", path);
     g_fileWrite(walkdata.header, "#define %s__CPPAPI_H\n\n", path);
-    c_includeFrom(g, walkdata.header, corto_o, "corto.h");
+    g_fileWrite(walkdata.header, "#include <corto>\n");
 
     corto_object pkg;
     if (bootstrap) {
@@ -233,12 +231,10 @@ int genmain(g_generator g) {
         pkg = g_getPackage(g);
     }
 
+    g_fileWrite(walkdata.header, "#include <%s.dir/_type.h>\n", g_getName(g));
     if (bootstrap || corto_isbuiltin(pkg)) {
-        g_fileWrite(walkdata.header, "#include <%s/_project.h>\n", g_getName(g));
-        g_fileWrite(walkdata.header, "#include <%s/_type.h>\n", g_getName(g));
     } else {
-        c_includeFrom(g, walkdata.header, pkg, "_project.h");
-        c_includeFrom(g, walkdata.header, pkg, "_type.h");
+        g_fileWrite(walkdata.header, "#include \"bake_config.h\"\n");
         g_fileWrite(walkdata.header, "\n");
     }
 
@@ -269,7 +265,7 @@ int genmain(g_generator g) {
     g_fileWrite(walkdata.source, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(walkdata.source, " */\n\n");
     if (!local && !app) {
-        g_fileWrite(walkdata.source, "#include <%s/cpp/cpp.h>\n", g_getName(g));
+        g_fileWrite(walkdata.source, "#include <%s.cpp>\n", g_getName(g));
     } else {
         c_includeFrom(g, walkdata.source, pkg, "_cpp.h");
     }
