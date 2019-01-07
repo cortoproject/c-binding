@@ -222,8 +222,7 @@ g_file c_apiHeaderOpen(
 
     if (!local && !app) {
         g_fileWrite(data->mainHeader, "#include \"bake_config.h\"\n");
-        g_fileWrite(data->mainHeader, "#include <%s.c.dir/%s>\n",
-            g_getName(data->g), headerFileName);
+        g_fileWrite(data->mainHeader, "#include \"%s\"\n", headerFileName);
     }
 
     /* Create file */
@@ -247,8 +246,10 @@ g_file c_apiHeaderOpen(
     if (!bootstrap) {
         if (local) {
             g_fileWrite(result, "#include \"bake_config.h\"\n");
+            g_fileWrite(result, "#include \"_type.h\"\n");
+        } else {
+            g_fileWrite(result, "#include <%s.dir/_type.h>\n", g_getName(data->g));
         }
-        g_fileWrite(result, "#include \"_type.h\"\n");
         g_fileWrite(result, "\n");
     }
 

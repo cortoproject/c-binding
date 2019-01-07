@@ -468,8 +468,15 @@ corto_int16 c_interfaceHeaderWrite(
     }
 
     g_fileWrite(result, "\n");
-    g_fileWrite(result, "#define %s_ETC ut_locate(\"%s\", NULL, UT_LOCATE_ETC)\n",
-        path, name);
+
+    if (!local) {
+        g_fileWrite(result, "#define %s_ETC ut_locate(\"%s\", NULL, UT_LOCATE_ETC)\n",
+            path, name);
+    } else {
+        g_fileWrite(result, "#define %s_ETC \"etc\"\n",
+            path, name);
+
+    }
 
     /* If a header exists, write it */
     if (mainHeader) {
