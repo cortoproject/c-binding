@@ -328,7 +328,7 @@ static corto_int16 c_apiListTypeInsertNoAlloc(corto_list o, corto_string operati
             g_fileWrite(data->source, "}\n");
         } else {
             if (element_type->kind == CORTO_PRIMITIVE || element_type->reference) {
-                g_fileWrite(data->source, "%s(list, (void*)(corto_word)element);\n", corto_operationToApi(operation, api));
+                g_fileWrite(data->source, "%s(list, (void*)*(uintptr_t*)&element);\n", corto_operationToApi(operation, api));
             } else {
                 g_fileWrite(data->source, "%s%s result;\n", elementId, ptr ? "*" : "");
                 g_fileWrite(data->source, "corto_ptr_init(&result, %s);\n", varId);
@@ -473,7 +473,7 @@ static corto_int16 c_apiListTypeGet(corto_list o, c_apiWalk_t* data) {
     } else {
         g_fileWrite(
           data->source,
-          "return (%s%s)(corto_word)ut_ll_get(list, index);\n",
+          "void *_get_temp = ut_ll_get(list, index);\nreturn *(%s*%s)&_get_temp;",
           elementId,
           allocRequired ? "*" : "");
     }
