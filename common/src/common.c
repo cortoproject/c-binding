@@ -5,7 +5,7 @@
  *      Author: sander
  */
 
-#include "driver/gen/c/common/common.h"
+#include <driver.gen.c.common>
 #include "ctype.h"
 
 /* Escape language keywords */
@@ -170,7 +170,7 @@ char* c_primitiveId(g_generator g, corto_primitive t, char* buff) {
             appendT = TRUE;
             break;
         default: {
-            corto_throw("unsupported width for primitive type '%s'.",
+            ut_throw("unsupported width for primitive type '%s'.",
                 corto_fullpath(NULL, t));
             goto error;
             break;
@@ -197,7 +197,7 @@ char* c_primitiveId(g_generator g, corto_primitive t, char* buff) {
             strcpy(buff, "double");
             break;
         default: {
-            corto_throw("unsupported width for floating point type '%s'",
+            ut_throw("unsupported width for floating point type '%s'",
                 corto_fullpath(NULL, t));
             goto error;
             break;
@@ -206,7 +206,7 @@ char* c_primitiveId(g_generator g, corto_primitive t, char* buff) {
         break;
     case CORTO_ENUM:
     case CORTO_BITMASK:
-        corto_throw(
+        ut_throw(
           "use c_specifierId instead of c_primitiveId for enums and bitmasks");
         goto error;
         g_fullOid(g, t, buff);
@@ -726,7 +726,7 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
         strcpy(buff, g_getName(g));
         char *ptr, ch;
         for (ptr = buff; (ch = *ptr); ptr++) {
-            if (ch == '/') *ptr = '_';
+            if (ch == '.') *ptr = '_';
         }
     }
 
@@ -736,18 +736,23 @@ char* c_buildingMacro(g_generator g, corto_id buffer) {
     return buffer;
 }
 
-void c_writeExport(g_generator g, g_file file) {
+void c_writeExport(g_generator g, const char *postfix, g_file file) {
     corto_id upperName;
-    if (!strcmp(g_getAttribute(g, "bootstrap"), "true") || !g_getCurrent(g)) {
-        strcpy(upperName, g_getName(g));
-        char *ptr, ch;
-        for (ptr = upperName; (ch = *ptr); ptr++) {
-            if (ch == '/') *ptr = '_';
-        }
 
-    } else {
-        corto_path(upperName, root_o, g_getCurrent(g), "_");
+    if (!strcmp(g_getAttribute(g, "app"), "true")) {
+        return;
     }
+
+    strcpy(upperName, g_getName(g));
+    char *ptr, ch;
+    for (ptr = upperName; (ch = *ptr); ptr++) {
+        if (ch == '.') *ptr = '_';
+    }
+
+    if (postfix) {
+        strcat(upperName, postfix);
+    }
+
     strupper(upperName);
     g_fileWrite(file, "%s_EXPORT", upperName);
 }
@@ -767,9 +772,9 @@ corto_object c_findPackage(g_generator g, corto_object o) {
     if (g_getCurrent(g)) {
         ptr = NULL;
         if (g->imports) {
-            corto_iter it = corto_ll_iter(g->imports);
-            while (corto_iter_hasNext(&it)) {
-                corto_object o = corto_iter_next(&it);
+            ut_iter it = ut_ll_iter(g->imports);
+            while (ut_iter_hasNext(&it)) {
+                corto_object o = ut_iter_next(&it);
                 if (o == package) {
                     ptr = package;
                 }
@@ -820,7 +825,7 @@ char* c_filename(
 
 void c_includeFrom_toBufferv(
     g_generator g,
-    corto_buffer *buffer,
+    ut_strbuf *buffer,
     corto_object o,
     corto_string include,
     va_list list)
@@ -843,14 +848,14 @@ void c_includeFrom_toBufferv(
         /* Never include headers by just their names, as this could potentially
          * conflict with system headers, for example when a user creates a class
          * called "time". */
-        corto_buffer_append(buffer, "#include <include/%s>\n", filebuff);
+        ut_strbuf_append(buffer, "#include <include/%s>\n", filebuff);
     } else {
         if (package) {
             corto_path(path, root_o, package, "/");
         } else {
             strcpy(path, g_getName(g));
         }
-        corto_buffer_append(buffer, "#include <%s/%s>\n",
+        ut_strbuf_append(buffer, "#include <%s/%s>\n",
           path,
           filebuff);
     }
@@ -858,7 +863,7 @@ void c_includeFrom_toBufferv(
 
 void c_includeFrom_toBuffer(
     g_generator g,
-    corto_buffer *buffer,
+    ut_strbuf *buffer,
     corto_object o,
     corto_string include,
     ...)
@@ -876,7 +881,7 @@ void c_includeFrom(
     corto_string include,
     ...)
 {
-    corto_buffer buffer = CORTO_BUFFER_INIT;
+    ut_strbuf buffer = UT_STRBUF_INIT;
 
     va_list args;
     va_start(args, include);
@@ -888,7 +893,7 @@ void c_includeFrom(
         args);
     va_end(args);
 
-    char *str = corto_buffer_str(&buffer);
+    char *str = ut_strbuf_get(&buffer);
     g_fileWrite(file, str);
     free(str);
 }
@@ -904,18 +909,17 @@ int c_includeDependency(
 
     if (import != corto_o) {
         corto_id import_id;
-        corto_path(import_id, root_o, import, "/");
-        const char *include = corto_locate(
-            import_id, NULL, CORTO_LOCATE_INCLUDE);
+        corto_path(import_id, root_o, import, ".");
+        const char *include = ut_locate(import_id, NULL, UT_LOCATE_INCLUDE);
 
         if (header) {
-            if (corto_file_test(strarg("%s/%s", include, header))) {
-                g_fileWrite(result, "#include <%s/%s>\n", import_id, header);
+            if (ut_file_test(strarg("%s/%s", include, header))) {
+                g_fileWrite(result, "#include <%s.dir/%s>\n", import_id, header);
                 count ++;
             }
         } else {
             bool is_binding = false;
-            char *import_name = strrchr(import_id, '/');
+            char *import_name = strrchr(import_id, '.');
 
             if (import_name) {
                 import_name ++;
@@ -936,7 +940,7 @@ int c_includeDependency(
             }
 
             if (is_binding ||
-                corto_file_test(strarg("%s/%s.h", include, import_name)))
+                ut_file_test(strarg("%s/%s.h", include, import_name)))
             {
                 g_fileWrite(
                     result, "#include <%s/%s.h>\n", import_id, import_name);
@@ -954,13 +958,13 @@ int c_includeDependencies(
     corto_string header)
 {
     int count = 0;
-    corto_iter it;
+    ut_iter it;
 
     /* Add include files of managed dependencies with models */
-    if (corto_ll_count(g->imports)) {
-        it = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&it)) {
-            corto_object import = corto_iter_next(&it);
+    if (ut_ll_count(g->imports)) {
+        it = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&it)) {
+            corto_object import = ut_iter_next(&it);
             count += c_includeDependency(g, result, header, import);
         }
     }
@@ -970,13 +974,13 @@ int c_includeDependencies(
     corto_id building_macro;
     c_buildingMacro(g, building_macro);
 
-    if (corto_ll_count(g->private_imports)) {
+    if (ut_ll_count(g->private_imports)) {
         g_fileWrite(result, "\n");
         g_fileWrite(result, "/* Private dependencies */\n");
         g_fileWrite(result, "#ifdef %s\n", building_macro);
-        it = corto_ll_iter(g->private_imports);
-        while (corto_iter_hasNext(&it)) {
-            corto_object import = corto_iter_next(&it);
+        it = ut_ll_iter(g->private_imports);
+        while (ut_iter_hasNext(&it)) {
+            corto_object import = ut_iter_next(&it);
             count += c_includeDependency(g, result, header, import);
         }
         g_fileWrite(result, "#endif\n");
@@ -985,11 +989,11 @@ int c_includeDependencies(
     return count;
 }
 
-void c_include_toBuffer(g_generator g, corto_buffer *buffer, corto_object o) {
+void c_include_toBuffer(g_generator g, ut_strbuf *buffer, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(g, o);
 
-    corto_assert (package != NULL, "can't include '%s' from non-package scopes",
+    ut_assert (package != NULL, "can't include '%s' from non-package scopes",
         corto_fullpath(NULL, o));
 
     c_includeFrom_toBuffer(g, buffer, package, c_filename(g, name, o, "h"));
@@ -999,7 +1003,7 @@ void c_include(g_generator g, g_file file, corto_object o) {
     corto_id name;
     corto_object package = c_findPackage(g, o);
 
-    corto_assert (package != NULL, "can't include '%s' from non-package scopes",
+    ut_assert (package != NULL, "can't include '%s' from non-package scopes",
         corto_fullpath(NULL, o));
 
     c_includeFrom(g, file, package, c_filename(g, name, o, "h"));
@@ -1041,7 +1045,7 @@ static int c_checkDuplicates(void* o, void* userData) {
 }
 
 typedef struct c_findTypeWalk_t {
-    corto_ll result;
+    ut_ll result;
     corto_class t;
 } c_findTypeWalk_t;
 
@@ -1049,22 +1053,22 @@ static int c_findTypeWalk(corto_object o, void* userData) {
     c_findTypeWalk_t* data = userData;
 
     if (corto_instanceof(data->t, o)) {
-        if (!corto_ll_count(data->result) || corto_ll_walk(data->result, c_checkDuplicates, o)) {
-            corto_ll_append(data->result, o);
+        if (!ut_ll_count(data->result) || ut_ll_walk(data->result, c_checkDuplicates, o)) {
+            ut_ll_append(data->result, o);
         }
     }
 
     return 1;
 }
 
-corto_ll c_findType(g_generator g, corto_class t) {
+ut_ll c_findType(g_generator g, corto_class t) {
     c_findTypeWalk_t walkData;
 
-    walkData.result = corto_ll_new();
+    walkData.result = ut_ll_new();
     walkData.t = t;
 
     if (corto_genDepWalk(g, c_findTypeWalk, NULL, &walkData)) {
-        corto_throw("failed to resolve instances of '%s'",
+        ut_throw("failed to resolve instances of '%s'",
             corto_fullpath(NULL, t));
         goto error;
     }
@@ -1140,7 +1144,7 @@ typedef struct c_paramWalk_t {
     g_generator g;
     bool firstComma;
     bool impl;
-    corto_buffer *buffer;
+    ut_strbuf *buffer;
 } c_paramWalk_t;
 
 /* Generate parameters for method */
@@ -1156,9 +1160,9 @@ int c_param(
 
     /* Write comma */
     if (data->firstComma) {
-        corto_buffer_appendstr(data->buffer, ",\n    ");
+        ut_strbuf_appendstr(data->buffer, ",\n    ");
     } else {
-        corto_buffer_appendstr(data->buffer, "\n    ");
+        ut_strbuf_appendstr(data->buffer, "\n    ");
     }
 
     if (!data->impl) {
@@ -1167,13 +1171,13 @@ int c_param(
         c_impl_param_type(data->g, o, type);
     }
 
-    corto_buffer_append(data->buffer, "%s", type);
+    ut_strbuf_append(data->buffer, "%s", type);
     if (type[strlen(type) - 1] != '*') {
-        corto_buffer_appendstr(data->buffer, " ");
+        ut_strbuf_appendstr(data->buffer, " ");
     }
 
     /* Write to source */
-    corto_buffer_append(data->buffer, "%s", c_param_name(o->name, name));
+    ut_strbuf_append(data->buffer, "%s", c_param_name(o->name, name));
 
     data->firstComma++;
 
@@ -1183,7 +1187,7 @@ int c_param(
 /* Add this to parameter-list */
 void c_paramThis(
     g_generator g,
-    corto_buffer *buffer,
+    ut_strbuf *buffer,
     bool cpp,
     bool impl,
     corto_type parentType)
@@ -1195,11 +1199,11 @@ void c_paramThis(
     /* If 'cpp' is enabled, the code will be compiled with a C++ compiler.
      * Therefore, avoid using the 'this' keyword */
     if (!cpp) {
-        corto_buffer_append(buffer,
+        ut_strbuf_append(buffer,
             "\n    %s this",
             c_typeptr(g, parentType, impl, classId));
     } else {
-        corto_buffer_append(buffer,
+        ut_strbuf_append(buffer,
             "\n    %s _this",
             c_typeptr(g, parentType, impl, classId));
     }
@@ -1227,7 +1231,7 @@ int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *use
 
 corto_int16 c_decl(
     g_generator g,
-    corto_buffer *buffer,
+    ut_strbuf *buffer,
     corto_function o,
     bool isWrapper,
     bool cpp,
@@ -1262,9 +1266,9 @@ corto_int16 c_decl(
 
     /* Start of function */
     if (impl) {
-        corto_buffer_append(buffer, "%s %s(", returnSpec, functionName);
+        ut_strbuf_append(buffer, "%s %s(", returnSpec, functionName);
     } else {
-        corto_buffer_append(buffer, "%s _%s(", returnSpec, functionName);
+        ut_strbuf_append(buffer, "%s _%s(", returnSpec, functionName);
     }
 
     /* Add 'this' parameter to methods */
@@ -1274,9 +1278,9 @@ corto_int16 c_decl(
             c_paramThis(g, buffer, cpp, impl, corto_parentof(o));
         } else {
             if (!cpp) {
-                corto_buffer_appendstr(buffer, "corto_any this");
+                ut_strbuf_appendstr(buffer, "corto_any this");
             } else {
-                corto_buffer_appendstr(buffer, "corto_any _this");
+                ut_strbuf_appendstr(buffer, "corto_any _this");
             }
         }
 
@@ -1292,11 +1296,11 @@ corto_int16 c_decl(
 
     /* Append void if the argumentlist was empty */
     if (!walkData.firstComma) {
-        corto_buffer_appendstr(buffer, "void");
+        ut_strbuf_appendstr(buffer, "void");
     }
 
     /* Begin of function */
-    corto_buffer_appendstr(buffer, ")");
+    ut_strbuf_appendstr(buffer, ")");
 
     return 0;
 error:
@@ -1309,17 +1313,7 @@ char* c_mainheader(g_generator g, corto_id header) {
     bool local = !strcmp(g_getAttribute(g, "local"), "true");
 
     if (!app && !local) {
-        corto_id name;
-        char *ptr, ch;
-        strcpy(name, g_getName(g));
-        for (ptr = name; (ch = *ptr); ptr++) {
-            if (ch == ':') {
-                *ptr = '/';
-                ptr++;
-                memmove(ptr, ptr + 1, strlen(ptr));
-            }
-        }
-        sprintf(header, "%s/%s.h", name, g_getProjectName(g));
+        sprintf(header, "%s", g_getName(g));
     } else {
         sprintf(header, "include/%s.h", g_getProjectName(g));
     }
@@ -1440,7 +1434,7 @@ cpp_scopeStack(
     corto_uint32 count;
     corto_object ptr;
 
-    corto_assert(module != NULL, "NULL passed for module to sd_utilModuleStack");
+    ut_assert(module != NULL, "NULL passed for module to sd_utilModuleStack");
 
     /* Count scope depth */
     ptr = module;
@@ -1450,9 +1444,9 @@ cpp_scopeStack(
     }
 
     if(count > CORTO_MAX_SCOPE_DEPTH) {
-        corto_error("cpp_scopeStack: unsupported scope-depth (depth=%d, max=%d).", count, CORTO_MAX_SCOPE_DEPTH);
+        ut_error("cpp_scopeStack: unsupported scope-depth (depth=%d, max=%d).", count, CORTO_MAX_SCOPE_DEPTH);
     }
-    corto_assert(count <= CORTO_MAX_SCOPE_DEPTH, "MAX_SCOPE_DEPTH overflow.");
+    ut_assert(count <= CORTO_MAX_SCOPE_DEPTH, "MAX_SCOPE_DEPTH overflow.");
 
     stack[count] = NULL;
 
@@ -1465,7 +1459,7 @@ cpp_scopeStack(
     }
 
     /* ptr should be NULL */
-    corto_assert(!ptr, "ptr is NULL.");
+    ut_assert(!ptr, "ptr is NULL.");
 }
 
 /* Find first common module in two module-stacks */

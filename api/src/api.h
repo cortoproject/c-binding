@@ -6,8 +6,8 @@
 #ifndef corto_api_H
 #define corto_api_H
 
-#include <corto/corto.h>
-#include "driver/gen/c/common/common.h"
+#include <corto>
+#include <driver.gen.c.common>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,11 +22,11 @@ typedef struct c_apiWalk_t {
     corto_bool owned;
     corto_object current;
     corto_uint32 parameterCount;
-    corto_ll memberCache;
-    corto_ll collections;
-    corto_ll iterators;
-    corto_ll types;
-    corto_ll args;
+    ut_ll memberCache;
+    ut_ll collections;
+    ut_ll iterators;
+    ut_ll types;
+    ut_ll args;
 } c_apiWalk_t;
 
 corto_int16 c_apiTypeCreateChild(corto_type t, c_apiWalk_t *data);

@@ -6,7 +6,7 @@
  */
 
 #include "api.h"
-#include "driver/gen/c/common/common.h"
+#include <driver.gen.c.common>
 
 /* Walk all types */
 static
@@ -200,14 +200,14 @@ g_file c_apiHeaderOpen(
     }
 
     if (!app && !local) {
-        corto_fullpath(name, pkg);
+        corto_path(name, NULL, pkg, ".");
 
         while (*namePtr == *ptr && *namePtr && *ptr) {
             namePtr ++;
             ptr ++;
         }
 
-        if (ptr[0] == '/') {
+        if (ptr[0] == '.') {
             ptr ++;
         }
     }
@@ -221,7 +221,8 @@ g_file c_apiHeaderOpen(
     sprintf(headerFileName, "%s.h", ptr);
 
     if (!local && !app) {
-        g_fileWrite(data->mainHeader, "#include <%s/c/%s>\n", g_getName(data->g), headerFileName);
+        g_fileWrite(data->mainHeader, "#include \"bake_config.h\"\n");
+        g_fileWrite(data->mainHeader, "#include \"%s\"\n", headerFileName);
     }
 
     /* Create file */
@@ -240,12 +241,15 @@ g_file c_apiHeaderOpen(
     g_fileWrite(result, "#ifndef %s__API_H\n", path);
     g_fileWrite(result, "#define %s__API_H\n\n", path);
 
-    c_includeFrom(data->g, result, corto_o, "corto.h");
-    if (bootstrap) {
-        g_fileWrite(result, "#include <%s/_project.h>\n", g_getName(data->g));
-    } else {
-        c_includeFrom(data->g, result, pkg, "_project.h");
-        c_includeFrom(data->g, result, pkg, "_type.h");
+    g_fileWrite(result, "#include <corto>\n");
+
+    if (!bootstrap) {
+        if (local) {
+            g_fileWrite(result, "#include \"bake_config.h\"\n");
+            g_fileWrite(result, "#include \"_type.h\"\n");
+        } else {
+            g_fileWrite(result, "#include <%s.dir/_type.h>\n", g_getName(data->g));
+        }
         g_fileWrite(result, "\n");
     }
 
@@ -284,7 +288,7 @@ g_file c_apiSourceOpen(
     corto_bool hidden = FALSE;
 
     if (!app && !local) {
-        corto_fullpath(name, g_getCurrent(g));
+        corto_path(name, NULL, g_getCurrent(g), ".");
 
         while (*namePtr == *ptr && *namePtr && *ptr) {
             namePtr ++;
@@ -324,7 +328,7 @@ g_file c_apiSourceOpen(
     g_fileWrite(result, " */\n\n");
 
     if (!local && !app) {
-        g_fileWrite(result, "#include <%s/c/c.h>\n", g_getName(g));
+        g_fileWrite(result, "#include <%s.c>\n", g_getName(g));
     } else {
         g_fileWrite(result, "#include <include/_api.h>\n");
         g_fileWrite(result, "#include <include/_load.h>\n", g_getName(g));
@@ -355,7 +359,7 @@ int c_apiVariableWalk(
         g_fileWrite(data->source, "corto_type _%s;\n", varId);
         g_fileWrite(
             data->source,
-            "#define %s _%s ? _%s : (_%s = *(corto_type*)corto_load_sym(\"%s\", &_package, \"%s\"))\n",
+            "#define %s _%s ? _%s : (_%s = *(corto_type*)ut_load_sym(\"%s\", &_package, \"%s\"))\n",
             varId, varId, varId, varId, packageId, varId);
         g_fileWrite(data->source, "\n");
     }
@@ -382,12 +386,12 @@ int c_apiVariableHasVariableDefs(
 
 static
 bool c_api_typeInList(
-    corto_ll types,
+    ut_ll types,
     corto_type t)
 {
-    corto_iter it = corto_ll_iter(types);
-    while (corto_iter_hasNext(&it)) {
-        corto_type type_in_list = corto_iter_next(&it);
+    ut_iter it = ut_ll_iter(types);
+    while (ut_iter_hasNext(&it)) {
+        corto_type type_in_list = ut_iter_next(&it);
         if (type_in_list == t) {
             return true;
         } else
@@ -409,11 +413,11 @@ int16_t c_apiAddDependent_item(
     void *userData)
 {
     corto_type t = corto_value_typeof(info);
-    corto_ll types = userData;
+    ut_ll types = userData;
 
     if (t->kind != CORTO_PRIMITIVE) {
         if (!c_api_typeInList(types, t)) {
-            corto_ll_append(types, t);
+            ut_ll_append(types, t);
         }
     }
 
@@ -422,15 +426,15 @@ int16_t c_apiAddDependent_item(
 
 static
 void c_apiAddDependentTypes(
-    corto_ll types)
+    ut_ll types)
 {
     corto_walk_opt opt;
     corto_walk_init(&opt);
     opt.metaprogram[CORTO_MEMBER] = c_apiAddDependent_item;
     opt.metaprogram[CORTO_ELEMENT] = c_apiAddDependent_item;
-    corto_iter it = corto_ll_iter(types);
-    while (corto_iter_hasNext(&it)) {
-        corto_type t = corto_iter_next(&it);
+    ut_iter it = ut_ll_iter(types);
+    while (ut_iter_hasNext(&it)) {
+        corto_type t = ut_iter_next(&it);
         corto_metawalk(&opt, t, types);
     }
 }
@@ -471,13 +475,13 @@ int c_apiWalkPackages(
         c_apiAddDependentTypes(data->types);
 
         /* Walk over collected types */
-        int has_defs = !corto_ll_walk(data->types, c_apiVariableHasVariableDefs, data);
+        int has_defs = !ut_ll_walk(data->types, c_apiVariableHasVariableDefs, data);
         if (data->types && has_defs) {
-            g_fileWrite(data->source, "static corto_dl _package;\n");
-            corto_ll_walk(data->types, c_apiVariableWalk, data);
+            g_fileWrite(data->source, "static ut_dl _package;\n");
+            ut_ll_walk(data->types, c_apiVariableWalk, data);
         }
         if (data->types) {
-            corto_ll_free(data->types);
+            ut_ll_free(data->types);
         }
     }
 
@@ -485,11 +489,11 @@ int c_apiWalkPackages(
         goto error;
     }
 
-    corto_ll_walk(data->collections, c_apiCollectionWalk, data);
-    corto_ll_walk(data->iterators, c_apiIteratorWalk, data);
+    ut_ll_walk(data->collections, c_apiCollectionWalk, data);
+    ut_ll_walk(data->iterators, c_apiIteratorWalk, data);
 
-    corto_ll_free(data->collections);
-    corto_ll_free(data->iterators);
+    ut_ll_free(data->collections);
+    ut_ll_free(data->iterators);
 
     c_apiHeaderClose(data->header);
 
@@ -506,47 +510,42 @@ int16_t genmain(g_generator g) {
 
     c_apiWalk_t walkData;
     memset(&walkData, 0, sizeof(walkData));
-    char *cwd = corto_strdup(corto_cwd());
+    char *cwd = ut_strdup(ut_cwd());
 
     /* Create project files */
     if (!local && !app) {
-        if (!corto_file_test("c/project.json")) {
+        if (!ut_file_test("c/project.json")) {
             corto_int8 ret, sig;
             corto_id cmd;
             sprintf(
                 cmd,
-                "corto create package %s/c %s --unmanaged --notest --nobuild --silent -o c",
+                "corto create package %s.c %s --unmanaged --notest --nobuild --silent -o c",
                 g_getName(g),
                 cpp ? "--use-cpp" : "");
 
-            sig = corto_proc_cmd(cmd, &ret);
+            sig = ut_proc_cmd(cmd, &ret);
             if (sig || ret) {
-                corto_throw("failed to setup project for '%s/c'", g_getName(g));
+                ut_throw("failed to setup project for '%s.c'", g_getName(g));
                 goto error;
             }
 
-            /* Overwrite rakefile */
+            /* Overwrite project.json */
             g_file rakefile = g_fileOpen(g, "c/project.json");
             if (!rakefile) {
-                corto_throw("failed to open c/project.json");
+                ut_throw("failed to open c/project.json");
                 goto error;
             }
             g_fileWrite(rakefile, "{\n");
-            g_fileWrite(rakefile, "    \"id\": \"%s/c\",\n", g_getName(g));
+            g_fileWrite(rakefile, "    \"id\": \"%s.c\",\n", g_getName(g));
             g_fileWrite(rakefile, "    \"type\": \"package\",\n");
             g_fileWrite(rakefile, "    \"value\": {\n");
-            g_fileWrite(rakefile, "        \"use\": [\"corto\"],\n");
-            g_fileWrite(rakefile, "        \"language\": \"c\",\n");
-            if (cpp) {
-                g_fileWrite(rakefile, "        \"c4cpp\": true,\n");
-            }
-            g_fileWrite(rakefile, "        \"managed\": false\n");
+            g_fileWrite(rakefile, "        \"use\": [\"corto\"]\n");
             g_fileWrite(rakefile, "    }\n");
             g_fileWrite(rakefile, "}\n");
             g_fileClose(rakefile);
         }
 
-        corto_chdir("c");
+        ut_chdir("c");
 
         walkData.mainHeader = g_fileOpen(g, "c.h");
         if (!walkData.mainHeader) {
@@ -563,7 +562,7 @@ int16_t genmain(g_generator g) {
     }
 
     if (!local) {
-        corto_chdir(cwd);
+        ut_chdir(cwd);
         corto_dealloc(cwd);
     }
 

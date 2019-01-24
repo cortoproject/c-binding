@@ -1,5 +1,5 @@
 
-#include <driver/gen/c/common/common.h>
+#include <driver.gen.c.common>
 
 typedef struct c_binding_t {
     g_generator g;
@@ -490,7 +490,7 @@ int c_binding_typeCastMacro(
 
         if (corto_type(o)->kind != CORTO_VOID) {
             g_fileWrite(data->header,
-                "#define %s(o) ((%s)corto_assert_type((corto_type)%s, o))\n",
+                "#define %s(o) ((%s)ut_assert_type((corto_type)%s, o))\n",
                 id, ptr, varId);
         } else {
             g_fileWrite(data->header,

@@ -1,10 +1,9 @@
 {
-    "id": "driver/gen/c/project",
+    "id": "driver.gen.c.project",
     "type": "package",
     "value": {
         "author": "Sander Mertens",
         "description": "Generate project infrastructure files",
-        "managed": false,
-        "use": ["corto", "corto/g", "driver/gen/c/common"]
+        "use": ["corto", "corto.g", "driver.gen.c.common"]
     }
 }

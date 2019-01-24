@@ -8,8 +8,7 @@
 #ifndef C_COMMON_H_
 #define C_COMMON_H_
 
-#include <corto/corto.h>
-#include "corto/g/g.h"
+#include "bake_config.h"
 
 #ifdef __cplusplus
 extern "c" {
@@ -77,7 +76,7 @@ char* c_usingConstant(g_generator g, corto_id id);
 char* c_buildingMacro(g_generator g, corto_id buffer);
 
 /* Write library export for symbol */
-void c_writeExport(g_generator g, g_file file);
+void c_writeExport(g_generator g, const char *postfix, g_file file);
 
 /* Get package for object */
 corto_object c_findPackage(g_generator g, corto_object o);
@@ -87,11 +86,11 @@ char* c_filename(g_generator g, char *fileName, corto_object o, char *ext);
 
 /* Create include statement from object for specified file */
 void c_includeFrom(g_generator g, g_file file, corto_object o, char* include, ...);
-void c_includeFrom_toBuffer(g_generator g, corto_buffer *buffer, corto_object o, char* include, ...);
+void c_includeFrom_toBuffer(g_generator g, ut_strbuf *buffer, corto_object o, char* include, ...);
 
 /* Create include statement for object */
 void c_include(g_generator g, g_file file, corto_object o);
-void c_include_toBuffer(g_generator g, corto_buffer *buffer, corto_object o);
+void c_include_toBuffer(g_generator g, ut_strbuf *buffer, corto_object o);
 
 /* Get filename of mainheader */
 char* c_mainheader(g_generator g, corto_id buffer);
@@ -100,7 +99,7 @@ char* c_mainheader(g_generator g, corto_id buffer);
 char* c_mainheaderImpl(g_generator g, corto_id buffer);
 
 /* Find all instances of a specified class */
-corto_ll c_findType(g_generator g, corto_class type);
+ut_ll c_findType(g_generator g, corto_class type);
 
 /* Obtain ID for meta object */
 char* c_varId(g_generator g, corto_object o, char* out);
@@ -129,7 +128,7 @@ char* c_short_id(g_generator g, corto_id id, corto_object o);
 /* Write this parameter to file */
 void c_paramThis(
     g_generator g,
-    corto_buffer *buffer,
+    ut_strbuf *buffer,
     bool cpp,
     bool impl,
     corto_type parentType);
@@ -137,7 +136,7 @@ void c_paramThis(
 int c_paramWalk(corto_object f, int(*action)(corto_parameter*, void*), void *userData);
 
 /* Create function declaration in buffer */
-int16_t c_decl(g_generator g, corto_buffer *buffer, corto_function f, bool isWrapper, bool cpp, bool impl);
+int16_t c_decl(g_generator g, ut_strbuf *buffer, corto_function f, bool isWrapper, bool cpp, bool impl);
 
 /* Include dependencies */
 int c_includeDependencies(g_generator g, g_file file, char* header);

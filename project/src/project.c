@@ -1,16 +1,16 @@
 
-#include <corto/corto.h>
-#include "driver/gen/c/common/common.h"
+#include <corto>
+#include <driver.gen.c.common>
 
 static
 uint32_t c_projectCountPackagesToLoad(
     g_generator g)
 {
     uint32_t result = 0;
-    if (g->imports && corto_ll_count(g->imports)) {
-        corto_iter iter = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&iter)) {
-            corto_object o = corto_iter_next(&iter);
+    if (g->imports && ut_ll_count(g->imports)) {
+        ut_iter iter = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&iter)) {
+            corto_object o = ut_iter_next(&iter);
             /* Filter out generated language packages */
             if (strcmp(corto_idof(o), "c")) {
                 result ++;
@@ -33,20 +33,20 @@ void c_projectLoadPackages(
         } else {
             strcpy(id, g_getProjectName(g));
         }
-        g_fileWrite(file, "corto_log_push(\"load-deps:%s\");\n", id);
-        corto_iter iter = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&iter)) {
-            corto_object o = corto_iter_next(&iter);
+        g_fileWrite(file, "ut_log_push(\"load-deps:%s\");\n", id);
+        ut_iter iter = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&iter)) {
+            corto_object o = ut_iter_next(&iter);
 
             /* Filter out generated language packages */
             if (strcmp(corto_idof(o), "c") && strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
-                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); corto_raise(); return -1;}\n",
-                    corto_path(NULL, NULL, o, "/"));
+                    "if (ut_use(\"%s\", 0, NULL)) {ut_log_pop(); ut_raise(); return -1;}\n",
+                    corto_path(NULL, root_o, o, "."));
             }
         }
-        g_fileWrite(file, "corto_log_pop();\n");
+        g_fileWrite(file, "ut_log_pop();\n");
     }
 }
 
@@ -63,22 +63,22 @@ void c_projectLoadGeneratedPackages(
         } else {
             strcpy(id, g_getProjectName(g));
         }
-        g_fileWrite(file, "corto_log_push(\"load-gen-deps:%s\");\n", id);
-        corto_iter iter = corto_ll_iter(g->imports);
-        while (corto_iter_hasNext(&iter)) {
-            corto_object o = corto_iter_next(&iter);
+        g_fileWrite(file, "ut_log_push(\"load-gen-deps:%s\");\n", id);
+        ut_iter iter = ut_ll_iter(g->imports);
+        while (ut_iter_hasNext(&iter)) {
+            corto_object o = ut_iter_next(&iter);
 
             /* Filter out generated language packages */
             if (!strcmp(corto_idof(o), "c") || !strcmp(corto_idof(o), "cpp")) {
                 g_fileWrite(
                     file,
-                    "if (corto_use(\"%s\", 0, NULL)) {corto_log_pop(); corto_raise(); return -1;}\n",
-                    corto_path(NULL, NULL, o, "/"));
+                    "if (ut_use(\"%s\", 0, NULL)) {ut_log_pop(); ut_raise(); return -1;}\n",
+                    corto_path(NULL, root_o, o, "."));
             } else {
                 continue;
             }
         }
-        g_fileWrite(file, "corto_log_pop();\n");
+        g_fileWrite(file, "ut_log_pop();\n");
     }
 
     /* If a c4cpp package, load own generated cpp package */
@@ -89,14 +89,14 @@ void c_projectLoadGeneratedPackages(
     if (cpp && g_getCurrent(g) && !local && !app) {
         corto_id id;
         if (g_getPackage(g)) {
-            corto_path(id, NULL, g_getPackage(g), "/");
+            corto_path(id, root_o, g_getPackage(g), ".");
         } else {
             strcpy(id, g_getProjectName(g));
         }
 
         g_fileWrite(
             file,
-            "if (corto_use(\"%s/cpp\", 0, NULL)) {corto_raise(); return -1;}\n",
+            "if (ut_use(\"%s.cpp\", 0, NULL)) {ut_raise(); return -1;}\n",
             id);
     }
 }
@@ -136,7 +136,7 @@ int16_t c_projectGenerateMainFile(
     }
 
     if (!app && g_getPackage(g)) {
-        c_includeFrom(g, file, g_getPackage(g), "_project.h");
+        g_fileWrite(file, "#include \"include/bake_config.h\"\n");
     }
 
     if (g_getCurrent(g)) {
@@ -153,7 +153,7 @@ int16_t c_projectGenerateMainFile(
     g_fileWrite(file, "extern \"C\"\n");
     g_fileWrite(file, "#endif\n");
     if (g_getCurrent(g)) {
-        c_writeExport(g, file);
+        c_writeExport(g, NULL, file);
         g_fileWrite(file, "\n");
     }
 
@@ -171,9 +171,9 @@ int16_t c_projectGenerateMainFile(
     if (g_getCurrent(g)) {
         corto_id id;
         corto_path(id, root_o, g_getPackage(g), "_");
-        g_fileWrite(file, "corto_log_push(\"load-model:%s\");\n", id);
+        g_fileWrite(file, "ut_log_push(\"load-model:%s\");\n", id);
         g_fileWrite(file, "ret = %s_load();\n", id);
-        g_fileWrite(file, "corto_log_pop();\n");
+        g_fileWrite(file, "ut_log_pop();\n");
     }
 
     /* If a C++ application that has a package, initialize C++ variables */
@@ -194,11 +194,11 @@ int16_t c_projectGenerateMainFile(
         g_fileWrite(file, "ret = cortomain(argc, argv);\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n");
-        g_fileWrite(file, "char *keep_alive = corto_getenv(\"CORTO_KEEP_ALIVE\");\n");
+        g_fileWrite(file, "char *keep_alive = ut_getenv(\"CORTO_KEEP_ALIVE\");\n");
         g_fileWrite(file, "if (keep_alive && !stricmp(keep_alive, \"true\")) {\n");
         g_fileIndent(file);
-        g_fileWrite(file, "corto_info(\"Keeping process alive, press CTRL-C to exit\");\n");
-        g_fileWrite(file, "while (true) { corto_sleep(1, 0); }\n");
+        g_fileWrite(file, "ut_info(\"Keeping process alive, press CTRL-C to exit\");\n");
+        g_fileWrite(file, "while (true) { ut_sleep(1, 0); }\n");
         g_fileDedent(file);
         g_fileWrite(file, "}\n");
         g_fileWrite(file, "corto_stop();\n");
@@ -212,83 +212,16 @@ error:
     return -1;
 }
 
-/* Generate interface header with macro's for exporting */
-static
-int16_t c_genInterfaceHeader(
-    g_generator g)
-{
-    corto_id interfaceHeaderName;
-
-    sprintf(interfaceHeaderName, "_project.h");
-
-    g_file interfaceHeader = g_fileOpen(g, interfaceHeaderName);
-
-    if (!interfaceHeader) {
-        goto error;
-    } else {
-        corto_id upperName;
-        strcpy(upperName, g_getName(g));
-        strupper(upperName);
-
-        corto_id upperFullName, buildingMacro;
-        if (g_getCurrent(g)) {
-            corto_path(upperFullName, root_o, g_getCurrent(g), "_");
-        } else {
-            strcpy(upperFullName, g_getName(g));
-            char *ptr, ch;
-            for (ptr = upperFullName; (ch = *ptr); ptr++) {
-                if (ch == '/') *ptr = '_';
-            }
-        }
-        strupper(upperFullName);
-
-        c_buildingMacro(g, buildingMacro);
-
-        g_fileWrite(interfaceHeader, "/* %s\n", interfaceHeaderName);
-        g_fileWrite(interfaceHeader, " * This file is generated. Do not modify the contents of this file.\n");
-        g_fileWrite(interfaceHeader, " */\n\n");
-
-        g_fileWrite(interfaceHeader, "#if %s && defined _MSC_VER\n", buildingMacro);
-        g_fileWrite(interfaceHeader, "#define ");
-        c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, " __declspec(dllexport)\n", upperFullName);
-        g_fileWrite(interfaceHeader, "#elif %s\n", buildingMacro);
-        g_fileWrite(interfaceHeader, "#define ");
-        c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, " __attribute__((__visibility__(\"default\")))\n");
-        g_fileWrite(interfaceHeader, "#elif defined _MSC_VER\n");
-        g_fileWrite(interfaceHeader, "#define ");
-        c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, " __declspec(dllimport)\n");
-        g_fileWrite(interfaceHeader, "#else\n");
-        g_fileWrite(interfaceHeader, "#define ");
-        c_writeExport(g, interfaceHeader);
-        g_fileWrite(interfaceHeader, "\n");
-        g_fileWrite(interfaceHeader, "#endif\n\n");
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
 /* Generator main */
 int genmain(g_generator g) {
 
     /* Create source and include directories */
-    corto_mkdir("include");
-    corto_mkdir("src");
+    ut_mkdir("include");
+    ut_mkdir("src");
 
     if (c_projectGenerateMainFile(g)) {
-        if (!corto_raised()) {
-            corto_throw("failed to create main sourcefile");
-        }
-        goto error;
-    }
-
-    if (c_genInterfaceHeader(g)) {
-        if (!corto_raised()) {
-            corto_throw("failed to create interface header");
+        if (!ut_raised()) {
+            ut_throw("failed to create main sourcefile");
         }
         goto error;
     }

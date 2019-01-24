@@ -5,8 +5,8 @@
  *      Author: sander
  */
 
-#include <corto/corto.h>
-#include "driver/gen/c/common/common.h"
+#include <corto>
+#include <driver.gen.c.common>
 
 typedef struct c_typeWalk_t {
     g_generator g;
@@ -14,7 +14,7 @@ typedef struct c_typeWalk_t {
     g_file source;
     uint32_t firstComma;
     uint32_t errorCount;
-    corto_ll collections;
+    ut_ll collections;
     bool scoped; /* Switch between generating scoped and anonymous */
 } c_typeWalk_t;
 
@@ -53,7 +53,7 @@ char* c_loadResolve(
 
         *ostr = '\0';
         data.compactNotation = TRUE;
-        data.buffer = CORTO_BUFFER_INIT;
+        data.buffer = UT_STRBUF_INIT;
         data.buffer.buf = NULL;
         data.buffer.max = 0;
         data.prefixType = TRUE;
@@ -62,7 +62,7 @@ char* c_loadResolve(
             goto error;
         }
 
-        char *str = corto_buffer_str(&data.buffer);
+        char *str = ut_strbuf_get(&data.buffer);
 
         escapedOstr = c_escapeString(str);
         sprintf(out, "corto_resolve(NULL, \"%s\")", escapedOstr);
@@ -232,7 +232,7 @@ char* c_loadMemberId(
 
         /* CORTO_OBJECT and CORTO_CONSTANT will not be encountered in this loop. */
         default:
-            corto_assert(0, "invalid valueKind at this place.");
+            ut_assert(0, "invalid valueKind at this place.");
             break;
         }
     }
@@ -282,7 +282,7 @@ int c_loadDeclareWalk(
     c_typeret(data->g, t, C_ByReference, false, specifier);
     c_varId(data->g, o, objectId);
 
-    c_writeExport(data->g, data->header);
+    c_writeExport(data->g, NULL, data->header);
 
     /* Declare objects in headerfile and define in sourcefile */
     g_fileWrite(data->header, " extern %s %s;\n", specifier, objectId);
@@ -398,7 +398,7 @@ g_file c_loadSourceFileOpen(
     g_fileWrite(result, "corto_object result = corto(CORTO_LOOKUP, action);\n");
     g_fileWrite(result, "if (!result) {\n");
     g_fileIndent(result);
-    g_fileWrite(result, "corto_throw(\"could not lookup '%%s'\", id);\n");
+    g_fileWrite(result, "ut_throw(\"could not lookup '%%s'\", id);\n");
     g_fileDedent(result);
     g_fileWrite(result, "}\n");
     g_fileWrite(result, "return result;\n");
@@ -528,15 +528,15 @@ int16_t c_initPrimitive(
      * the language mapping of C TRUE and FALSE is. */
     if (corto_primitive(t)->kind == CORTO_BOOLEAN) {
         if (*(bool*)ptr) {
-            str = corto_strdup("TRUE");
+            str = ut_strdup("TRUE");
         } else {
-            str = corto_strdup("FALSE");
+            str = ut_strdup("FALSE");
         }
     } else if (corto_primitive(t)->kind == CORTO_ENUM) {
         corto_id enumId;
 
         /* Convert constant-name to language id */
-        str = corto_strdup(c_constantId(data->g, corto_enum_constant_from_value(corto_enum(t), *(uint32_t*)ptr), enumId));
+        str = ut_strdup(c_constantId(data->g, corto_enum_constant_from_value(corto_enum(t), *(uint32_t*)ptr), enumId));
     } else if (corto_primitive(t)->kind == CORTO_BITMASK) {
         str = corto_alloc(11);
         sprintf(str, "0x%x", *(uint32_t*)ptr);
@@ -544,12 +544,12 @@ int16_t c_initPrimitive(
         corto_string v = *(corto_string*)ptr;
         if (v) {
             size_t n = stresc(NULL, 0, '"', v);
-            str = malloc(strlen("corto_strdup(\"\")") + n + 1);
-            strcpy(str, "corto_strdup(\"");
-            stresc(str + strlen("corto_strdup(\""), n + 1, '"', v);
+            str = malloc(strlen("ut_strdup(\"\")") + n + 1);
+            strcpy(str, "ut_strdup(\"");
+            stresc(str + strlen("ut_strdup(\""), n + 1, '"', v);
             strcat(str, "\")");
         } else {
-            str = corto_strdup("NULL");
+            str = ut_strdup("NULL");
         }
     } else if (corto_primitive(t)->kind == CORTO_CHARACTER) {
         char v = *(char*)ptr;
@@ -559,7 +559,7 @@ int16_t c_initPrimitive(
             str = malloc(strlen(buff) + 1 + 2);
             sprintf(str, "'%s'", buff);
         } else {
-            str = corto_strdup("'\\0'");
+            str = ut_strdup("'\\0'");
         }
     } else {
         /* Convert primitive value to string using built-in conversion */
@@ -597,7 +597,7 @@ int16_t c_initReference(
     data = userData;
     optr = corto_value_ptrof(v);
 
-    corto_assert(optr != NULL, "walk value yields NULL ptr");
+    ut_assert(optr != NULL, "walk value yields NULL ptr");
 
     c_varPrintStart(v, userData);
 
@@ -684,14 +684,14 @@ int16_t c_initElement(
     switch (t->kind) {
     case CORTO_LIST: {
         corto_id parentId, elementId;
-        g_fileWrite(data->source, "corto_ll_append(%s, %s%s);\n",
+        g_fileWrite(data->source, "ut_ll_append(%s, %s%s);\n",
                 c_loadMemberId(data, v->parent, parentId, FALSE),
                 requires_alloc ? "" : "(void*)(intptr_t)", c_loadElementId(v, elementId, 0));
         break;
     }
     case CORTO_MAP: /*{
         corto_id parentId, elementId;
-        g_fileWrite(data->source, "corto_rb_set(%s, %s)",
+        g_fileWrite(data->source, "ut_rb_set(%s, %s)",
                 c_loadMemberId(data->g, v->parent, parentId),
                 c_loadElementId(v, elementId, 0));
         break;
@@ -764,21 +764,21 @@ int16_t c_initCollection(
         g_fileWrite(data->source, "if (!%s)\n",
                 c_loadMemberId(data, v, memberId, FALSE));
         g_fileIndent(data->source);
-        g_fileWrite(data->source, "%s = corto_ll_new();\n",
+        g_fileWrite(data->source, "%s = ut_ll_new();\n",
                 c_loadMemberId(data, v, memberId, FALSE));
         g_fileDedent(data->source);
-        size = corto_ll_count(*(corto_ll*)ptr);
+        size = ut_ll_count(*(ut_ll*)ptr);
         break;
     case CORTO_MAP: {
         /*corto_id keyId;*/
         /* Create map object */
-        if (*(corto_rb*)ptr) {
-            /*g_fileWrite(data->source, "%s = corto_rb_new(%s);\n",
-                    c_loadMemberId(data, v, memberId, FALSE), g_fullOid(data->g, corto_rb_key_type(*(corto_rb*)ptr), keyId));*/
+        if (*(ut_rb*)ptr) {
+            /*g_fileWrite(data->source, "%s = ut_rb_new(%s);\n",
+                    c_loadMemberId(data, v, memberId, FALSE), g_fullOid(data->g, ut_rb_key_type(*(ut_rb*)ptr), keyId));*/
         } else {
             g_fileWrite(data->source, "%s = NULL;\n", c_loadMemberId(data, v, memberId, FALSE));
         }
-        size = corto_rb_count(*(corto_rb*)ptr);
+        size = ut_rb_count(*(ut_rb*)ptr);
         break;
     }
     }
@@ -917,7 +917,7 @@ int c_loadDeclare(
                 strcpy(parentId, "_e_");
                 g_fileWrite(data->source, "if (!_e_) {\n");
                 g_fileIndent(data->source);
-                g_fileWrite(data->source, "corto_throw(\"failed to lookup '%s'\");\n", corto_fullpath(NULL, corto_parentof(o)));
+                g_fileWrite(data->source, "ut_throw(\"failed to lookup '%s'\");\n", corto_fullpath(NULL, corto_parentof(o)));
                 g_fileWrite(data->source, "goto error;\n");
                 g_fileDedent(data->source);
                 g_fileWrite(data->source, "}\n");
@@ -950,7 +950,7 @@ int c_loadDeclare(
     /* Error checking */
     g_fileWrite(data->source, "if (!%s) {\n", varId);
     g_fileIndent(data->source);
-    g_fileWrite(data->source, "corto_throw(\"%s_load: failed to declare '%s'\");\n",
+    g_fileWrite(data->source, "ut_throw(\"%s_load: failed to declare '%s'\");\n",
             g_getProjectName(data->g),
             varId);
     g_fileWrite(data->source, "goto error;\n");
@@ -978,9 +978,9 @@ int16_t c_loadFwdDeclProcedure(
     g_fileWrite(data->source, "extern \"C\"\n");
     g_fileWrite(data->source, "#endif\n");
 
-    corto_buffer declBuffer = CORTO_BUFFER_INIT;
+    ut_strbuf declBuffer = UT_STRBUF_INIT;
     c_decl(data->g, &declBuffer, f, FALSE, TRUE, FALSE);
-    char *decl = corto_buffer_str(&declBuffer);
+    char *decl = ut_strbuf_get(&declBuffer);
     g_fileWrite(data->source, "%s;\n", decl);
     free(decl);
 
@@ -1049,7 +1049,7 @@ int c_loadDefine(
     g_fileWrite(data->source, "if (DEFINE(%s)) {\n", varId);
     g_fileIndent(data->source);
     escapedId = c_escapeString(varId);
-    g_fileWrite(data->source, "corto_throw(\"%s_load: failed to define '%s'\");\n",
+    g_fileWrite(data->source, "ut_throw(\"%s_load: failed to define '%s'\");\n",
             g_getProjectName(data->g),
             escapedId);
     corto_dealloc(escapedId);
@@ -1073,7 +1073,7 @@ int c_loadDefine(
                     typeId);
                 g_fileIndent(data->source);
                 g_fileWrite(data->source,
-                    "corto_throw(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
+                    "ut_throw(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(struct %s_s));\n",
                     g_getProjectName(data->g),
                     varId,
                     varId,
@@ -1087,7 +1087,7 @@ int c_loadDefine(
                     typeId);
                 g_fileIndent(data->source);
                 g_fileWrite(data->source,
-                    "corto_throw(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n",
+                    "ut_throw(\"%s_load: calculated size '%%d' of type '%s' doesn't match C-type size '%%d'\", corto_type(%s)->size, sizeof(%s));\n",
                     g_getProjectName(data->g),
                     varId,
                     varId,
@@ -1139,7 +1139,7 @@ int genmain(g_generator g) {
 
     /* Walk objects in dependency order */
     if (corto_genDepWalk(g, c_loadDeclare, c_loadDefine, &walkData)) {
-        corto_trace("generation of load-routine failed while resolving dependencies.");
+        ut_trace("generation of load-routine failed while resolving dependencies.");
         goto error;
     }
 

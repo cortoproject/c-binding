@@ -1,12 +1,11 @@
 {
-    "id": "driver/gen/c/binding",
+    "id": "driver.gen.c.binding",
     "type": "package",
     "value": {
         "description": "Macro's that add type-safety and aliassing for C projects",
         "author": "Sander Mertens",
         "version": "1.0.0",
         "language": "c",
-        "managed": false,
-        "use": ["corto", "corto/g", "driver/gen/c/common"]
+        "use": ["corto", "corto.g", "driver.gen.c.common"]
     }
 }

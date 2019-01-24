@@ -1,5 +1,5 @@
 
-#include <driver/gen/c/cpp/cpp.h>
+#include <driver.gen.c.cpp>
 
 typedef struct c_binding_t {
     g_generator g;
@@ -153,49 +153,47 @@ int genmain(g_generator g) {
     c_binding_t walkdata = {0};
     walkdata.g = g;
 
-    char *cwd = corto_strdup(corto_cwd());
+    char *cwd = ut_strdup(ut_cwd());
 
     if ((app || local) && !cpp) {
-        corto_trace("skip generating C++ for a local non-C++ project");
+        ut_trace("skip generating C++ for a local non-C++ project");
         return 0;
     }
 
     /* Create project files */
     if (!local && !app) {
-        if (!corto_file_test("cpp/project.json")) {
+        if (!ut_file_test("cpp/project.json")) {
             corto_int8 ret, sig;
             corto_id cmd;
             sprintf(
                 cmd,
-                "corto create package %s/cpp --use-cpp --unmanaged --notest --nobuild --silent -o cpp",
+                "corto create package %s.cpp --use-cpp --unmanaged --notest --nobuild --silent -o cpp",
                 g_getName(g));
 
-            sig = corto_proc_cmd(cmd, &ret);
+            sig = ut_proc_cmd(cmd, &ret);
             if (sig || ret) {
-                corto_throw("failed to setup project for '%s/c'", g_getName(g));
+                ut_throw("failed to setup project for '%s/c'", g_getName(g));
                 goto error;
             }
 
             /* Overwrite rakefile */
             g_file rakefile = g_fileOpen(g, "cpp/project.json");
             if (!rakefile) {
-                corto_throw("failed to open cpp/project.json");
+                ut_throw("failed to open cpp/project.json");
                 goto error;
             }
             g_fileWrite(rakefile, "{\n");
-            g_fileWrite(rakefile, "    \"id\": \"%s/cpp\",\n", g_getName(g));
+            g_fileWrite(rakefile, "    \"id\": \"%s.cpp\",\n", g_getName(g));
             g_fileWrite(rakefile, "    \"type\": \"package\",\n");
             g_fileWrite(rakefile, "    \"value\": {\n");
             g_fileWrite(rakefile, "        \"use\": [\"corto\"],\n");
-            g_fileWrite(rakefile, "        \"language\": \"c\",\n");
-            g_fileWrite(rakefile, "        \"c4cpp\": true,\n");
-            g_fileWrite(rakefile, "        \"managed\": false\n");
+            g_fileWrite(rakefile, "        \"language\": \"c++\"\n");
             g_fileWrite(rakefile, "    }\n");
             g_fileWrite(rakefile, "}\n");
             g_fileClose(rakefile);
         }
 
-        corto_chdir("cpp");
+        ut_chdir("cpp");
 
         walkdata.header = g_fileOpen(g, "cpp.h");
         walkdata.source = g_fileOpen(g, "main.cpp");
@@ -224,7 +222,7 @@ int genmain(g_generator g) {
     g_fileWrite(walkdata.header, " */\n\n");
     g_fileWrite(walkdata.header, "#ifndef %s__CPPAPI_H\n", path);
     g_fileWrite(walkdata.header, "#define %s__CPPAPI_H\n\n", path);
-    c_includeFrom(g, walkdata.header, corto_o, "corto.h");
+    g_fileWrite(walkdata.header, "#include <corto>\n");
 
     corto_object pkg;
     if (bootstrap) {
@@ -233,12 +231,10 @@ int genmain(g_generator g) {
         pkg = g_getPackage(g);
     }
 
+    g_fileWrite(walkdata.header, "#include <%s.dir/_type.h>\n", g_getName(g));
     if (bootstrap || corto_isbuiltin(pkg)) {
-        g_fileWrite(walkdata.header, "#include <%s/_project.h>\n", g_getName(g));
-        g_fileWrite(walkdata.header, "#include <%s/_type.h>\n", g_getName(g));
     } else {
-        c_includeFrom(g, walkdata.header, pkg, "_project.h");
-        c_includeFrom(g, walkdata.header, pkg, "_type.h");
+        g_fileWrite(walkdata.header, "#include \"bake_config.h\"\n");
         g_fileWrite(walkdata.header, "\n");
     }
 
@@ -269,7 +265,7 @@ int genmain(g_generator g) {
     g_fileWrite(walkdata.source, " * This file contains generated code. Do not modify!\n");
     g_fileWrite(walkdata.source, " */\n\n");
     if (!local && !app) {
-        g_fileWrite(walkdata.source, "#include <%s/cpp/cpp.h>\n", g_getName(g));
+        g_fileWrite(walkdata.source, "#include <%s.cpp>\n", g_getName(g));
     } else {
         c_includeFrom(g, walkdata.source, pkg, "_cpp.h");
     }
@@ -299,7 +295,7 @@ int genmain(g_generator g) {
     g_fileWrite(walkdata.source, "}\n");
 
     if (!local) {
-        corto_chdir(cwd);
+        ut_chdir(cwd);
         corto_dealloc(cwd);
     }
 

@@ -2,8 +2,7 @@
 #ifndef DRIVER_GEN_CPP_BINDING_H
 #define DRIVER_GEN_CPP_BINDING_H
 
-#include <corto/g/g.h>
-#include <driver/gen/c/common/common.h>
+#include "bake_config.h"
 
 #ifdef __cplusplus
 extern "C" {
