@@ -519,7 +519,7 @@ int16_t genmain(g_generator g) {
             corto_id cmd;
             sprintf(
                 cmd,
-                "corto create package %s.c %s --unmanaged --notest --nobuild --silent -o c",
+                "corto create package %s.c %s --nobuild --silent -o c",
                 g_getName(g),
                 cpp ? "--use-cpp" : "");
 

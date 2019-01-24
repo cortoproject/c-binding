@@ -167,7 +167,7 @@ int genmain(g_generator g) {
             corto_id cmd;
             sprintf(
                 cmd,
-                "corto create package %s.cpp --use-cpp --unmanaged --notest --nobuild --silent -o cpp",
+                "corto create package %s.cpp --use-cpp --nobuild --silent -o cpp",
                 g_getName(g));
 
             sig = ut_proc_cmd(cmd, &ret);
